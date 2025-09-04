@@ -32,17 +32,27 @@ class InfoView extends StatefulWidget {
 class _InfoViewState extends State<InfoView> with InfoViewMixin {
   @override
   Widget build(BuildContext context) {
+    // Show only loading screen when loading
+    if (isLoading) {
+      return AppScaffold(
+        child: Scaffold(
+          backgroundColor: AppColors.background,
+          body: const ComprehensiveLoadingBar(
+            loadingText: 'Bilgiler yükleniyor...',
+          ),
+        ),
+      );
+    }
+
     return AppScaffold(
       child: Scaffold(
         appBar: buildAppbar(),
-        body: isLoading
-            ? const LoadingBar()
-            : Column(
-                children: [
-                  elementTypesContainer(context),
-                  infoListBuilder(),
-                ],
-              ),
+        body: Column(
+          children: [
+            elementTypesContainer(context),
+            infoListBuilder(),
+          ],
+        ),
       ),
     );
   }
@@ -52,7 +62,9 @@ class _InfoViewState extends State<InfoView> with InfoViewMixin {
       future: infoList,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const LoadingBar();
+          return const ComprehensiveLoadingBar(
+            loadingText: 'Bilgiler yükleniyor...',
+          );
         } else {
           final infos = snapshot.data;
           return ListView.builder(

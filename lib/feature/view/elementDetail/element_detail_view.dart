@@ -1,4 +1,5 @@
 import 'package:elements_app/feature/model/periodic_element.dart';
+import 'package:elements_app/feature/provider/favorite_elements_provider.dart';
 import 'package:elements_app/feature/provider/localization_provider.dart';
 import 'package:elements_app/product/constants/app_colors.dart';
 import 'package:elements_app/product/extensions/color_extension.dart';
@@ -77,7 +78,20 @@ class _ElementDetailViewState extends State<ElementDetailView>
 
   @override
   Widget build(BuildContext context) {
-    final elementColor = widget.element.colors?.toColor() ?? AppColors.darkBlue;
+    Color elementColor;
+
+    try {
+      if (widget.element.colors is String) {
+        elementColor = (widget.element.colors as String).toColor();
+      } else if (widget.element.colors != null) {
+        elementColor = widget.element.colors!.toColor();
+      } else {
+        elementColor = AppColors.darkBlue;
+      }
+    } catch (e) {
+      elementColor = AppColors.darkBlue;
+    }
+
     final isTr = Provider.of<LocalizationProvider>(context).isTr;
 
     return AppScaffold(
@@ -279,26 +293,44 @@ class _ElementDetailViewState extends State<ElementDetailView>
 
   List<Widget> _buildActionButtons(Color elementColor) {
     return [
-      Container(
-        margin: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: AppColors.white.withValues(alpha: 0.2),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: IconButton(
-          icon: const Icon(Icons.favorite_border, color: AppColors.white),
-          onPressed: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: const Text('Favorilere eklendi!'),
-                backgroundColor: elementColor,
-                behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
+      Consumer<FavoriteElementsProvider>(
+        builder: (context, provider, child) {
+          final isFavorite = provider.isFavorite(widget.element);
+          return Container(
+            margin: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.white.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: IconButton(
+              icon: Icon(
+                isFavorite ? Icons.favorite : Icons.favorite_border,
+                color: AppColors.white,
               ),
-            );
-          },
-        ),
+              onPressed: () {
+                provider.toggleFavorite(widget.element);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      context.read<LocalizationProvider>().isTr
+                          ? isFavorite
+                              ? 'Favorilerden kaldırıldı'
+                              : 'Favorilere eklendi'
+                          : isFavorite
+                              ? 'Removed from favorites'
+                              : 'Added to favorites',
+                    ),
+                    backgroundColor: elementColor,
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                );
+              },
+            ),
+          );
+        },
       ),
       Container(
         margin: const EdgeInsets.all(8),
@@ -527,7 +559,7 @@ class _ElementDetailViewState extends State<ElementDetailView>
             {'label': 'Atom Ağırlığı', 'value': widget.element.weight ?? ''},
             {
               'label': 'Elektron Konfigürasyonu',
-              'value': widget.element.electronConfiguration ?? ""
+              'value': widget.element.electronConfiguration?.toString() ?? "aa"
             },
           ],
           Icons.science_outlined,

@@ -1,6 +1,6 @@
 import 'package:elements_app/feature/model/periodic_element.dart';
 import 'package:elements_app/feature/mixin/elementList/elements_list_view_mixin.dart';
-import 'package:elements_app/feature/provider/admob_provider.dart';
+
 import 'package:elements_app/feature/view/quiz/symbol/quiz_symbol_view.dart';
 import 'package:elements_app/feature/view/elementDetail/element_detail_view.dart';
 import 'package:elements_app/feature/provider/localization_provider.dart';
@@ -8,8 +8,8 @@ import 'package:elements_app/product/constants/app_colors.dart';
 import 'package:elements_app/product/constants/assets_constants.dart';
 import 'package:elements_app/product/extensions/context_extensions.dart';
 import 'package:elements_app/product/extensions/color_extension.dart';
+import 'package:elements_app/product/widget/ads/banner_ads_widget.dart';
 import 'package:elements_app/product/widget/loadingBar/loading_bar.dart';
-
 import 'package:elements_app/product/widget/scaffold/app_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -32,35 +32,26 @@ class ElementsListView extends StatefulWidget {
 
 class _ElementsListViewState extends State<ElementsListView>
     with TickerProviderStateMixin, ElementsListViewMixin {
-  final TextEditingController _searchController = TextEditingController();
-  final FocusNode _searchFocusNode = FocusNode();
   final ScrollController _scrollController = ScrollController();
+  final TextEditingController _searchController = TextEditingController();
 
   List<PeriodicElement> _filteredElements = [];
   bool _isGridView = false;
-  bool _isSearching = false;
-  bool _isSearchFocused = false;
+  String _searchQuery = '';
   bool _showSearchBar = false;
 
   late AnimationController _mainAnimationController;
-  late AnimationController _searchAnimationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
-  late Animation<double> _searchScaleAnimation;
 
   @override
   void initState() {
     super.initState();
     _searchController.addListener(_onSearchChanged);
-    _searchFocusNode.addListener(_onSearchFocusChanged);
     _scrollController.addListener(_onScrollChanged);
 
     _mainAnimationController = AnimationController(
-      duration: const Duration(milliseconds: 1000),
-      vsync: this,
-    );
-    _searchAnimationController = AnimationController(
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 800),
       vsync: this,
     );
 
@@ -80,53 +71,31 @@ class _ElementsListViewState extends State<ElementsListView>
       curve: const Interval(0.2, 0.8, curve: Curves.easeOutCubic),
     ));
 
-    _searchScaleAnimation = Tween<double>(
-      begin: 0.95,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _searchAnimationController,
-      curve: Curves.easeInOut,
-    ));
-
     _mainAnimationController.forward();
   }
 
   @override
   void dispose() {
     _searchController.dispose();
-    _searchFocusNode.dispose();
     _scrollController.dispose();
     _mainAnimationController.dispose();
-    _searchAnimationController.dispose();
     super.dispose();
+  }
+
+  void _onSearchChanged() {
+    setState(() {
+      _searchQuery = _searchController.text;
+    });
   }
 
   void _onScrollChanged() {
     final scrollOffset = _scrollController.offset;
-    final shouldShowSearchBar =
-        scrollOffset > 100; // SliverAppBar expandedHeight'ı geçince göster
+    final shouldShowSearchBar = scrollOffset > 100;
 
     if (shouldShowSearchBar != _showSearchBar) {
       setState(() {
         _showSearchBar = shouldShowSearchBar;
       });
-    }
-  }
-
-  void _onSearchChanged() {
-    setState(() {
-      _isSearching = _searchController.text.isNotEmpty;
-    });
-  }
-
-  void _onSearchFocusChanged() {
-    setState(() {
-      _isSearchFocused = _searchFocusNode.hasFocus;
-    });
-    if (_isSearchFocused) {
-      _searchAnimationController.forward();
-    } else {
-      _searchAnimationController.reverse();
     }
   }
 
@@ -138,81 +107,98 @@ class _ElementsListViewState extends State<ElementsListView>
 
   @override
   Widget build(BuildContext context) {
+    // Show only loading screen when loading
+    if (isLoading) {
+      return AppScaffold(
+        child: Scaffold(
+          backgroundColor: AppColors.background,
+          body: const ComprehensiveLoadingBar(
+            loadingText: 'Elementler yükleniyor...',
+          ),
+        ),
+      );
+    }
+
     return AppScaffold(
-      child: Scaffold(
-        backgroundColor: AppColors.background,
-        body: CustomScrollView(
-          controller: _scrollController,
-          slivers: [
-            // Modern Hero Header
-            SliverAppBar(
-              expandedHeight: 200,
-              floating: false,
-              pinned: true,
-              elevation: 0,
-              backgroundColor: AppColors.darkBlue,
-              systemOverlayStyle: SystemUiOverlayStyle.light,
-              flexibleSpace: FlexibleSpaceBar(
-                background: _buildHeroHeader(context),
+      child: CallbackShortcuts(
+        bindings: {
+          const SingleActivator(LogicalKeyboardKey.escape): () {
+            Navigator.pop(context);
+          },
+        },
+        child: Scaffold(
+          backgroundColor: AppColors.background,
+          body: CustomScrollView(
+            controller: _scrollController,
+            slivers: [
+              // Modern Hero Header with Search
+              SliverAppBar(
+                expandedHeight: 200,
+                floating: false,
+                pinned: true,
+                elevation: 0,
+                backgroundColor: AppColors.darkBlue,
+                systemOverlayStyle: SystemUiOverlayStyle.light,
+                flexibleSpace: FlexibleSpaceBar(
+                  background: _buildHeroHeader(context),
+                ),
+                title: _showSearchBar ? _buildSearchBar() : null,
+                leading: _buildBackButton(),
+                actions: _buildActionButtons(),
               ),
-              leading: _buildBackButton(),
-              actions: _buildActionButtons(),
-              title: _showSearchBar ? _buildSearchBar() : null,
-            ),
 
-            // Content
-            SliverToBoxAdapter(
-              child: FadeTransition(
-                opacity: _fadeAnimation,
-                child: SlideTransition(
-                  position: _slideAnimation,
-                  child: isLoading
-                      ? const LoadingBar()
-                      : FutureBuilder<List<PeriodicElement>>(
-                          future: elementList,
-                          builder: (context, snapshot) {
-                            if (snapshot.connectionState ==
-                                ConnectionState.waiting) {
-                              return const LoadingBar();
-                            } else {
-                              final elements = snapshot.data ?? [];
-                              _filteredElements = _filterElements(elements);
+              // Content
+              SliverToBoxAdapter(
+                child: FadeTransition(
+                  opacity: _fadeAnimation,
+                  child: SlideTransition(
+                    position: _slideAnimation,
+                    child: FutureBuilder<List<PeriodicElement>>(
+                      future: elementList,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const ComprehensiveLoadingBar(
+                            loadingText: 'Elementler yükleniyor...',
+                          );
+                        } else {
+                          final elements = snapshot.data ?? [];
+                          _filteredElements = _filterElements(elements);
 
-                              if (_filteredElements.isEmpty && _isSearching) {
-                                return _buildEmptySearchState();
-                              }
+                          if (_filteredElements.isEmpty &&
+                              _searchQuery.isNotEmpty) {
+                            return _buildEmptySearchState();
+                          }
 
-                              return Padding(
-                                padding: const EdgeInsets.all(20),
-                                child: Column(
-                                  children: [
-                                    // View Mode Toggle
-                                    _buildViewModeToggle(),
-                                    const SizedBox(height: 20),
+                          return Padding(
+                            padding: const EdgeInsets.all(20),
+                            child: Column(
+                              children: [
+                                // View Mode Toggle
+                                _buildViewModeToggle(),
+                                const SizedBox(height: 20),
 
-                                    // Elements Grid/List
-                                    _isGridView
-                                        ? _buildModernGridView(
-                                            _filteredElements)
-                                        : _buildModernListView(
-                                            _filteredElements),
+                                // Elements Grid/List
+                                _isGridView
+                                    ? _buildModernGridView(_filteredElements)
+                                    : _buildModernListView(_filteredElements),
 
-                                    const SizedBox(
-                                        height: 100), // Bottom padding
-                                  ],
-                                ),
-                              );
-                            }
-                          },
-                        ),
+                                const SizedBox(height: 100), // Bottom padding
+                              ],
+                            ),
+                          );
+                        }
+                      },
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ],
-        ),
+            ],
+          ),
 
-        // Modern Floating Action Button
-        floatingActionButton: _buildModernFAB(context),
+          // Modern Floating Action Button
+          floatingActionButton: _buildModernFAB(context),
+        ),
       ),
     );
   }
@@ -278,12 +264,34 @@ class _ElementsListViewState extends State<ElementsListView>
                               ),
                             ),
                             const SizedBox(height: 4),
-                            Text(
-                              '${_filteredElements.length} element bulundu',
-                              style: context.textTheme.bodyMedium?.copyWith(
-                                color: AppColors.white.withValues(alpha: 0.8),
-                                fontWeight: FontWeight.w500,
-                              ),
+                            FutureBuilder<List<PeriodicElement>>(
+                              future: elementList,
+                              builder: (context, snapshot) {
+                                if (snapshot.hasData) {
+                                  final elements = snapshot.data ?? [];
+                                  final filteredElements =
+                                      _filterElements(elements);
+                                  return Text(
+                                    '${filteredElements.length} element',
+                                    style:
+                                        context.textTheme.bodyMedium?.copyWith(
+                                      color: AppColors.white
+                                          .withValues(alpha: 0.8),
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  );
+                                } else {
+                                  return Text(
+                                    '0 element',
+                                    style:
+                                        context.textTheme.bodyMedium?.copyWith(
+                                      color: AppColors.white
+                                          .withValues(alpha: 0.8),
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  );
+                                }
+                              },
                             ),
                           ],
                         ),
@@ -300,283 +308,371 @@ class _ElementsListViewState extends State<ElementsListView>
   }
 
   Widget _buildBackButton() {
-    return Container(
-      margin: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: AppColors.white.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: AppColors.white.withValues(alpha: 0.3),
-          width: 1,
-        ),
-      ),
-      child: IconButton(
-        icon: const Icon(Icons.arrow_back_ios_new, color: AppColors.white),
-        onPressed: () => Navigator.pop(context),
-      ),
+    return IconButton(
+      icon: const Icon(Icons.arrow_back_ios_new, color: AppColors.white),
+      onPressed: () => Navigator.pop(context),
     );
   }
 
   List<Widget> _buildActionButtons() {
     return [
-      Container(
-        margin: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: AppColors.white.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: AppColors.white.withValues(alpha: 0.3),
-            width: 1,
-          ),
-        ),
-        child: IconButton(
-          icon: const Icon(Icons.filter_list, color: AppColors.white),
-          onPressed: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: const Text('Filtreleme özelliği yakında!'),
-                backgroundColor: AppColors.darkBlue,
-                behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
-              ),
-            );
-          },
-        ),
+      IconButton(
+        icon: const Icon(Icons.filter_list, color: AppColors.white),
+        onPressed: () {
+          _showFilterModal(context);
+        },
       ),
     ];
   }
 
-  Widget _buildSearchBar() {
-    return AnimatedBuilder(
-      animation: _searchAnimationController,
-      builder: (context, child) {
-        return Transform.scale(
-          scale: _searchScaleAnimation.value,
-          child: Container(
-            height: 56,
-            decoration: BoxDecoration(
-              color: AppColors.white,
-              borderRadius: BorderRadius.circular(28),
-              border: Border.all(
-                color: _isSearchFocused
-                    ? AppColors.turquoise
-                    : AppColors.white.withValues(alpha: 0.2),
-                width: _isSearchFocused ? 2.5 : 1.5,
+  void _showFilterModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: BoxDecoration(
+          color: AppColors.darkBlue,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          border: Border.all(
+            color: AppColors.white.withValues(alpha: 0.1),
+            width: 1,
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Handle
+            Container(
+              margin: const EdgeInsets.only(top: 12),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.white.withValues(alpha: 0.3),
+                borderRadius: BorderRadius.circular(2),
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: _isSearchFocused
-                      ? AppColors.turquoise.withValues(alpha: 0.25)
-                      : AppColors.darkBlue.withValues(alpha: 0.08),
-                  offset: const Offset(0, 6),
-                  blurRadius: _isSearchFocused ? 20 : 15,
-                  spreadRadius: 0,
-                ),
-                BoxShadow(
-                  color: AppColors.white.withValues(alpha: 0.9),
-                  offset: const Offset(0, -2),
-                  blurRadius: 4,
-                  spreadRadius: 0,
-                ),
-              ],
             ),
-            child: Row(
-              children: [
-                // Search Icon with Background
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  width: 56,
-                  height: 56,
-                  decoration: BoxDecoration(
-                    color: _isSearchFocused
-                        ? AppColors.turquoise.withValues(alpha: 0.15)
-                        : AppColors.darkBlue.withValues(alpha: 0.05),
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(28),
-                      bottomLeft: Radius.circular(28),
-                    ),
-                  ),
-                  child: Icon(
-                    Icons.search_rounded,
-                    color: _isSearchFocused
-                        ? AppColors.turquoise
-                        : AppColors.darkBlue.withValues(alpha: 0.7),
-                    size: 26,
-                  ),
-                ),
+            const SizedBox(height: 20),
 
-                // Text Field
-                Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: TextField(
-                      controller: _searchController,
-                      focusNode: _searchFocusNode,
-                      style: const TextStyle(
-                        color: AppColors.darkBlue,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 16,
-                        letterSpacing: 0.3,
-                      ),
-                      decoration: InputDecoration(
-                        hintText: 'Element adı, sembol veya numara...',
-                        hintStyle: TextStyle(
-                          color: AppColors.darkBlue.withValues(alpha: 0.4),
-                          fontWeight: FontWeight.w400,
-                          fontSize: 15,
-                          letterSpacing: 0.2,
-                        ),
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 0,
-                          vertical: 18,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
+            // Title
+            Text(
+              context.read<LocalizationProvider>().isTr
+                  ? 'Sıralama Seçenekleri'
+                  : 'Sort Options',
+              style: const TextStyle(
+                color: AppColors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 20),
 
-                // Clear Button with Animation
-                if (_isSearching)
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 300),
-                    width: 56,
-                    height: 56,
-                    decoration: BoxDecoration(
-                      color: AppColors.powderRed.withValues(alpha: 0.12),
-                      borderRadius: const BorderRadius.only(
-                        topRight: Radius.circular(28),
-                        bottomRight: Radius.circular(28),
-                      ),
+            // Filter Options
+            _buildFilterOption(
+              context,
+              icon: Icons.format_list_numbered,
+              title: context.read<LocalizationProvider>().isTr
+                  ? 'Atom Numarasına Göre'
+                  : 'By Atomic Number',
+              onTap: () {
+                _sortElements('number');
+                Navigator.pop(context);
+              },
+            ),
+            _buildFilterOption(
+              context,
+              icon: Icons.sort_by_alpha,
+              title: context.read<LocalizationProvider>().isTr
+                  ? 'İsme Göre'
+                  : 'By Name',
+              onTap: () {
+                _sortElements('name');
+                Navigator.pop(context);
+              },
+            ),
+            _buildFilterOption(
+              context,
+              icon: Icons.scale,
+              title: context.read<LocalizationProvider>().isTr
+                  ? 'Atom Ağırlığına Göre'
+                  : 'By Atomic Weight',
+              onTap: () {
+                _sortElements('weight');
+                Navigator.pop(context);
+              },
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilterOption(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.white.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                icon,
+                color: AppColors.white,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Text(
+              title,
+              style: TextStyle(
+                color: AppColors.white.withValues(alpha: 0.9),
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _sortElements(String criteria) {
+    setState(() {
+      switch (criteria) {
+        case 'number':
+          _filteredElements
+              .sort((a, b) => (a.number ?? 0).compareTo(b.number ?? 0));
+          break;
+        case 'name':
+          _filteredElements.sort((a, b) {
+            final aName = context.read<LocalizationProvider>().isTr
+                ? (a.trName ?? '')
+                : (a.enName ?? '');
+            final bName = context.read<LocalizationProvider>().isTr
+                ? (b.trName ?? '')
+                : (b.enName ?? '');
+            return aName.compareTo(bName);
+          });
+          break;
+        case 'weight':
+          _filteredElements.sort((a, b) {
+            final aWeight =
+                double.tryParse(a.weight?.replaceAll(',', '.') ?? '0') ?? 0;
+            final bWeight =
+                double.tryParse(b.weight?.replaceAll(',', '.') ?? '0') ?? 0;
+            return aWeight.compareTo(bWeight);
+          });
+          break;
+      }
+    });
+  }
+
+  Widget _buildSearchBar() {
+    return Container(
+      height: 40,
+      margin: const EdgeInsets.symmetric(horizontal: 8),
+      decoration: BoxDecoration(
+        color: AppColors.white.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppColors.white.withValues(alpha: 0.2),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.darkBlue.withValues(alpha: 0.2),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Center(
+        child: TextField(
+          controller: _searchController,
+          textAlignVertical: TextAlignVertical.center,
+          style: const TextStyle(
+            color: AppColors.white,
+            fontSize: 14,
+            height: 1,
+          ),
+          decoration: InputDecoration(
+            isDense: true,
+            hintText: context.read<LocalizationProvider>().isTr
+                ? 'Element adı, sembol veya numara ara...'
+                : 'Search by element name, symbol or number...',
+            hintStyle: TextStyle(
+              color: AppColors.white.withValues(alpha: 0.5),
+              fontSize: 12,
+              height: 1,
+            ),
+            prefixIcon: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: Icon(
+                Icons.search,
+                color: AppColors.white.withValues(alpha: 0.7),
+                size: 20,
+              ),
+            ),
+            prefixIconConstraints: const BoxConstraints(
+              minWidth: 36,
+              minHeight: 36,
+            ),
+            suffixIcon: _searchQuery.isNotEmpty
+                ? IconButton(
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(
+                      minWidth: 36,
+                      minHeight: 36,
                     ),
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        borderRadius: const BorderRadius.only(
-                          topRight: Radius.circular(28),
-                          bottomRight: Radius.circular(28),
-                        ),
-                        onTap: () {
-                          _searchController.clear();
-                          _searchFocusNode.unfocus();
-                        },
-                        child: Icon(
-                          Icons.close_rounded,
-                          color: AppColors.powderRed,
-                          size: 22,
-                        ),
-                      ),
+                    icon: Icon(
+                      Icons.clear,
+                      color: AppColors.white.withValues(alpha: 0.7),
+                      size: 18,
                     ),
-                  ),
-              ],
+                    onPressed: () {
+                      _searchController.clear();
+                      setState(() {
+                        _searchQuery = '';
+                      });
+                    },
+                  )
+                : null,
+            border: InputBorder.none,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 8,
+              vertical: 0,
             ),
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 
   Widget _buildViewModeToggle() {
-    return Container(
-      height: 48,
-      decoration: BoxDecoration(
-        color: AppColors.darkBlue,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: AppColors.glowGreen.withValues(alpha: 0.3),
-          width: 1,
+    return Column(
+      children: [
+        Container(
+          height: 48,
+          decoration: BoxDecoration(
+            color: AppColors.darkBlue,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: AppColors.glowGreen.withValues(alpha: 0.3),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    if (_isGridView) {
+                      _toggleViewMode();
+                    }
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    decoration: BoxDecoration(
+                      color: !_isGridView
+                          ? AppColors.glowGreen
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    child: Center(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.view_list,
+                            color: !_isGridView
+                                ? AppColors.darkBlue
+                                : AppColors.white.withValues(alpha: 0.7),
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Liste',
+                            style: TextStyle(
+                              color: !_isGridView
+                                  ? AppColors.darkBlue
+                                  : AppColors.white.withValues(alpha: 0.7),
+                              fontWeight: !_isGridView
+                                  ? FontWeight.bold
+                                  : FontWeight.w500,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    if (!_isGridView) {
+                      _toggleViewMode();
+                    }
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    decoration: BoxDecoration(
+                      color: _isGridView
+                          ? AppColors.glowGreen
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    child: Center(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.grid_view,
+                            color: _isGridView
+                                ? AppColors.darkBlue
+                                : AppColors.white.withValues(alpha: 0.7),
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Grid',
+                            style: TextStyle(
+                              color: _isGridView
+                                  ? AppColors.darkBlue
+                                  : AppColors.white.withValues(alpha: 0.7),
+                              fontWeight: _isGridView
+                                  ? FontWeight.bold
+                                  : FontWeight.w500,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: GestureDetector(
-              onTap: () {
-                if (_isGridView) {
-                  _toggleViewMode();
-                }
-              },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                decoration: BoxDecoration(
-                  color:
-                      !_isGridView ? AppColors.glowGreen : Colors.transparent,
-                  borderRadius: BorderRadius.circular(24),
-                ),
-                child: Center(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.view_list,
-                        color: !_isGridView
-                            ? AppColors.darkBlue
-                            : AppColors.white.withValues(alpha: 0.7),
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Liste',
-                        style: TextStyle(
-                          color: !_isGridView
-                              ? AppColors.darkBlue
-                              : AppColors.white.withValues(alpha: 0.7),
-                          fontWeight:
-                              !_isGridView ? FontWeight.bold : FontWeight.w500,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-          Expanded(
-            child: GestureDetector(
-              onTap: () {
-                if (!_isGridView) {
-                  _toggleViewMode();
-                }
-              },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                decoration: BoxDecoration(
-                  color: _isGridView ? AppColors.glowGreen : Colors.transparent,
-                  borderRadius: BorderRadius.circular(24),
-                ),
-                child: Center(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.grid_view,
-                        color: _isGridView
-                            ? AppColors.darkBlue
-                            : AppColors.white.withValues(alpha: 0.7),
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Grid',
-                        style: TextStyle(
-                          color: _isGridView
-                              ? AppColors.darkBlue
-                              : AppColors.white.withValues(alpha: 0.7),
-                          fontWeight:
-                              _isGridView ? FontWeight.bold : FontWeight.w500,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
+        const SizedBox(height: 20),
+        // Banner Ads
+        const BannerAdsWidget(
+          margin: EdgeInsets.symmetric(horizontal: 10),
+          backgroundColor: Colors.transparent,
+        ),
+      ],
     );
   }
 
@@ -615,7 +711,6 @@ class _ElementsListViewState extends State<ElementsListView>
           ElevatedButton.icon(
             onPressed: () {
               _searchController.clear();
-              _searchFocusNode.unfocus();
             },
             icon: const Icon(Icons.clear, color: AppColors.darkBlue),
             label: const Text(
@@ -648,8 +743,30 @@ class _ElementsListViewState extends State<ElementsListView>
   }
 
   Widget _buildModernListCard(PeriodicElement element, int index) {
-    final elementColor = element.colors?.toColor() ?? AppColors.darkBlue;
-    final shadowColor = element.shColor?.toColor() ?? AppColors.background;
+    Color elementColor;
+    Color shadowColor;
+
+    try {
+      if (element.colors is String) {
+        elementColor = (element.colors as String).toColor();
+      } else if (element.colors != null) {
+        elementColor = element.colors!.toColor();
+      } else {
+        elementColor = AppColors.darkBlue;
+      }
+
+      if (element.shColor is String) {
+        shadowColor = (element.shColor as String).toColor();
+      } else if (element.shColor != null) {
+        shadowColor = element.shColor!.toColor();
+      } else {
+        shadowColor = AppColors.background;
+      }
+    } catch (e) {
+      elementColor = AppColors.darkBlue;
+      shadowColor = AppColors.background;
+    }
+
     final isTr = Provider.of<LocalizationProvider>(context, listen: false).isTr;
 
     return Container(
@@ -678,7 +795,6 @@ class _ElementsListViewState extends State<ElementsListView>
         child: InkWell(
           borderRadius: BorderRadius.circular(20),
           onTap: () {
-            context.read<AdmobProvider>().onRouteChanged();
             Navigator.push(
               context,
               MaterialPageRoute(
@@ -785,8 +901,30 @@ class _ElementsListViewState extends State<ElementsListView>
   }
 
   Widget _buildModernGridCard(PeriodicElement element, int index) {
-    final elementColor = element.colors?.toColor() ?? AppColors.darkBlue;
-    final shadowColor = element.shColor?.toColor() ?? AppColors.background;
+    Color elementColor;
+    Color shadowColor;
+
+    try {
+      if (element.colors is String) {
+        elementColor = (element.colors as String).toColor();
+      } else if (element.colors != null) {
+        elementColor = element.colors!.toColor();
+      } else {
+        elementColor = AppColors.darkBlue;
+      }
+
+      if (element.shColor is String) {
+        shadowColor = (element.shColor as String).toColor();
+      } else if (element.shColor != null) {
+        shadowColor = element.shColor!.toColor();
+      } else {
+        shadowColor = AppColors.background;
+      }
+    } catch (e) {
+      elementColor = AppColors.darkBlue;
+      shadowColor = AppColors.background;
+    }
+
     final isTr = Provider.of<LocalizationProvider>(context, listen: false).isTr;
 
     return Container(
@@ -814,7 +952,6 @@ class _ElementsListViewState extends State<ElementsListView>
         child: InkWell(
           borderRadius: BorderRadius.circular(20),
           onTap: () {
-            context.read<AdmobProvider>().onRouteChanged();
             Navigator.push(
               context,
               MaterialPageRoute(
@@ -953,16 +1090,15 @@ class _ElementsListViewState extends State<ElementsListView>
   }
 
   List<PeriodicElement> _filterElements(List<PeriodicElement> elements) {
-    if (_searchController.text.isEmpty) {
+    if (_searchQuery.isEmpty) {
       return elements;
     }
 
-    final query = _searchController.text.toLowerCase();
+    final query = _searchQuery.toLowerCase();
     return elements.where((element) {
-      final name =
-          Provider.of<LocalizationProvider>(context, listen: false).isTr
-              ? element.trName?.toLowerCase() ?? ''
-              : element.enName?.toLowerCase() ?? '';
+      final name = context.read<LocalizationProvider>().isTr
+          ? element.trName?.toLowerCase() ?? ''
+          : element.enName?.toLowerCase() ?? '';
       final symbol = element.symbol?.toLowerCase() ?? '';
       final number = element.number?.toString() ?? '';
 

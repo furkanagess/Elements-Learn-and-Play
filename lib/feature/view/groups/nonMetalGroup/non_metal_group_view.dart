@@ -11,6 +11,45 @@ import 'package:elements_app/product/widget/scaffold/app_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+class NonMetalGroupPatternPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = AppColors.white.withValues(alpha: 0.05)
+      ..strokeWidth = 1;
+
+    // Draw subtle pattern
+    for (int i = 0; i < size.width; i += 40) {
+      canvas.drawLine(
+        Offset(i.toDouble(), 0),
+        Offset(i.toDouble(), size.height),
+        paint,
+      );
+    }
+    for (int i = 0; i < size.height; i += 40) {
+      canvas.drawLine(
+        Offset(0, i.toDouble()),
+        Offset(size.width, i.toDouble()),
+        paint,
+      );
+    }
+
+    // Draw some circles for visual interest
+    final circlePaint = Paint()
+      ..color = AppColors.white.withValues(alpha: 0.03)
+      ..style = PaintingStyle.fill;
+
+    for (int i = 0; i < 5; i++) {
+      final x = (i * 80) % size.width;
+      final y = (i * 60) % size.height;
+      canvas.drawCircle(Offset(x, y), 20, circlePaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
 class NonMetalGroupView extends StatelessWidget {
   const NonMetalGroupView({super.key});
 
@@ -18,20 +57,92 @@ class NonMetalGroupView extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppScaffold(
       child: Scaffold(
-        appBar: appBar(context),
-        body: Padding(
-          padding: context.paddingLowHorizontal,
-          child: Column(
-            children: [
-              spacer(context, 0.05),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  reactiveNonmetalContainer(context),
-                  nobleGasesContainer(context),
-                ],
+        backgroundColor: AppColors.background,
+        body: SafeArea(
+          child: CustomScrollView(
+            physics: const BouncingScrollPhysics(),
+            slivers: [
+              // Modern App Bar
+              SliverAppBar(
+                expandedHeight: 200,
+                pinned: true,
+                backgroundColor: AppColors.powderRed,
+                flexibleSpace: FlexibleSpaceBar(
+                  background: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          AppColors.powderRed,
+                          AppColors.powderRed.withValues(alpha: 0.8),
+                        ],
+                      ),
+                    ),
+                    child: _buildHeader(context),
+                  ),
+                ),
+                leading: _buildBackButton(context),
               ),
-              spacer(context, 0.05),
+
+              // Content
+              SliverPadding(
+                padding: const EdgeInsets.all(16),
+                sliver: SliverGrid(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 16,
+                    crossAxisSpacing: 16,
+                    childAspectRatio: 0.85,
+                  ),
+                  delegate: SliverChildListDelegate([
+                    _buildGroupCard(
+                      context,
+                      title: context.read<LocalizationProvider>().isTr
+                          ? TrAppStrings.reactiveNonmetal
+                          : EnAppStrings.reactiveNonmetal,
+                      color: AppColors.powderRed,
+                      shadowColor: AppColors.shPowderRed,
+                      onTap: () {
+                        context.read<AdmobProvider>().onRouteChanged();
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ElementsListView(
+                              apiType: ApiTypes.reactiveNonmetal,
+                              title: context.read<LocalizationProvider>().isTr
+                                  ? TrAppStrings.reactiveNonmetal
+                                  : EnAppStrings.reactiveNonmetal,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    _buildGroupCard(
+                      context,
+                      title: context.read<LocalizationProvider>().isTr
+                          ? TrAppStrings.nobleGases
+                          : EnAppStrings.nobleGases,
+                      color: AppColors.glowGreen,
+                      shadowColor: AppColors.shGlowGreen,
+                      onTap: () {
+                        context.read<AdmobProvider>().onRouteChanged();
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ElementsListView(
+                              apiType: ApiTypes.nobleGases,
+                              title: context.read<LocalizationProvider>().isTr
+                                  ? TrAppStrings.nobleGases
+                                  : EnAppStrings.nobleGases,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ]),
+                ),
+              ),
             ],
           ),
         ),
@@ -39,61 +150,147 @@ class NonMetalGroupView extends StatelessWidget {
     );
   }
 
-  ElementGroupContainer nobleGasesContainer(BuildContext context) {
-    return ElementGroupContainer(
-      color: AppColors.glowGreen,
-      shadowColor: AppColors.shGlowGreen,
-      onTap: () {
-        context.read<AdmobProvider>().onRouteChanged();
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ElementsListView(
-              apiType: ApiTypes.nobleGases,
-              title: context.read<LocalizationProvider>().isTr
-                  ? TrAppStrings.nobleGases
-                  : EnAppStrings.nobleGases,
+  Widget _buildBackButton(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: AppColors.white.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppColors.white.withValues(alpha: 0.3),
+          width: 1,
+        ),
+      ),
+      child: IconButton(
+        icon: const Icon(Icons.arrow_back_ios_new, color: AppColors.white),
+        onPressed: () => Navigator.pop(context),
+      ),
+    );
+  }
+
+  Widget _buildHeader(BuildContext context) {
+    return Stack(
+      children: [
+        // Background pattern
+        Positioned.fill(
+          child: CustomPaint(
+            painter: NonMetalGroupPatternPainter(),
+          ),
+        ),
+        // Content
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 60, 20, 20),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.white.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: AppColors.white.withValues(alpha: 0.3),
+                    width: 1,
+                  ),
+                ),
+                child: Icon(
+                  Icons.water_drop,
+                  color: AppColors.white,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      context.read<LocalizationProvider>().isTr
+                          ? TrAppStrings.nonMetalGroups
+                          : EnAppStrings.nonMetalGroup,
+                      style: context.textTheme.headlineMedium?.copyWith(
+                        color: AppColors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 28,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildGroupCard(
+    BuildContext context, {
+    required String title,
+    required Color color,
+    required Color shadowColor,
+    required VoidCallback onTap,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            color,
+            color.withValues(alpha: 0.8),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: shadowColor.withValues(alpha: 0.3),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppColors.white.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: AppColors.white.withValues(alpha: 0.3),
+                      width: 1,
+                    ),
+                  ),
+                  child: Icon(
+                    Icons.science,
+                    color: AppColors.white,
+                    size: 32,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: AppColors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
             ),
           ),
-        );
-      },
-      title: context.read<LocalizationProvider>().isTr
-          ? TrAppStrings.nobleGases
-          : EnAppStrings.nobleGases,
+        ),
+      ),
     );
   }
-
-  ElementGroupContainer reactiveNonmetalContainer(BuildContext context) {
-    return ElementGroupContainer(
-      color: AppColors.powderRed,
-      shadowColor: AppColors.shPowderRed,
-      onTap: () {
-        context.read<AdmobProvider>().onRouteChanged();
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ElementsListView(
-              apiType: ApiTypes.reactiveNonmetal,
-              title: context.read<LocalizationProvider>().isTr
-                  ? TrAppStrings.reactiveNonmetal
-                  : EnAppStrings.reactiveNonmetal,
-            ),
-          ),
-        );
-      },
-      title: context.read<LocalizationProvider>().isTr
-          ? TrAppStrings.reactiveNonmetal
-          : EnAppStrings.reactiveNonmetal,
-    );
-  }
-
-  AppBar appBar(isTr) {
-    return AppBar(
-      title:
-          Text(isTr ? TrAppStrings.nonMetalGroups : EnAppStrings.nonMetalGroup),
-    );
-  }
-
-  SizedBox spacer(BuildContext context, double value) =>
-      SizedBox(height: context.dynamicHeight(value));
 }

@@ -39,7 +39,7 @@ final class WhatIsContainer extends StatelessWidget {
           decoration: BoxDecoration(
             boxShadow: [
               BoxShadow(
-                color: info.shColor?.toColor(),
+                color: info.shColor!.toColor(),
                 offset: const Offset(4, 4),
                 spreadRadius: 1,
               ),

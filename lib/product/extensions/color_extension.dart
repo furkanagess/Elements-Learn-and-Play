@@ -13,7 +13,7 @@ extension ColorExtension on String {
   /// ```dart
   /// Color myColor = "#FF5733".toColor();
   /// ```
-  toColor() {
+  Color toColor() {
     var hexStringColor = this;
     final buffer = StringBuffer();
 
@@ -22,5 +22,8 @@ extension ColorExtension on String {
       buffer.write(hexStringColor.replaceFirst("#", ""));
       return Color(int.parse(buffer.toString(), radix: 16));
     }
+
+    // Default color if the string format is invalid
+    return Colors.grey;
   }
 }

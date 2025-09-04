@@ -66,6 +66,126 @@ class LoadingBar extends StatelessWidget {
   }
 }
 
+class ComprehensiveLoadingBar extends StatelessWidget {
+  final String? loadingText;
+
+  const ComprehensiveLoadingBar({
+    super.key,
+    this.loadingText,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      height: double.infinity,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [AppColors.darkBlue, AppColors.background],
+        ),
+      ),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Large loading animation
+            Container(
+              width: 150,
+              height: 150,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(75),
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [AppColors.darkBlue, AppColors.background],
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.darkBlue.withValues(alpha: 0.4),
+                    offset: const Offset(0, 12),
+                    blurRadius: 30,
+                    spreadRadius: 4,
+                  ),
+                ],
+              ),
+              child: Lottie.asset(
+                AssetConstants.instance.lottieLoadingChemistry,
+                fit: BoxFit.cover,
+                reverse: true,
+                repeat: true,
+              ),
+            ),
+            const SizedBox(height: 32),
+            // Loading text
+            Text(
+              loadingText ?? 'Elementler yükleniyor...',
+              style: context.textTheme.headlineSmall?.copyWith(
+                color: AppColors.white,
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            // Subtitle
+            Text(
+              'Lütfen bekleyin',
+              style: context.textTheme.bodyLarge?.copyWith(
+                color: AppColors.white.withValues(alpha: 0.7),
+                fontWeight: FontWeight.w500,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 32),
+            // Progress indicator
+            SizedBox(
+              width: 250,
+              child: LinearProgressIndicator(
+                backgroundColor: AppColors.white.withValues(alpha: 0.2),
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  AppColors.glowGreen,
+                ),
+                minHeight: 6,
+              ),
+            ),
+            const SizedBox(height: 24),
+            // Animated dots
+            _buildAnimatedDots(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAnimatedDots() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(3, (index) {
+        return TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0.0, end: 1.0),
+          duration: Duration(milliseconds: 600 + (index * 200)),
+          builder: (context, value, child) {
+            return Container(
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              width: 8 + (value * 4),
+              height: 8 + (value * 4),
+              decoration: BoxDecoration(
+                color:
+                    AppColors.glowGreen.withValues(alpha: 0.3 + (value * 0.7)),
+                shape: BoxShape.circle,
+              ),
+            );
+          },
+          onEnd: () {
+            // Restart animation
+          },
+        );
+      }),
+    );
+  }
+}
+
 class ShimmerLoading extends StatefulWidget {
   final Widget child;
   final Duration duration;

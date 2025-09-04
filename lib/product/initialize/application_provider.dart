@@ -1,6 +1,10 @@
 import 'package:elements_app/feature/provider/admob_provider.dart';
 import 'package:elements_app/feature/provider/banner_ads_provider.dart';
+import 'package:elements_app/feature/provider/favorite_elements_provider.dart';
 import 'package:elements_app/feature/provider/localization_provider.dart';
+import 'package:elements_app/feature/provider/periodicTable/periodic_table_provider.dart';
+import 'package:elements_app/feature/service/api_service.dart';
+import 'package:elements_app/feature/service/periodicTable/periodic_table_service.dart';
 import 'package:elements_app/feature/service/network_service.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
@@ -37,6 +41,14 @@ class ApplicationProvider {
     ),
     ChangeNotifierProvider<BannerAdsProvider>(
       create: (context) => BannerAdsProvider(),
+    ),
+    ChangeNotifierProvider<FavoriteElementsProvider>(
+      create: (context) => FavoriteElementsProvider(),
+    ),
+    ChangeNotifierProvider<PeriodicTableProvider>(
+      create: (context) => PeriodicTableProvider(
+        PeriodicTableService(ApiService()),
+      ),
     ),
   ];
 }

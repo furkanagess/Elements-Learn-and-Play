@@ -1,9 +1,11 @@
-import 'package:elements_app/feature/provider/admob_provider.dart';
 import 'package:elements_app/feature/provider/localization_provider.dart';
+import 'package:elements_app/feature/view/favorites/favorites_view.dart';
 import 'package:elements_app/feature/view/groups/element_group_view.dart';
 import 'package:elements_app/feature/view/info/info_view.dart';
+import 'package:elements_app/feature/view/periodicTable/periodic_table_view.dart';
 import 'package:elements_app/feature/view/quiz/quiz_home.dart';
-import 'package:elements_app/feature/view/search/search_view.dart';
+import 'package:elements_app/feature/view/settings/settings_view.dart';
+import 'package:elements_app/feature/view/elementsList/elements_list_view.dart';
 import 'package:elements_app/product/constants/api_types.dart';
 import 'package:elements_app/product/constants/app_colors.dart';
 import 'package:elements_app/product/constants/stringConstants/en_app_strings.dart';
@@ -11,14 +13,11 @@ import 'package:elements_app/product/constants/assets_constants.dart';
 import 'package:elements_app/product/constants/stringConstants/tr_app_strings.dart';
 import 'package:elements_app/product/extensions/context_extensions.dart';
 import 'package:elements_app/product/widget/ads/banner_ads_widget.dart';
-import 'package:elements_app/product/widget/button/gradient_button.dart';
 
 import 'package:elements_app/product/widget/scaffold/app_scaffold.dart';
-import 'package:elements_app/product/widget/text/text_icon_row.dart';
-import 'package:elements_app/product/widget/textField/long_feedback_textfield.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:in_app_review/in_app_review.dart';
 import 'package:neon_widgets/neon_widgets.dart';
 import 'package:provider/provider.dart';
 
@@ -78,60 +77,58 @@ class _HomeViewState extends State<StatefulWidget>
   @override
   Widget build(BuildContext context) {
     return AppScaffold(
-      child: Scaffold(
-        resizeToAvoidBottomInset: false,
-        body: SafeArea(
-          child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                children: [
-                  const SizedBox(height: 20),
-                  // Header Section
-                  FadeTransition(
-                    opacity: _fadeAnimation,
-                    child: _buildHeader(context),
-                  ),
-                  const SizedBox(height: 30),
-
-                  // Hero Image Section
-                  SlideTransition(
-                    position: _slideAnimation,
-                    child: FadeTransition(
+      child: CallbackShortcuts(
+        bindings: {
+          const SingleActivator(LogicalKeyboardKey.escape): () {
+            Navigator.pop(context);
+          },
+        },
+        child: Scaffold(
+          resizeToAvoidBottomInset: false,
+          body: SafeArea(
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 20),
+                    // Header Section
+                    FadeTransition(
                       opacity: _fadeAnimation,
-                      child: _buildHeroSection(context),
+                      child: _buildHeader(context),
                     ),
-                  ),
-                  const SizedBox(height: 40),
+                    const SizedBox(height: 20),
 
-                  // Main Features Grid
-                  SlideTransition(
-                    position: _slideAnimation,
-                    child: FadeTransition(
-                      opacity: _fadeAnimation,
-                      child: _buildFeaturesGrid(context),
+                    // Banner Ads
+                    const BannerAdsWidget(
+                      margin: EdgeInsets.symmetric(horizontal: 10),
+                      backgroundColor: Colors.transparent,
                     ),
-                  ),
-                  const SizedBox(height: 30),
 
-                  // Bottom Actions
-                  SlideTransition(
-                    position: _slideAnimation,
-                    child: FadeTransition(
-                      opacity: _fadeAnimation,
-                      child: _buildBottomActions(context),
+                    const SizedBox(height: 20),
+
+                    // Hero Image Section
+                    SlideTransition(
+                      position: _slideAnimation,
+                      child: FadeTransition(
+                        opacity: _fadeAnimation,
+                        child: _buildHeroSection(context),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 20),
+                    const SizedBox(height: 20),
 
-                  // Banner Ads
-                  const BannerAdsWidget(
-                    margin: EdgeInsets.symmetric(horizontal: 10),
-                    backgroundColor: Colors.transparent,
-                  ),
-                  const SizedBox(height: 20),
-                ],
+                    // Main Features Grid
+                    SlideTransition(
+                      position: _slideAnimation,
+                      child: FadeTransition(
+                        opacity: _fadeAnimation,
+                        child: _buildFeaturesGrid(context),
+                      ),
+                    ),
+                    const SizedBox(height: 30),
+                  ],
+                ),
               ),
             ),
           ),
@@ -210,53 +207,123 @@ class _HomeViewState extends State<StatefulWidget>
               ],
             ),
           ),
+          // Action Buttons
+          Row(
+            children: [
+              // Favorites Button
+              Container(
+                padding: const EdgeInsets.all(8),
+                margin: const EdgeInsets.only(right: 8),
+                decoration: BoxDecoration(
+                  color: AppColors.purple.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: AppColors.purple.withOpacity(0.3),
+                    width: 1,
+                  ),
+                ),
+                child: IconButton(
+                  icon: Icon(
+                    Icons.favorite,
+                    color: AppColors.white.withOpacity(0.9),
+                    size: 24,
+                  ),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const FavoritesView(),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              // Settings Button
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.purple.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: AppColors.purple.withOpacity(0.3),
+                    width: 1,
+                  ),
+                ),
+                child: IconButton(
+                  icon: Icon(
+                    Icons.settings,
+                    color: AppColors.white.withOpacity(0.9),
+                    size: 24,
+                  ),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const SettingsView(),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
   }
 
   Widget _buildHeroSection(BuildContext context) {
-    return Container(
-      height: 200,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(25),
-        gradient: LinearGradient(
-          colors: [
-            AppColors.purple.withOpacity(0.2),
-            AppColors.pink.withOpacity(0.1),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.purple.withOpacity(0.1),
-            blurRadius: 30,
-            offset: const Offset(0, 15),
+    return InkWell(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const PeriodicTableView(),
           ),
-        ],
-      ),
-      child: Stack(
-        children: [
-          Positioned(
-            right: -20,
-            bottom: -20,
-            child: Container(
-              width: 120,
-              height: 120,
-              decoration: BoxDecoration(
-                color: AppColors.purple.withOpacity(0.1),
-                shape: BoxShape.circle,
+        );
+      },
+      child: Container(
+        height: 200,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(25),
+          gradient: LinearGradient(
+            colors: [
+              AppColors.purple.withOpacity(0.2),
+              AppColors.pink.withOpacity(0.1),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.purple.withOpacity(0.1),
+              blurRadius: 30,
+              offset: const Offset(0, 15),
+            ),
+          ],
+        ),
+        child: Stack(
+          children: [
+            Positioned(
+              right: -20,
+              bottom: -20,
+              child: Container(
+                width: 120,
+                height: 120,
+                decoration: BoxDecoration(
+                  color: AppColors.purple.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
               ),
             ),
-          ),
-          Center(
-            child: Image.asset(
-              AssetConstants.instance.pngHomeImage,
-              height: 150,
+            Center(
+              child: Image.asset(
+                AssetConstants.instance.pngHomeImage,
+                height: 150,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -280,11 +347,15 @@ class _HomeViewState extends State<StatefulWidget>
                 color: AppColors.turquoise,
                 shadowColor: AppColors.shTurquoise,
                 onTap: () {
-                  context.read<AdmobProvider>().onRouteChanged();
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const SearchView(),
+                      builder: (context) => ElementsListView(
+                        apiType: ApiTypes.allElements,
+                        title: context.read<LocalizationProvider>().isTr
+                            ? TrAppStrings.allElements
+                            : EnAppStrings.elements,
+                      ),
                     ),
                   );
                 },
@@ -304,7 +375,6 @@ class _HomeViewState extends State<StatefulWidget>
                 color: AppColors.glowGreen,
                 shadowColor: AppColors.shGlowGreen,
                 onTap: () {
-                  context.read<AdmobProvider>().onRouteChanged();
                   Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -333,7 +403,6 @@ class _HomeViewState extends State<StatefulWidget>
                 color: AppColors.yellow,
                 shadowColor: AppColors.shYellow,
                 onTap: () {
-                  context.read<AdmobProvider>().onRouteChanged();
                   Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -362,7 +431,6 @@ class _HomeViewState extends State<StatefulWidget>
                 color: AppColors.pink,
                 shadowColor: AppColors.shPink,
                 onTap: () {
-                  context.read<AdmobProvider>().onRouteChanged();
                   Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -375,6 +443,92 @@ class _HomeViewState extends State<StatefulWidget>
           ],
         ),
       ],
+    );
+  }
+
+  Widget _buildPeriodicTableButton(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      height: 80,
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppColors.glowGreen.withOpacity(0.9),
+            AppColors.glowGreen.withOpacity(0.7),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.glowGreen.withOpacity(0.3),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: () {},
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    Icons.table_chart,
+                    color: AppColors.white,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        context.read<LocalizationProvider>().isTr
+                            ? 'İnteraktif Periyodik Tablo'
+                            : 'Interactive Periodic Table',
+                        style: const TextStyle(
+                          color: AppColors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        context.read<LocalizationProvider>().isTr
+                            ? 'Elementleri keşfedin ve öğrenin'
+                            : 'Explore and learn elements',
+                        style: TextStyle(
+                          color: AppColors.white.withOpacity(0.8),
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.arrow_forward_ios,
+                  color: AppColors.white.withOpacity(0.8),
+                  size: 20,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -464,290 +618,10 @@ class _HomeViewState extends State<StatefulWidget>
     );
   }
 
-  Widget _buildBottomActions(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.background.withOpacity(0.5),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: AppColors.purple.withOpacity(0.2),
-          width: 1,
-        ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          _buildActionButton(
-            context,
-            icon: AssetConstants.instance.svgTrFlag,
-            label: context.read<LocalizationProvider>().isTr ? 'EN' : 'TR',
-            onTap: () {
-              Provider.of<LocalizationProvider>(context, listen: false)
-                  .toggleBool();
-            },
-          ),
-          _buildActionButton(
-            context,
-            icon: AssetConstants.instance.svgStarTwo,
-            label: context.read<LocalizationProvider>().isTr
-                ? TrAppStrings.rateTitle
-                : EnAppStrings.rateTitle,
-            onTap: () => rateBottomSheet(context),
-          ),
-          _buildActionButton(
-            context,
-            icon: AssetConstants.instance.svgQuestion,
-            label:
-                context.read<LocalizationProvider>().isTr ? 'Yardım' : 'Help',
-            onTap: () => helpPopUp(context),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActionButton(
-    BuildContext context, {
-    required String icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: AppColors.purple.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(15),
-              border: Border.all(
-                color: AppColors.purple.withOpacity(0.3),
-                width: 1,
-              ),
-            ),
-            child: SvgPicture.asset(
-              icon,
-              height: 24,
-              colorFilter: const ColorFilter.mode(
-                AppColors.purple,
-                BlendMode.srcIn,
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            label,
-            style: TextStyle(
-              color: AppColors.white.withOpacity(0.8),
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   // Helper methods
   SizedBox spacerVertical(BuildContext context, double value) =>
       SizedBox(height: context.dynamicHeight(value));
 
   SizedBox spacerHorizontal(BuildContext context, double value) =>
       SizedBox(height: context.dynamicWidth(value));
-
-  // Existing methods for bottom sheets and dialogs
-  Future<dynamic> rateBottomSheet(BuildContext context) {
-    return showModalBottomSheet<void>(
-      context: context,
-      enableDrag: false,
-      isScrollControlled: true,
-      backgroundColor: AppColors.transparent,
-      isDismissible: false,
-      builder: (context) => Padding(
-        padding: context.paddingLowVertical,
-        child: Container(
-          width: context.width,
-          height: context.dynamicHeight(0.5),
-          decoration: const BoxDecoration(
-            color: AppColors.background,
-            borderRadius: BorderRadius.only(
-              topRight: Radius.circular(20),
-              topLeft: Radius.circular(20),
-            ),
-          ),
-          child: Column(
-            children: [
-              Align(
-                alignment: Alignment.topRight,
-                child: IconButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  icon: const Icon(
-                    Icons.close,
-                    color: AppColors.white,
-                  ),
-                ),
-              ),
-              Image.asset(
-                AssetConstants.instance.pngStarLogo,
-                width: context.width,
-                height: context.dynamicHeight(0.2),
-              ),
-              Padding(
-                padding: context.paddingNormal,
-                child: Text(
-                  context.read<LocalizationProvider>().isTr
-                      ? TrAppStrings.rateDescription
-                      : EnAppStrings.rateDescription,
-                  style: context.textTheme.titleSmall?.copyWith(
-                    color: AppColors.white,
-                  ),
-                  maxLines: 4,
-                  textAlign: TextAlign.center,
-                ),
-              ),
-              SizedBox(
-                height: context.dynamicHeight(0.03),
-              ),
-              GradientButton(
-                onTap: () async {
-                  Navigator.pop(context);
-                  final InAppReview inAppReview = InAppReview.instance;
-                  if (await inAppReview.isAvailable()) {
-                    await inAppReview.openStoreListing();
-                  }
-                },
-                title: context.read<LocalizationProvider>().isTr
-                    ? TrAppStrings.rateTitle
-                    : EnAppStrings.rateTitle,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Future<dynamic> helpPopUp(BuildContext context) {
-    return showDialog(
-      barrierDismissible: false,
-      context: context,
-      builder: (context) => AlertDialog(
-        elevation: 3,
-        backgroundColor: AppColors.background,
-        title: Column(
-          children: [
-            Align(
-              alignment: Alignment.topRight,
-              child: IconButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  icon: const Icon(
-                    Icons.close,
-                    color: AppColors.white,
-                  )),
-            ),
-            Image.asset(
-              AssetConstants.instance.pnginfoLogo,
-              width: context.width,
-              height: context.dynamicHeight(0.1),
-            ),
-            spacerVertical(context, 0.01),
-            TextIconRow(
-              title: context.read<LocalizationProvider>().isTr
-                  ? TrAppStrings.help1
-                  : EnAppStrings.help1,
-              color: AppColors.purple,
-            ),
-            spacerVertical(context, 0.01),
-            TextIconRow(
-              title: context.read<LocalizationProvider>().isTr
-                  ? TrAppStrings.help2
-                  : EnAppStrings.help2,
-              color: AppColors.yellow,
-            ),
-            spacerVertical(context, 0.01),
-            TextIconRow(
-              title: context.read<LocalizationProvider>().isTr
-                  ? TrAppStrings.help3
-                  : EnAppStrings.help3,
-              color: AppColors.glowGreen,
-            ),
-            spacerVertical(context, 0.01),
-            TextIconRow(
-              title: context.read<LocalizationProvider>().isTr
-                  ? TrAppStrings.help4
-                  : EnAppStrings.help4,
-              color: AppColors.powderRed,
-            ),
-            spacerVertical(context, 0.01),
-            TextIconRow(
-              title: context.read<LocalizationProvider>().isTr
-                  ? TrAppStrings.help5
-                  : EnAppStrings.help5,
-              color: AppColors.turquoise,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Future<dynamic> reportBottomSheet(BuildContext context) {
-    return showModalBottomSheet(
-      isScrollControlled: true,
-      isDismissible: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(20),
-          topRight: Radius.circular(20),
-        ),
-      ),
-      backgroundColor: AppColors.powderRed,
-      context: context,
-      builder: (context) => SingleChildScrollView(
-        child: Padding(
-          padding: MediaQuery.of(context).viewInsets,
-          child: Column(
-            children: [
-              spacerVertical(context, 0.05),
-              const FeedbackLongTextField(
-                title: EnAppStrings.feedback,
-              ),
-              spacerVertical(context, 0.01),
-              GradientButton(
-                title: EnAppStrings.sendFeedback,
-                onTap: () => Navigator.pop(context),
-              ),
-              spacerVertical(context, 0.01),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Text headerGroupText(BuildContext context) {
-    return Text(
-      EnAppStrings.appName,
-      style: context.textTheme.labelLarge?.copyWith(
-        color: AppColors.white,
-      ),
-    );
-  }
-
-  Text headerElementText(BuildContext context) {
-    return Text(
-      context.read<LocalizationProvider>().isTr
-          ? TrAppStrings.allElements
-          : EnAppStrings.allElements,
-      style: context.textTheme.labelLarge?.copyWith(
-        color: AppColors.white,
-      ),
-    );
-  }
 }

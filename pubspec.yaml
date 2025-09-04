@@ -17,6 +17,9 @@ dependencies:
 
   # State Management
   provider: ^6.0.5
+  
+  # Storage
+  shared_preferences: ^2.2.2
 
   # Analysis
   very_good_analysis: ^5.1.0

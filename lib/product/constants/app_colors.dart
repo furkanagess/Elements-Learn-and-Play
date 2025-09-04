@@ -9,6 +9,7 @@ final class AppColors {
   // General Colors
   static const Color transparent = Colors.transparent;
   static const Color white = Color(0xFFFFFFFF);
+  static const Color black = Color(0xFF000000);
   static const Color background = Color(0xff212437);
   static const Color darkBlue = Color(0xff13132c); // detail pages bgColor
 
