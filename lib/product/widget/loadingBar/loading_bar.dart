@@ -52,12 +52,13 @@ class LoadingBar extends StatelessWidget {
           const SizedBox(height: 8),
           // Progress indicator
           SizedBox(
-            width: 200,
-            child: LinearProgressIndicator(
-              backgroundColor: AppColors.darkBlue.withValues(alpha: 0.3),
-              valueColor: AlwaysStoppedAnimation<Color>(
-                AppColors.glowGreen.withValues(alpha: 0.8),
-              ),
+            width: 100,
+            height: 30,
+            child: Lottie.asset(
+              AssetConstants.instance.lottieLoadingChemistry,
+              fit: BoxFit.contain,
+              reverse: true,
+              repeat: true,
             ),
           ),
         ],
@@ -137,18 +138,7 @@ class ComprehensiveLoadingBar extends StatelessWidget {
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 32),
-            // Progress indicator
-            SizedBox(
-              width: 250,
-              child: LinearProgressIndicator(
-                backgroundColor: AppColors.white.withValues(alpha: 0.2),
-                valueColor: AlwaysStoppedAnimation<Color>(
-                  AppColors.glowGreen,
-                ),
-                minHeight: 6,
-              ),
-            ),
+
             const SizedBox(height: 24),
             // Animated dots
             _buildAnimatedDots(),

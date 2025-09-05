@@ -44,7 +44,7 @@ class FavoritesView extends StatelessWidget {
                     child: _buildHeader(context),
                   ),
                 ),
-                leading: _buildBackButton(context),
+                leading: BackButton(),
               ),
 
               // Content
@@ -144,24 +144,6 @@ class FavoritesView extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildBackButton(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: AppColors.white.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: AppColors.white.withValues(alpha: 0.3),
-          width: 1,
-        ),
-      ),
-      child: IconButton(
-        icon: const Icon(Icons.arrow_back_ios_new, color: AppColors.white),
-        onPressed: () => Navigator.pop(context),
-      ),
     );
   }
 
@@ -318,7 +300,7 @@ class FavoritesView extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        element.weight ?? '',
+                        _formatWeight(element.weight),
                         style: TextStyle(
                           color: AppColors.white.withValues(alpha: 0.7),
                           fontWeight: FontWeight.w500,
@@ -348,6 +330,20 @@ class FavoritesView extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  /// Formats the weight string to show 4 decimal places
+  String _formatWeight(String? weight) {
+    if (weight == null || weight.isEmpty) return '';
+
+    // Try to parse as double and format to 4 decimal places
+    final doubleValue = double.tryParse(weight.replaceAll(',', '.'));
+    if (doubleValue != null) {
+      return doubleValue.toStringAsFixed(4);
+    }
+
+    // If parsing fails, return original value
+    return weight;
   }
 }
 

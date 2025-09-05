@@ -119,7 +119,7 @@ class AdmobProvider with ChangeNotifier {
         ad.dispose();
         _interstitialAd = null;
 
-        // Preload next ad
+        // Preload next ad with immersive mode
         _createInterstitialAd();
         notifyListeners();
       },
@@ -129,15 +129,18 @@ class AdmobProvider with ChangeNotifier {
         ad.dispose();
         _interstitialAd = null;
 
-        // Try to create a new ad
+        // Try to create a new ad with immersive mode
         _createInterstitialAd();
         notifyListeners();
       },
       onAdShowedFullScreenContent: (InterstitialAd ad) {
-        debugPrint('🎬 Interstitial ad showed full screen');
+        debugPrint('🎬 Interstitial ad showed in immersive mode');
+
+        // Tam ekran modunu zorla
+        ad.setImmersiveMode(true);
       },
       onAdImpression: (InterstitialAd ad) {
-        debugPrint('👁️ Interstitial ad impression recorded');
+        debugPrint('👁️ Interstitial ad impression recorded in fullscreen');
       },
     );
   }
@@ -147,7 +150,17 @@ class AdmobProvider with ChangeNotifier {
     try {
       if (_interstitialAd != null) {
         debugPrint('🎯 Showing interstitial ad...');
-        _interstitialAd!.show();
+
+        // Tam ekran modunda göster
+        _interstitialAd!.setImmersiveMode(true);
+
+        // Reklamı göster
+        _interstitialAd!.show().then((_) {
+          debugPrint('✅ Interstitial ad shown in fullscreen mode');
+        }).catchError((error) {
+          debugPrint('❌ Error showing interstitial ad: $error');
+          _createInterstitialAd();
+        });
       } else {
         debugPrint('⚠️ No interstitial ad available to show');
         // Try to create a new ad if none is available
@@ -167,7 +180,7 @@ class AdmobProvider with ChangeNotifier {
     // Note: This will show the ad when it's loaded, not immediately
   }
 
-  /// Tracks route changes and shows interstitial ad every 15 routes
+  /// Tracks all route changes (push, pop, replace) and shows interstitial ad every 15 routes
   void onRouteChanged() {
     _routeCounter++;
     _totalRoutesTracked++;
@@ -179,29 +192,19 @@ class AdmobProvider with ChangeNotifier {
     if (_routeCounter >= _routesBeforeAd) {
       debugPrint('🎯 Route threshold reached! Showing interstitial ad...');
       showInterstitialAd();
-      _routeCounter = 0; // Reset counter after showing ad
+
+      // Reset both counters after showing ad
+      _routeCounter = 0;
+      _totalRoutesTracked = 0;
 
       debugPrint('📈 Ad shown. Total ads shown: $_totalAdsShown');
+      debugPrint('🔄 Route counters reset to 0');
     }
   }
 
-  /// Tracks back navigation and shows interstitial ad every 15 routes
-  void onBackNavigation() {
-    _routeCounter++;
-    _totalRoutesTracked++;
-
-    debugPrint('⬅️ Back navigation. Counter: $_routeCounter/$_routesBeforeAd');
-    debugPrint('📊 Total routes tracked: $_totalRoutesTracked');
-
-    // Show interstitial ad every 15 routes
-    if (_routeCounter >= _routesBeforeAd) {
-      debugPrint('🎯 Route threshold reached! Showing interstitial ad...');
-      showInterstitialAd();
-      _routeCounter = 0; // Reset counter after showing ad
-
-      debugPrint('📈 Ad shown. Total ads shown: $_totalAdsShown');
-    }
-  }
+  /// @deprecated Use onRouteChanged() instead
+  /// This method is kept for backward compatibility
+  void onBackNavigation() => onRouteChanged();
 
   /// Gets debug information about the current state
   Map<String, dynamic> getDebugInfo() {
@@ -209,7 +212,8 @@ class AdmobProvider with ChangeNotifier {
       'routeCounter': _routeCounter,
       'routesBeforeAd': _routesBeforeAd,
       'totalAdsShown': _totalAdsShown,
-      'totalRoutesTracked': _totalRoutesTracked,
+      'currentRouteCount':
+          _totalRoutesTracked, // Current route count since last ad
       'lastAdShownTime': _lastAdShownTime?.toIso8601String(),
       'isAdLoading': _isAdLoading,
       'interstitialLoadAttempts': _interstitialLoadAttempts,

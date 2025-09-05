@@ -1,7 +1,7 @@
 import 'package:elements_app/feature/model/periodic_element.dart';
 import 'package:elements_app/feature/mixin/elementList/elements_list_view_mixin.dart';
+import 'package:elements_app/feature/view/quiz/modern_quiz_home.dart';
 
-import 'package:elements_app/feature/view/quiz/symbol/quiz_symbol_view.dart';
 import 'package:elements_app/feature/view/elementDetail/element_detail_view.dart';
 import 'package:elements_app/feature/provider/localization_provider.dart';
 import 'package:elements_app/product/constants/app_colors.dart';
@@ -51,26 +51,30 @@ class _ElementsListViewState extends State<ElementsListView>
     _scrollController.addListener(_onScrollChanged);
 
     _mainAnimationController = AnimationController(
-      duration: const Duration(milliseconds: 800),
+      duration:
+          const Duration(milliseconds: 400), // Animasyon süresini kısalttık
       vsync: this,
     );
 
     _fadeAnimation = Tween<double>(
-      begin: 0.0,
+      begin: 0.3, // Başlangıç opaklığını artırdık
       end: 1.0,
     ).animate(CurvedAnimation(
       parent: _mainAnimationController,
-      curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
+      curve: const Interval(0.0, 0.4,
+          curve: Curves.easeOut), // Interval'i kısalttık
     ));
 
     _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.2),
+      begin: const Offset(0, 0.1), // Başlangıç offset'ini azalttık
       end: Offset.zero,
     ).animate(CurvedAnimation(
       parent: _mainAnimationController,
-      curve: const Interval(0.2, 0.8, curve: Curves.easeOutCubic),
+      curve: const Interval(0.0, 0.4,
+          curve: Curves.easeOutCubic), // Interval'i kısalttık
     ));
 
+    // Animasyonu hemen başlatıyoruz
     _mainAnimationController.forward();
   }
 
@@ -105,14 +109,29 @@ class _ElementsListViewState extends State<ElementsListView>
     });
   }
 
+  /// Formats the weight string to show 4 decimal places
+  String _formatWeight(String? weight) {
+    if (weight == null || weight.isEmpty) return '';
+
+    // Try to parse as double and format to 4 decimal places
+    final doubleValue = double.tryParse(weight.replaceAll(',', '.'));
+    if (doubleValue != null) {
+      return doubleValue.toStringAsFixed(4);
+    }
+
+    // If parsing fails, return original value
+    return weight;
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Show only loading screen when loading
+    // Loading durumunu daha akıcı yönetiyoruz
     if (isLoading) {
-      return AppScaffold(
+      _mainAnimationController.forward(); // Loading sırasında animasyonu başlat
+      return const AppScaffold(
         child: Scaffold(
           backgroundColor: AppColors.background,
-          body: const ComprehensiveLoadingBar(
+          body: ComprehensiveLoadingBar(
             loadingText: 'Elementler yükleniyor...',
           ),
         ),
@@ -158,9 +177,9 @@ class _ElementsListViewState extends State<ElementsListView>
                       builder: (context, snapshot) {
                         if (snapshot.connectionState ==
                             ConnectionState.waiting) {
-                          return const ComprehensiveLoadingBar(
-                            loadingText: 'Elementler yükleniyor...',
-                          );
+                          _mainAnimationController
+                              .forward(); // Loading sırasında animasyonu başlat
+                          return Container(); // Boş container döndürüyoruz çünkü ana loading zaten gösteriliyor
                         } else {
                           final elements = snapshot.data ?? [];
                           _filteredElements = _filterElements(elements);
@@ -308,19 +327,33 @@ class _ElementsListViewState extends State<ElementsListView>
   }
 
   Widget _buildBackButton() {
-    return IconButton(
-      icon: const Icon(Icons.arrow_back_ios_new, color: AppColors.white),
-      onPressed: () => Navigator.pop(context),
+    return Container(
+      margin: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: AppColors.white.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: IconButton(
+        icon: const Icon(Icons.arrow_back_ios_new, color: AppColors.white),
+        onPressed: () => Navigator.pop(context),
+      ),
     );
   }
 
   List<Widget> _buildActionButtons() {
     return [
-      IconButton(
-        icon: const Icon(Icons.filter_list, color: AppColors.white),
-        onPressed: () {
-          _showFilterModal(context);
-        },
+      Container(
+        margin: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: AppColors.white.withValues(alpha: 0.2),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: IconButton(
+          icon: const Icon(Icons.filter_list, color: AppColors.white),
+          onPressed: () {
+            _showFilterModal(context);
+          },
+        ),
       ),
     ];
   }
@@ -677,54 +710,53 @@ class _ElementsListViewState extends State<ElementsListView>
   }
 
   Widget _buildEmptySearchState() {
+    final isTr = context.read<LocalizationProvider>().isTr;
+
     return Container(
-      height: 400,
-      padding: const EdgeInsets.all(40),
+      height: MediaQuery.of(context).size.height * 0.6,
+      padding: const EdgeInsets.symmetric(horizontal: 32),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Lottie.asset(
-            AssetConstants.instance.lottieSearch,
-            height: 200,
-            repeat: true,
-          ),
-          const SizedBox(height: 24),
-          Text(
-            'Aradığınız element bulunamadı',
-            style: TextStyle(
-              color: AppColors.white.withValues(alpha: 0.8),
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
+          // Animated search illustration
+          Container(
+            width: 240,
+            height: 240,
+            decoration: BoxDecoration(
+              color: AppColors.darkBlue,
+              borderRadius: BorderRadius.circular(30),
+              border: Border.all(
+                color: AppColors.glowGreen.withValues(alpha: 0.3),
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.glowGreen.withValues(alpha: 0.1),
+                  blurRadius: 20,
+                  spreadRadius: 5,
+                ),
+              ],
             ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Farklı bir arama terimi deneyin veya filtreleri temizleyin',
-            style: TextStyle(
-              color: AppColors.white.withValues(alpha: 0.6),
-              fontSize: 14,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton.icon(
-            onPressed: () {
-              _searchController.clear();
-            },
-            icon: const Icon(Icons.clear, color: AppColors.darkBlue),
-            label: const Text(
-              'Aramayı Temizle',
-              style: TextStyle(
-                  color: AppColors.darkBlue, fontWeight: FontWeight.w600),
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.glowGreen,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
+            child: Stack(
+              children: [
+                // Background pattern
+                Positioned.fill(
+                  child: CustomPaint(
+                    painter: EmptyStatePatternPainter(),
+                  ),
+                ),
+                // Lottie animation
+                Positioned.fill(
+                  child: Lottie.asset(
+                    AssetConstants.instance.lottieSearch,
+                    fit: BoxFit.contain,
+                    repeat: true,
+                  ),
+                ),
+              ],
             ),
           ),
+          const SizedBox(height: 40),
         ],
       ),
     );
@@ -857,7 +889,7 @@ class _ElementsListViewState extends State<ElementsListView>
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        element.weight ?? '',
+                        _formatWeight(element.weight),
                         style: TextStyle(
                           color: AppColors.white.withValues(alpha: 0.7),
                           fontWeight: FontWeight.w500,
@@ -1023,7 +1055,7 @@ class _ElementsListViewState extends State<ElementsListView>
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    element.weight ?? '',
+                    _formatWeight(element.weight),
                     style: const TextStyle(
                       color: AppColors.white,
                       fontWeight: FontWeight.w600,
@@ -1062,10 +1094,7 @@ class _ElementsListViewState extends State<ElementsListView>
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => QuizSymbolView(
-                apiType: widget.apiType,
-                title: widget.title,
-              ),
+              builder: (context) => const ModernQuizHome(),
             ),
           );
         },
@@ -1077,7 +1106,7 @@ class _ElementsListViewState extends State<ElementsListView>
           width: 24,
           height: 24,
         ),
-        label: Text(
+        label: const Text(
           'Quiz Başlat',
           style: TextStyle(
             color: AppColors.white,
@@ -1141,6 +1170,67 @@ class ElementsListPatternPainter extends CustomPainter {
       final x = (i * 80) % size.width;
       final y = (i * 60) % size.height;
       canvas.drawCircle(Offset(x, y), 20, circlePaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class EmptyStatePatternPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = AppColors.white.withValues(alpha: 0.05)
+      ..strokeWidth = 1.5
+      ..style = PaintingStyle.stroke;
+
+    // Draw a modern geometric pattern
+    final path = Path();
+
+    // Draw diagonal lines
+    for (int i = 0; i < size.width + size.height; i += 40) {
+      path.moveTo(i.toDouble(), 0);
+      path.lineTo(0, i.toDouble());
+    }
+
+    // Draw circles at intersections
+    for (int x = 0; x < size.width; x += 40) {
+      for (int y = 0; y < size.height; y += 40) {
+        canvas.drawCircle(
+          Offset(x.toDouble(), y.toDouble()),
+          2,
+          paint..style = PaintingStyle.fill,
+        );
+      }
+    }
+
+    // Draw the pattern
+    canvas.drawPath(path, paint..style = PaintingStyle.stroke);
+
+    // Add some decorative elements
+    final decorPaint = Paint()
+      ..color = AppColors.glowGreen.withValues(alpha: 0.1)
+      ..style = PaintingStyle.fill;
+
+    // Draw glowing dots
+    for (int i = 0; i < 5; i++) {
+      final x = (i * 60) % size.width;
+      final y = (i * 60) % size.height;
+
+      // Draw outer glow
+      canvas.drawCircle(
+        Offset(x.toDouble(), y.toDouble()),
+        8,
+        decorPaint,
+      );
+
+      // Draw inner dot
+      canvas.drawCircle(
+        Offset(x.toDouble(), y.toDouble()),
+        3,
+        decorPaint..color = AppColors.glowGreen.withValues(alpha: 0.2),
+      );
     }
   }
 

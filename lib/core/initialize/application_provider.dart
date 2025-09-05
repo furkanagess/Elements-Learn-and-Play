@@ -3,6 +3,8 @@ import 'package:elements_app/feature/provider/banner_ads_provider.dart';
 import 'package:elements_app/feature/provider/favorite_elements_provider.dart';
 import 'package:elements_app/feature/provider/localization_provider.dart';
 import 'package:elements_app/feature/provider/periodicTable/periodic_table_provider.dart';
+import 'package:elements_app/feature/provider/quiz_provider.dart';
+import 'package:elements_app/feature/provider/info_provider.dart';
 import 'package:elements_app/feature/service/api_service.dart';
 import 'package:elements_app/feature/service/periodicTable/periodic_table_service.dart';
 import 'package:elements_app/feature/service/network_service.dart';
@@ -49,6 +51,12 @@ class ApplicationProvider {
       create: (context) => PeriodicTableProvider(
         PeriodicTableService(ApiService()),
       ),
+    ),
+    ChangeNotifierProvider<QuizProvider>(
+      create: (context) => QuizProvider(),
+    ),
+    ChangeNotifierProvider<InfoProvider>(
+      create: (context) => InfoProvider(),
     ),
   ];
 }

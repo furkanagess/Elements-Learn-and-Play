@@ -1,6 +1,7 @@
 import 'package:elements_app/feature/service/google_ads_service.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:elements_app/product/widget/loadingBar/loading_chemistry.dart';
 
 /// The `BannerAdsProvider` class is responsible for managing banner ads using the
 /// AdMob service. It provides methods for creating and displaying banner ads
@@ -73,7 +74,7 @@ class BannerAdsProvider with ChangeNotifier {
       child: _isBannerAdLoaded && bannerAd != null
           ? AdWidget(ad: bannerAd!)
           : const Center(
-              child: CircularProgressIndicator(),
+              child: LoadingChemistry(size: 30),
             ),
     );
   }

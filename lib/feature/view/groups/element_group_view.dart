@@ -1,3 +1,4 @@
+import 'package:elements_app/core/painter/group_pattern_painter.dart';
 import 'package:elements_app/feature/provider/admob_provider.dart';
 import 'package:elements_app/feature/provider/localization_provider.dart';
 import 'package:elements_app/feature/view/elementsList/elements_list_view.dart';
@@ -13,44 +14,7 @@ import 'package:elements_app/product/widget/scaffold/app_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-class ElementGroupPatternPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = AppColors.white.withValues(alpha: 0.05)
-      ..strokeWidth = 1;
-
-    // Draw subtle pattern
-    for (int i = 0; i < size.width; i += 40) {
-      canvas.drawLine(
-        Offset(i.toDouble(), 0),
-        Offset(i.toDouble(), size.height),
-        paint,
-      );
-    }
-    for (int i = 0; i < size.height; i += 40) {
-      canvas.drawLine(
-        Offset(0, i.toDouble()),
-        Offset(size.width, i.toDouble()),
-        paint,
-      );
-    }
-
-    // Draw some circles for visual interest
-    final circlePaint = Paint()
-      ..color = AppColors.white.withValues(alpha: 0.03)
-      ..style = PaintingStyle.fill;
-
-    for (int i = 0; i < 5; i++) {
-      final x = (i * 80) % size.width;
-      final y = (i * 60) % size.height;
-      canvas.drawCircle(Offset(x, y), 20, circlePaint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
+// Using GroupPatternPainter from /lib/core/painter/group_pattern_painter.dart
 
 class ElementGroupView extends StatelessWidget {
   const ElementGroupView({super.key});
@@ -84,7 +48,7 @@ class ElementGroupView extends StatelessWidget {
                     child: _buildHeader(context),
                   ),
                 ),
-                leading: _buildBackButton(context),
+                leading: BackButton(),
               ),
 
               // Content
@@ -349,31 +313,13 @@ class ElementGroupView extends StatelessWidget {
     );
   }
 
-  Widget _buildBackButton(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: AppColors.white.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: AppColors.white.withValues(alpha: 0.3),
-          width: 1,
-        ),
-      ),
-      child: IconButton(
-        icon: const Icon(Icons.arrow_back_ios_new, color: AppColors.white),
-        onPressed: () => Navigator.pop(context),
-      ),
-    );
-  }
-
   Widget _buildHeader(BuildContext context) {
     return Stack(
       children: [
         // Background pattern
         Positioned.fill(
           child: CustomPaint(
-            painter: ElementGroupPatternPainter(),
+            painter: GroupPatternPainter(AppColors.white),
           ),
         ),
         // Content

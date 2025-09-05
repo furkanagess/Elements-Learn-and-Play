@@ -1,3 +1,4 @@
+import 'package:elements_app/core/painter/element_particles_painter.dart';
 import 'package:elements_app/feature/model/periodic_element.dart';
 import 'package:elements_app/feature/provider/favorite_elements_provider.dart';
 import 'package:elements_app/feature/provider/localization_provider.dart';
@@ -8,6 +9,47 @@ import 'package:elements_app/product/widget/scaffold/app_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+
+/// Data class for detail card items
+class DetailItem {
+  final String label;
+  final String value;
+  final IconData? icon;
+  final Color? valueColor;
+  final bool isHighlighted;
+  final String? unit;
+
+  const DetailItem({
+    required this.label,
+    required this.value,
+    this.icon,
+    this.valueColor,
+    this.isHighlighted = false,
+    this.unit,
+  });
+
+  /// Creates a DetailItem with a highlighted value
+  const DetailItem.highlighted({
+    required this.label,
+    required this.value,
+    this.icon,
+    this.valueColor,
+    this.unit,
+  }) : isHighlighted = true;
+
+  /// Creates a DetailItem with a unit
+  const DetailItem.withUnit({
+    required this.label,
+    required this.value,
+    required this.unit,
+    this.icon,
+    this.valueColor,
+    this.isHighlighted = false,
+  });
+
+  /// Gets the display value with unit if available
+  String get displayValue => unit != null ? '$value $unit' : value;
+}
 
 class ElementDetailView extends StatefulWidget {
   final PeriodicElement element;
@@ -72,8 +114,21 @@ class _ElementDetailViewState extends State<ElementDetailView>
   @override
   void dispose() {
     _mainAnimationController.dispose();
-    _cardAnimationController.dispose();
     super.dispose();
+  }
+
+  /// Formats the weight string to show 4 decimal places
+  String _formatWeight(String? weight) {
+    if (weight == null || weight.isEmpty) return '';
+
+    // Try to parse as double and format to 4 decimal places
+    final doubleValue = double.tryParse(weight.replaceAll(',', '.'));
+    if (doubleValue != null) {
+      return doubleValue.toStringAsFixed(4);
+    }
+
+    // If parsing fails, return original value
+    return weight;
   }
 
   @override
@@ -110,7 +165,7 @@ class _ElementDetailViewState extends State<ElementDetailView>
               flexibleSpace: FlexibleSpaceBar(
                 background: _buildHeroHeader(context, elementColor, isTr),
               ),
-              leading: _buildBackButton(elementColor),
+              leading: const BackButton(),
               actions: _buildActionButtons(elementColor),
             ),
 
@@ -148,8 +203,7 @@ class _ElementDetailViewState extends State<ElementDetailView>
           ],
         ),
 
-        // Modern Floating Action Button
-        floatingActionButton: _buildModernFAB(context, elementColor),
+        // Quiz functionality removed
       ),
     );
   }
@@ -277,20 +331,6 @@ class _ElementDetailViewState extends State<ElementDetailView>
     );
   }
 
-  Widget _buildBackButton(Color elementColor) {
-    return Container(
-      margin: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: AppColors.white.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: IconButton(
-        icon: const Icon(Icons.arrow_back_ios_new, color: AppColors.white),
-        onPressed: () => Navigator.pop(context),
-      ),
-    );
-  }
-
   List<Widget> _buildActionButtons(Color elementColor) {
     return [
       Consumer<FavoriteElementsProvider>(
@@ -363,7 +403,7 @@ class _ElementDetailViewState extends State<ElementDetailView>
           child: _buildStatCard(
             context,
             'Ağırlık',
-            widget.element.weight ?? '',
+            _formatWeight(widget.element.weight),
             Icons.scale,
             elementColor,
           ),
@@ -552,15 +592,22 @@ class _ElementDetailViewState extends State<ElementDetailView>
           context,
           'Fiziksel Özellikler',
           [
-            {
-              'label': 'Atom Numarası',
-              'value': widget.element.number?.toString() ?? ''
-            },
-            {'label': 'Atom Ağırlığı', 'value': widget.element.weight ?? ''},
-            {
-              'label': 'Elektron Konfigürasyonu',
-              'value': widget.element.electronConfiguration?.toString() ?? "aa"
-            },
+            DetailItem.highlighted(
+                label: 'Atom Numarası',
+                value: widget.element.number?.toString() ?? '',
+                icon: Icons.tag),
+            DetailItem.withUnit(
+                label: 'Atom Ağırlığı',
+                value: _formatWeight(widget.element.weight),
+                unit: 'u',
+                icon: Icons.scale),
+            DetailItem(
+                label: 'Elektron Konfigürasyonu',
+                value: widget.element.electronConfiguration ?? '-',
+                icon: Icons.science_outlined,
+                valueColor: widget.element.electronConfiguration != null
+                    ? null
+                    : AppColors.white.withValues(alpha: 0.5)),
           ],
           Icons.science_outlined,
           elementColor,
@@ -570,11 +617,50 @@ class _ElementDetailViewState extends State<ElementDetailView>
           context,
           'Kimyasal Özellikler',
           [
-            {'label': 'Elektronegatiflik', 'value': '2.20'},
-            {'label': 'İyonlaşma Enerjisi', 'value': '1312 kJ/mol'},
-            {'label': 'Atom Yarıçapı', 'value': '120 pm'},
+            const DetailItem.withUnit(
+                label: 'Elektronegatiflik',
+                value: '2.20',
+                unit: '',
+                icon: Icons.electric_bolt),
+            const DetailItem.withUnit(
+                label: 'İyonlaşma Enerjisi',
+                value: '1312',
+                unit: 'kJ/mol',
+                icon: Icons.flash_on),
+            const DetailItem.withUnit(
+                label: 'Atom Yarıçapı',
+                value: '120',
+                unit: 'pm',
+                icon: Icons.radio_button_unchecked),
           ],
           Icons.science,
+          elementColor,
+        ),
+        const SizedBox(height: 16),
+        _buildDetailCard(
+          context,
+          'Sınıflandırma',
+          [
+            DetailItem(
+                label: 'Blok',
+                value: widget.element.block ?? '',
+                icon: Icons.crop_square),
+            DetailItem(
+                label: 'Periyot',
+                value: widget.element.period ?? '',
+                icon: Icons.timeline),
+            DetailItem(
+                label: 'Grup',
+                value: widget.element.group ?? '',
+                icon: Icons.group_work),
+            DetailItem(
+                label: 'Kategori',
+                value: isTr
+                    ? widget.element.trCategory ?? ''
+                    : widget.element.enCategory ?? '',
+                icon: Icons.category),
+          ],
+          Icons.tune,
           elementColor,
         ),
       ],
@@ -583,26 +669,22 @@ class _ElementDetailViewState extends State<ElementDetailView>
 
   Widget _buildPropertyGrid(BuildContext context, Color elementColor) {
     final properties = [
-      {
-        'label': 'Blok',
-        'value': widget.element.block ?? '',
-        'icon': Icons.crop_square
-      },
-      {
-        'label': 'Periyot',
-        'value': widget.element.period ?? '',
-        'icon': Icons.timeline
-      },
-      {
-        'label': 'Grup',
-        'value': widget.element.group ?? '',
-        'icon': Icons.group_work
-      },
-      {
-        'label': 'Kategori',
-        'value': widget.element.enCategory ?? '',
-        'icon': Icons.category
-      },
+      DetailItem(
+          label: 'Blok',
+          value: widget.element.block ?? '',
+          icon: Icons.crop_square),
+      DetailItem(
+          label: 'Periyot',
+          value: widget.element.period ?? '',
+          icon: Icons.timeline),
+      DetailItem(
+          label: 'Grup',
+          value: widget.element.group ?? '',
+          icon: Icons.group_work),
+      DetailItem(
+          label: 'Kategori',
+          value: widget.element.enCategory ?? '',
+          icon: Icons.category),
     ];
 
     return Container(
@@ -632,24 +714,28 @@ class _ElementDetailViewState extends State<ElementDetailView>
             ],
           ),
           const SizedBox(height: 20),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              childAspectRatio: 2.5,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
-            ),
-            itemCount: properties.length,
-            itemBuilder: (context, index) {
-              final property = properties[index];
-              return _buildPropertyItem(
-                context,
-                property['label'] as String,
-                property['value'] as String,
-                property['icon'] as IconData,
-                elementColor,
+          LayoutBuilder(
+            builder: (context, constraints) {
+              return GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: constraints.maxWidth > 400 ? 2 : 1,
+                  childAspectRatio: constraints.maxWidth > 400 ? 3 : 4,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                ),
+                itemCount: properties.length,
+                itemBuilder: (context, index) {
+                  final property = properties[index];
+                  return _buildPropertyItem(
+                    context,
+                    property.label,
+                    property.value,
+                    property.icon ?? Icons.info,
+                    elementColor,
+                  );
+                },
               );
             },
           ),
@@ -661,7 +747,7 @@ class _ElementDetailViewState extends State<ElementDetailView>
   Widget _buildPropertyItem(BuildContext context, String label, String value,
       IconData icon, Color color) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: AppColors.background,
         borderRadius: BorderRadius.circular(12),
@@ -673,7 +759,7 @@ class _ElementDetailViewState extends State<ElementDetailView>
       child: Row(
         children: [
           Icon(icon, color: color, size: 20),
-          const SizedBox(width: 8),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -685,13 +771,18 @@ class _ElementDetailViewState extends State<ElementDetailView>
                     color: AppColors.white.withValues(alpha: 0.7),
                     fontWeight: FontWeight.w500,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
+                const SizedBox(height: 4),
                 Text(
                   value,
                   style: context.textTheme.titleSmall?.copyWith(
                     color: AppColors.white,
                     fontWeight: FontWeight.bold,
                   ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
@@ -744,7 +835,7 @@ class _ElementDetailViewState extends State<ElementDetailView>
   }
 
   Widget _buildDetailCard(BuildContext context, String title,
-      List<Map<String, String>> details, IconData icon, Color color) {
+      List<DetailItem> details, IconData icon, Color color) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -775,26 +866,42 @@ class _ElementDetailViewState extends State<ElementDetailView>
           const SizedBox(height: 16),
           ...details
               .map((detail) => Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.only(bottom: 16),
                     child: Row(
                       children: [
+                        if (detail.icon != null) ...[
+                          Icon(
+                            detail.icon,
+                            color: color.withValues(alpha: 0.7),
+                            size: 18,
+                          ),
+                          const SizedBox(width: 8),
+                        ],
                         Expanded(
                           flex: 2,
                           child: Text(
-                            detail['label']!,
+                            detail.label,
                             style: context.textTheme.bodyMedium?.copyWith(
-                              color: AppColors.white.withValues(alpha: 0.7),
-                              fontWeight: FontWeight.w500,
+                              color: detail.isHighlighted
+                                  ? AppColors.white
+                                  : AppColors.white.withValues(alpha: 0.7),
+                              fontWeight: detail.isHighlighted
+                                  ? FontWeight.w600
+                                  : FontWeight.w500,
                             ),
                           ),
                         ),
                         Expanded(
                           flex: 3,
                           child: Text(
-                            detail['value']!,
+                            detail.displayValue,
+                            textAlign: TextAlign.end,
                             style: context.textTheme.bodyMedium?.copyWith(
-                              color: AppColors.white,
-                              fontWeight: FontWeight.bold,
+                              color: detail.valueColor ?? AppColors.white,
+                              fontWeight: detail.isHighlighted
+                                  ? FontWeight.w900
+                                  : FontWeight.bold,
+                              fontSize: detail.isHighlighted ? 16 : null,
                             ),
                           ),
                         ),
@@ -806,81 +913,4 @@ class _ElementDetailViewState extends State<ElementDetailView>
       ),
     );
   }
-
-  Widget _buildModernFAB(BuildContext context, Color elementColor) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [elementColor, elementColor.withValues(alpha: 0.8)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: elementColor.withValues(alpha: 0.4),
-            offset: const Offset(0, 8),
-            blurRadius: 20,
-            spreadRadius: 2,
-          ),
-        ],
-      ),
-      child: FloatingActionButton.extended(
-        onPressed: () {
-          // Quiz başlat
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('${widget.element.symbol} quiz\'i başlatılıyor...'),
-              backgroundColor: elementColor,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
-            ),
-          );
-        },
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        icon: const Icon(Icons.quiz, color: AppColors.white),
-        label: Text(
-          'Quiz Başlat',
-          style: context.textTheme.titleMedium?.copyWith(
-            color: AppColors.white,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class ElementParticlesPainter extends CustomPainter {
-  final Color color;
-
-  ElementParticlesPainter(this.color);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = AppColors.white.withValues(alpha: 0.1)
-      ..strokeWidth = 2;
-
-    // Draw animated particles
-    for (int i = 0; i < 20; i++) {
-      final x = (i * 37) % size.width;
-      final y = (i * 23) % size.height;
-      canvas.drawCircle(Offset(x, y), 2, paint);
-    }
-
-    // Draw connecting lines
-    for (int i = 0; i < 10; i++) {
-      final x1 = (i * 67) % size.width;
-      final y1 = (i * 41) % size.height;
-      final x2 = ((i + 1) * 67) % size.width;
-      final y2 = ((i + 1) * 41) % size.height;
-      canvas.drawLine(Offset(x1, y1), Offset(x2, y2), paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

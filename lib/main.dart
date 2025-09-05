@@ -1,8 +1,9 @@
-import 'package:elements_app/product/initialize/app_initializer.dart';
-import 'package:elements_app/product/initialize/application_provider.dart';
+import 'package:elements_app/core/initialize/app_initializer.dart';
+import 'package:elements_app/core/initialize/application_provider.dart';
 import 'package:elements_app/feature/view/home/home_view.dart';
 import 'package:elements_app/product/constants/stringConstants/en_app_strings.dart';
-import 'package:elements_app/product/theme/app_theme.dart';
+import 'package:elements_app/core/theme/app_theme.dart';
+import 'package:elements_app/core/observer/route_observer.dart';
 
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
@@ -35,6 +36,9 @@ class MyApp extends StatelessWidget {
       title: EnAppStrings.appName,
       theme: AppTheme().theme,
       home: const HomeView(),
+      navigatorObservers: [
+        AdRouteObserver(),
+      ],
     );
   }
 }
