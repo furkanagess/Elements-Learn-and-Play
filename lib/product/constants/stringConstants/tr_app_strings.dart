@@ -87,4 +87,24 @@ final class TrAppStrings {
   static const String medium = 'Orta';
   static const String numberQuiz = 'Numara Testi';
   static const String hard = 'Zor';
+
+  // Element of Day
+  static const String elementOfDay = 'Günün Elementi';
+  static const String atomicWeight = 'Atom Ağırlığı';
+
+  // Navigation
+  static const String favorites = 'Favoriler';
+  static const String settings = 'Ayarlar';
+  static const String welcome = 'Hoş Geldiniz';
+
+  // Loading
+  static const String loadingElements = 'Elementler yükleniyor...';
+  static const String loadingInfo = 'Bilgiler yükleniyor...';
+  static const String loadingQuiz = 'Quiz hazırlanıyor...';
+  static const String pleaseWait = 'Lütfen bekleyin';
+
+  // Periodic Table
+  static const String periodicTable = 'Periyodik Tablo';
+  static const String exploreTable = 'Tüm elementleri keşfet';
+  static const String tapToExplore = 'Keşfetmek için dokun';
 }

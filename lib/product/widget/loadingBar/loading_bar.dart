@@ -1,68 +1,80 @@
 import 'package:flutter/material.dart';
+import 'package:elements_app/feature/provider/localization_provider.dart';
 import 'package:elements_app/product/constants/app_colors.dart';
+import 'package:elements_app/product/constants/stringConstants/en_app_strings.dart';
+import 'package:elements_app/product/constants/stringConstants/tr_app_strings.dart';
 import 'package:elements_app/product/extensions/context_extensions.dart';
 import 'package:lottie/lottie.dart';
 import 'package:elements_app/product/constants/assets_constants.dart';
+import 'package:provider/provider.dart';
 
 class LoadingBar extends StatelessWidget {
   const LoadingBar({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          // Modern loading animation
-          Container(
-            width: 120,
-            height: 120,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(60),
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [AppColors.darkBlue, AppColors.background],
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.darkBlue.withValues(alpha: 0.3),
-                  offset: const Offset(0, 8),
-                  blurRadius: 20,
-                  spreadRadius: 2,
+    return Consumer<LocalizationProvider>(
+      builder: (context, localizationProvider, child) {
+        final isTr = localizationProvider.isTr;
+
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Modern loading animation
+              Container(
+                width: 120,
+                height: 120,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(60),
+                  gradient: const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [AppColors.darkBlue, AppColors.background],
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.darkBlue.withValues(alpha: 0.3),
+                      offset: const Offset(0, 8),
+                      blurRadius: 20,
+                      spreadRadius: 2,
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            child: Lottie.asset(
-              AssetConstants.instance.lottieLoadingChemistry,
-              fit: BoxFit.cover,
-              reverse: true,
-              repeat: true,
-            ),
+                child: Lottie.asset(
+                  AssetConstants.instance.lottieLoadingChemistry,
+                  fit: BoxFit.cover,
+                  reverse: true,
+                  repeat: true,
+                ),
+              ),
+              const SizedBox(height: 24),
+              // Loading text
+              Text(
+                isTr
+                    ? TrAppStrings.loadingElements
+                    : EnAppStrings.loadingElements,
+                style: context.textTheme.titleMedium?.copyWith(
+                  color: AppColors.white.withValues(alpha: 0.8),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 8),
+              // Progress indicator
+              SizedBox(
+                width: 100,
+                height: 30,
+                child: Lottie.asset(
+                  AssetConstants.instance.lottieLoadingChemistry,
+                  fit: BoxFit.contain,
+                  reverse: true,
+                  repeat: true,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 24),
-          // Loading text
-          Text(
-            'Elementler yükleniyor...',
-            style: context.textTheme.titleMedium?.copyWith(
-              color: AppColors.white.withValues(alpha: 0.8),
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 8),
-          // Progress indicator
-          SizedBox(
-            width: 100,
-            height: 30,
-            child: Lottie.asset(
-              AssetConstants.instance.lottieLoadingChemistry,
-              fit: BoxFit.contain,
-              reverse: true,
-              repeat: true,
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
@@ -77,74 +89,83 @@ class ComprehensiveLoadingBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      height: double.infinity,
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [AppColors.darkBlue, AppColors.background],
-        ),
-      ),
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Large loading animation
-            Container(
-              width: 150,
-              height: 150,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(75),
-                gradient: const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [AppColors.darkBlue, AppColors.background],
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.darkBlue.withValues(alpha: 0.4),
-                    offset: const Offset(0, 12),
-                    blurRadius: 30,
-                    spreadRadius: 4,
-                  ),
-                ],
-              ),
-              child: Lottie.asset(
-                AssetConstants.instance.lottieLoadingChemistry,
-                fit: BoxFit.cover,
-                reverse: true,
-                repeat: true,
-              ),
-            ),
-            const SizedBox(height: 32),
-            // Loading text
-            Text(
-              loadingText ?? 'Elementler yükleniyor...',
-              style: context.textTheme.headlineSmall?.copyWith(
-                color: AppColors.white,
-                fontWeight: FontWeight.bold,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
-            // Subtitle
-            Text(
-              'Lütfen bekleyin',
-              style: context.textTheme.bodyLarge?.copyWith(
-                color: AppColors.white.withValues(alpha: 0.7),
-                fontWeight: FontWeight.w500,
-              ),
-              textAlign: TextAlign.center,
-            ),
+    return Consumer<LocalizationProvider>(
+      builder: (context, localizationProvider, child) {
+        final isTr = localizationProvider.isTr;
 
-            const SizedBox(height: 24),
-            // Animated dots
-            _buildAnimatedDots(),
-          ],
-        ),
-      ),
+        return Container(
+          width: double.infinity,
+          height: double.infinity,
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [AppColors.darkBlue, AppColors.background],
+            ),
+          ),
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Large loading animation
+                Container(
+                  width: 150,
+                  height: 150,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(75),
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [AppColors.darkBlue, AppColors.background],
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.darkBlue.withValues(alpha: 0.4),
+                        offset: const Offset(0, 12),
+                        blurRadius: 30,
+                        spreadRadius: 4,
+                      ),
+                    ],
+                  ),
+                  child: Lottie.asset(
+                    AssetConstants.instance.lottieLoadingChemistry,
+                    fit: BoxFit.cover,
+                    reverse: true,
+                    repeat: true,
+                  ),
+                ),
+                const SizedBox(height: 32),
+                // Loading text
+                Text(
+                  loadingText ??
+                      (isTr
+                          ? TrAppStrings.loadingElements
+                          : EnAppStrings.loadingElements),
+                  style: context.textTheme.headlineSmall?.copyWith(
+                    color: AppColors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                // Subtitle
+                Text(
+                  isTr ? TrAppStrings.pleaseWait : EnAppStrings.pleaseWait,
+                  style: context.textTheme.bodyLarge?.copyWith(
+                    color: AppColors.white.withValues(alpha: 0.7),
+                    fontWeight: FontWeight.w500,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+
+                const SizedBox(height: 24),
+                // Animated dots
+                _buildAnimatedDots(),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 

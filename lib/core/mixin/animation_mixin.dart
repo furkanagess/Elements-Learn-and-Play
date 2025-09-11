@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-mixin AnimationMixin on State<StatefulWidget>, TickerProviderStateMixin {
+mixin AnimationMixin<T extends StatefulWidget>
+    on State<T>, TickerProviderStateMixin<T> {
   late AnimationController fadeController;
   late AnimationController slideController;
   late Animation<double> fadeAnimation;
@@ -14,29 +15,29 @@ mixin AnimationMixin on State<StatefulWidget>, TickerProviderStateMixin {
 
   void _initializeAnimations() {
     fadeController = AnimationController(
-      duration: const Duration(milliseconds: 1200),
+      duration: const Duration(milliseconds: 400),
       vsync: this,
     );
 
     slideController = AnimationController(
-      duration: const Duration(milliseconds: 800),
+      duration: const Duration(milliseconds: 400),
       vsync: this,
     );
 
     fadeAnimation = Tween<double>(
-      begin: 0.0,
+      begin: 0.3,
       end: 1.0,
     ).animate(CurvedAnimation(
       parent: fadeController,
-      curve: Curves.easeInOut,
+      curve: const Interval(0.0, 0.4, curve: Curves.easeOut),
     ));
 
     slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.3),
+      begin: const Offset(0, 0.1),
       end: Offset.zero,
     ).animate(CurvedAnimation(
       parent: slideController,
-      curve: Curves.easeOutCubic,
+      curve: const Interval(0.0, 0.4, curve: Curves.easeOutCubic),
     ));
 
     fadeController.forward();

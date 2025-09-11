@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:elements_app/feature/provider/quiz_provider.dart';
 import 'package:elements_app/feature/provider/admob_provider.dart';
+import 'package:elements_app/feature/provider/localization_provider.dart';
 import 'package:elements_app/feature/model/quiz/quiz_models.dart';
 import 'package:elements_app/feature/view/quiz/unified_quiz_view.dart';
 import 'package:elements_app/feature/view/quiz/quiz_statistics_view.dart';
+import 'package:elements_app/feature/view/home/home_view.dart';
 import 'package:elements_app/product/widget/scaffold/app_scaffold.dart';
 import 'package:elements_app/product/constants/app_colors.dart';
-import 'package:elements_app/product/extensions/context_extensions.dart';
+import 'package:elements_app/core/services/pattern/pattern_service.dart';
+import 'package:flutter/services.dart';
 
 /// Modern quiz home view with statistics and quiz selection
 class ModernQuizHome extends StatefulWidget {
@@ -23,6 +26,8 @@ class _ModernQuizHomeState extends State<ModernQuizHome>
   late AnimationController _slideController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
+
+  final PatternService _patternService = PatternService();
 
   @override
   void initState() {
@@ -50,15 +55,31 @@ class _ModernQuizHomeState extends State<ModernQuizHome>
     ));
 
     _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.3),
+      begin: const Offset(0, 0.1),
       end: Offset.zero,
     ).animate(CurvedAnimation(
       parent: _slideController,
-      curve: Curves.easeOutBack,
+      curve: Curves.easeOutCubic,
     ));
 
     _fadeController.forward();
     _slideController.forward();
+  }
+
+  String _localizedDifficulty(String difficulty) {
+    final isTr = context.read<LocalizationProvider>().isTr;
+    final d = difficulty.toLowerCase();
+    if (isTr) {
+      if (d == 'easy' || d == 'kolay') return 'Kolay';
+      if (d == 'medium' || d == 'orta') return 'Orta';
+      if (d == 'hard' || d == 'zor') return 'Zor';
+      return difficulty;
+    } else {
+      if (d == 'easy' || d == 'kolay') return 'Easy';
+      if (d == 'medium' || d == 'orta') return 'Medium';
+      if (d == 'hard' || d == 'zor') return 'Hard';
+      return difficulty;
+    }
   }
 
   @override
@@ -73,167 +94,209 @@ class _ModernQuizHomeState extends State<ModernQuizHome>
     return AppScaffold(
       child: Scaffold(
         backgroundColor: AppColors.background,
-        body: FadeTransition(
-          opacity: _fadeAnimation,
-          child: SlideTransition(
-            position: _slideAnimation,
-            child: CustomScrollView(
-              physics: const BouncingScrollPhysics(),
-              slivers: [
-                // Modern App Bar
-                _buildSliverAppBar(context),
-
-                // Content
-                SliverPadding(
-                  padding: const EdgeInsets.all(20),
-                  sliver: SliverList(
-                    delegate: SliverChildListDelegate([
-                      // Quiz Types
-                      _buildQuizTypesSection(),
-                      const SizedBox(height: 100), // Bottom padding
-                    ]),
-                  ),
+        appBar: _buildModernAppBar(),
+        body: Stack(
+          children: [
+            // Background Pattern
+            Positioned.fill(
+              child: CustomPaint(
+                painter: _patternService.getPatternPainter(
+                  type: PatternType.atomic,
+                  color: Colors.white,
+                  opacity: 0.03,
                 ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSliverAppBar(BuildContext context) {
-    return SliverAppBar(
-      expandedHeight: 200,
-      pinned: true,
-      backgroundColor: AppColors.darkBlue,
-      flexibleSpace: FlexibleSpaceBar(
-        background: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                AppColors.darkBlue,
-                AppColors.darkBlue.withValues(alpha: 0.8),
-              ],
-            ),
-          ),
-          child: _buildHeader(context),
-        ),
-      ),
-      leading: BackButton(),
-      actions: [
-        Container(
-          margin: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: AppColors.white.withValues(alpha: 0.2),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: IconButton(
-            icon: const Icon(Icons.analytics_rounded, color: AppColors.white),
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const QuizStatisticsView(),
               ),
             ),
-          ),
+
+            // Content
+            SafeArea(
+              child: FadeTransition(
+                opacity: _fadeAnimation,
+                child: SlideTransition(
+                  position: _slideAnimation,
+                  child: ListView(
+                    physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.all(20),
+                    children: [
+                      _buildStatisticsCard(),
+                      const SizedBox(height: 16),
+                      _buildQuizTypesSection(),
+                      const SizedBox(height: 100),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
-    return Stack(
-      children: [
-        // Background pattern
-        Positioned.fill(
-          child: CustomPaint(
-            painter: QuizPatternPainter(),
+  AppBar _buildModernAppBar() {
+    return AppBar(
+      backgroundColor: AppColors.darkBlue,
+      elevation: 0,
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back_ios_new_rounded,
+            color: AppColors.white, size: 20),
+        onPressed: () {
+          HapticFeedback.lightImpact();
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const HomeView()),
+            (route) => false,
+          );
+        },
+      ),
+      title: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              Icons.quiz,
+              color: AppColors.white,
+              size: 20,
+            ),
           ),
-        ),
-        // Content
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 60, 20, 20),
+          const SizedBox(width: 12),
+          Text(
+            context.watch<LocalizationProvider>().isTr
+                ? 'Quiz Merkezi'
+                : 'Quiz Center',
+            style: const TextStyle(
+              color: AppColors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatisticsCard() {
+    final isTr = context.watch<LocalizationProvider>().isTr;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: () {
+          HapticFeedback.lightImpact();
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const QuizStatisticsView(),
+            ),
+          );
+        },
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            gradient: const LinearGradient(
+              colors: [AppColors.glowGreen, Color(0xFF2E7D32)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.2),
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.glowGreen.withValues(alpha: 0.3),
+                offset: const Offset(0, 8),
+                blurRadius: 20,
+              ),
+            ],
+          ),
           child: Row(
             children: [
               Container(
-                margin: const EdgeInsets.only(top: 4),
-                padding: const EdgeInsets.all(12),
+                width: 56,
+                height: 56,
                 decoration: BoxDecoration(
-                  color: AppColors.white.withValues(alpha: 0.15),
+                  color: Colors.white.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: AppColors.white.withValues(alpha: 0.3),
+                    color: Colors.white.withValues(alpha: 0.25),
                     width: 1,
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.white.withValues(alpha: 0.1),
-                      blurRadius: 8,
-                      spreadRadius: 0,
-                    ),
-                  ],
                 ),
-                child: Icon(
-                  Icons.quiz,
+                child: const Icon(
+                  Icons.analytics_rounded,
                   color: AppColors.white,
-                  size: 24,
+                  size: 26,
                 ),
               ),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Text(
-                          'Quiz Merkezi',
-                          style: context.textTheme.headlineMedium?.copyWith(
-                            color: AppColors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 28,
-                            height: 1.1,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
                     Text(
-                      'Bilginizi test edin ve öğrenin',
+                      isTr ? 'İstatistikler' : 'Statistics',
+                      style: const TextStyle(
+                        color: AppColors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      isTr
+                          ? 'Performansını görüntüle, en iyi skorlarını incele'
+                          : 'View your performance and best scores',
                       style: TextStyle(
-                        color: AppColors.white.withValues(alpha: 0.9),
-                        fontSize: 16,
-                        height: 1.2,
+                        color: Colors.white.withValues(alpha: 0.85),
+                        fontSize: 14,
                       ),
                     ),
                   ],
                 ),
               ),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.25),
+                    width: 1,
+                  ),
+                ),
+                child: Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  color: AppColors.white.withValues(alpha: 0.9),
+                  size: 16,
+                ),
+              ),
             ],
           ),
         ),
-      ],
+      ),
     );
   }
 
   Widget _buildQuizTypesSection() {
+    final isTr = context.watch<LocalizationProvider>().isTr;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Quiz Türleri',
-          style: TextStyle(
+          isTr ? 'Quiz Türleri' : 'Quiz Types',
+          style: const TextStyle(
             color: AppColors.white,
-            fontSize: 24,
+            fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
         ...QuizType.values.map((type) => _buildQuizTypeCard(type)).toList(),
       ],
     );
@@ -241,6 +304,7 @@ class _ModernQuizHomeState extends State<ModernQuizHome>
 
   Widget _buildQuizTypeCard(QuizType type) {
     final colors = _getQuizTypeColors(type);
+    final isTr = context.watch<LocalizationProvider>().isTr;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -253,6 +317,10 @@ class _ModernQuizHomeState extends State<ModernQuizHome>
             colors.primary.withValues(alpha: 0.8),
           ],
         ),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.2),
+          width: 1,
+        ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -263,101 +331,188 @@ class _ModernQuizHomeState extends State<ModernQuizHome>
           ),
         ],
       ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(20),
-          onTap: () => _startQuiz(type),
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Row(
-              children: [
-                // Icon
-                Container(
-                  width: 60,
-                  height: 60,
-                  decoration: BoxDecoration(
-                    color: AppColors.white.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Icon(
-                    type.icon,
-                    color: AppColors.white,
-                    size: 28,
-                  ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Stack(
+          children: [
+            // Background Pattern
+            Positioned.fill(
+              child: CustomPaint(
+                painter: _patternService.getRandomPatternPainter(
+                  seed: type.hashCode,
+                  color: Colors.white,
+                  opacity: 0.08,
                 ),
-                const SizedBox(width: 20),
+              ),
+            ),
 
-                // Content
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+            // Decorative Elements
+            Positioned(
+              top: -15,
+              right: -15,
+              child: Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: -10,
+              left: -10,
+              child: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.05),
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+
+            // Main Content
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(20),
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  _startQuiz(type);
+                },
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Row(
                     children: [
-                      Text(
-                        type.turkishTitle,
-                        style: TextStyle(
+                      // Icon
+                      Container(
+                        width: 60,
+                        height: 60,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.25),
+                            width: 1,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.08),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Icon(
+                          type.icon,
                           color: AppColors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
+                          size: 28,
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        _getQuizDescription(type),
-                        style: TextStyle(
-                          color: AppColors.white.withValues(alpha: 0.8),
-                          fontSize: 14,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.white.withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              type.difficulty,
-                              style: TextStyle(
+                      const SizedBox(width: 20),
+
+                      // Content
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              isTr ? type.turkishTitle : type.englishTitle,
+                              style: const TextStyle(
                                 color: AppColors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                shadows: [
+                                  Shadow(
+                                    color: Colors.black26,
+                                    offset: Offset(1, 1),
+                                    blurRadius: 2,
+                                  ),
+                                ],
                               ),
                             ),
-                          ),
-                          const SizedBox(width: 12),
-                          Consumer<QuizProvider>(
-                            builder: (context, provider, child) {
-                              final stats = provider.getStatisticsForType(type);
-                              return Text(
-                                'En İyi: %${stats.bestScore.toInt()}',
-                                style: TextStyle(
-                                  color: AppColors.white.withValues(alpha: 0.7),
-                                  fontSize: 12,
+                            const SizedBox(height: 4),
+                            Text(
+                              _getQuizDescriptionLocalized(type, isTr),
+                              style: TextStyle(
+                                color: AppColors.white.withValues(alpha: 0.8),
+                                fontSize: 14,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color:
+                                        AppColors.white.withValues(alpha: 0.2),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color:
+                                          Colors.white.withValues(alpha: 0.25),
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    _localizedDifficulty(type.difficulty),
+                                    style: const TextStyle(
+                                      color: AppColors.white,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
                                 ),
-                              );
-                            },
+                                const SizedBox(width: 12),
+                                Consumer<QuizProvider>(
+                                  builder: (context, provider, child) {
+                                    final stats =
+                                        provider.getStatisticsForType(type);
+                                    return Text(
+                                      isTr
+                                          ? 'En İyi: %${stats.bestScore.toInt()}'
+                                          : 'Best: %${stats.bestScore.toInt()}',
+                                      style: TextStyle(
+                                        color: AppColors.white
+                                            .withValues(alpha: 0.7),
+                                        fontSize: 12,
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // Arrow
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.25),
+                            width: 1,
                           ),
-                        ],
+                        ),
+                        child: Icon(
+                          Icons.arrow_forward_ios_rounded,
+                          color: AppColors.white.withValues(alpha: 0.9),
+                          size: 16,
+                        ),
                       ),
                     ],
                   ),
                 ),
-
-                // Arrow
-                Icon(
-                  Icons.arrow_forward_ios,
-                  color: AppColors.white.withValues(alpha: 0.7),
-                  size: 20,
-                ),
-              ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );
@@ -384,54 +539,20 @@ class _ModernQuizHomeState extends State<ModernQuizHome>
     }
   }
 
-  String _getQuizDescription(QuizType type) {
+  String _getQuizDescriptionLocalized(QuizType type, bool isTr) {
     switch (type) {
       case QuizType.symbol:
-        return 'Sembol verildiğinde element adını bulun';
+        return isTr
+            ? 'Sembol verildiğinde element adını bulun'
+            : 'Find the element name given its symbol';
       case QuizType.group:
-        return 'Element adı verildiğinde grubunu bulun';
+        return isTr
+            ? 'Element adı verildiğinde grubunu bulun'
+            : 'Find the group given the element name';
       case QuizType.number:
-        return 'Atom numarası verildiğinde element adını bulun';
+        return isTr
+            ? 'Atom numarası verildiğinde element adını bulun'
+            : 'Find the element name given the atomic number';
     }
   }
-}
-
-/// Custom painter for quiz background pattern
-class QuizPatternPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = AppColors.white.withValues(alpha: 0.05)
-      ..strokeWidth = 1;
-
-    // Draw subtle pattern
-    for (int i = 0; i < size.width; i += 40) {
-      canvas.drawLine(
-        Offset(i.toDouble(), 0),
-        Offset(i.toDouble(), size.height),
-        paint,
-      );
-    }
-    for (int i = 0; i < size.height; i += 40) {
-      canvas.drawLine(
-        Offset(0, i.toDouble()),
-        Offset(size.width, i.toDouble()),
-        paint,
-      );
-    }
-
-    // Draw some circles for visual interest
-    final circlePaint = Paint()
-      ..color = AppColors.white.withValues(alpha: 0.03)
-      ..style = PaintingStyle.fill;
-
-    for (int i = 0; i < 5; i++) {
-      final x = (i * 80) % size.width;
-      final y = (i * 60) % size.height;
-      canvas.drawCircle(Offset(x, y), 20, circlePaint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

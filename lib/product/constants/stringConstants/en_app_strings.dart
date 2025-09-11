@@ -93,4 +93,24 @@ final class EnAppStrings {
   static const String medium = 'Medium';
   static const String numberQuiz = 'Number Quiz';
   static const String hard = 'Hard';
+
+  // Element of Day
+  static const String elementOfDay = 'Element of the Day';
+  static const String atomicWeight = 'Atomic Weight';
+
+  // Navigation
+  static const String favorites = 'Favorites';
+  static const String settings = 'Settings';
+  static const String welcome = 'Welcome';
+
+  // Loading
+  static const String loadingElements = 'Loading elements...';
+  static const String loadingInfo = 'Loading information...';
+  static const String loadingQuiz = 'Preparing quiz...';
+  static const String pleaseWait = 'Please wait';
+
+  // Periodic Table
+  static const String periodicTable = 'Periodic Table';
+  static const String exploreTable = 'Discover all elements';
+  static const String tapToExplore = 'Tap to explore';
 }

@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="6dp"
+    android:background="#00141F">
+
+    <LinearLayout
+        android:id="@+id/card"
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="8dp"
+        android:background="#1C2A3E"
+        android:elevation="3dp"
+        android:gravity="center_vertical">
+
+        <!-- Icon -->
+        <ImageView
+            android:id="@+id/imgChem"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_marginRight="8dp"
+            android:src="@android:drawable/ic_menu_compass"
+            android:tint="#7DDFF8"/>
+
+        <!-- Abbreviation (Symbol) -->
+        <TextView
+            android:id="@+id/txtSymbol"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="He"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold"
+            android:textSize="22sp"/>
+
+        <!-- Number badge -->
+        <TextView
+            android:id="@+id/txtNumber"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="8dp"
+            android:paddingLeft="8dp"
+            android:paddingRight="8dp"
+            android:paddingTop="3dp"
+            android:paddingBottom="3dp"
+            android:background="#2A3952"
+            android:textColor="#BFE3FF"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:text="#2"/>
+
+        <!-- Open app icon (small) -->
+        <ImageView
+            android:id="@+id/imgOpenApp"
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:layout_marginLeft="8dp"
+            android:src="@android:drawable/ic_menu_send"
+            android:tint="#FFFFFF"/>
+
+    </LinearLayout>
+
+    <!-- Hidden (for provider compatibility) -->
+    <TextView
+        android:id="@+id/txtName"
+        android:layout_width="1dp"
+        android:layout_height="1dp"
+        android:visibility="gone"
+        android:text=""/>
+
+    <TextView
+        android:id="@+id/txtCategory"
+        android:layout_width="1dp"
+        android:layout_height="1dp"
+        android:visibility="gone"
+        android:text=""/>
+
+</RelativeLayout>

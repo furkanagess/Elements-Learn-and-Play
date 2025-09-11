@@ -8,6 +8,7 @@ import 'package:elements_app/product/constants/stringConstants/tr_app_strings.da
 import 'package:elements_app/product/extensions/context_extensions.dart';
 import 'package:elements_app/product/widget/scaffold/app_scaffold.dart';
 import 'package:elements_app/product/widget/text/element_info_long_text.dart';
+import 'package:elements_app/product/widget/appBar/custom_sliver_app_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
@@ -26,10 +27,21 @@ class InfoDetailView extends StatelessWidget {
       child: Scaffold(
         body: NestedScrollView(
           headerSliverBuilder: (context, innerBoxIsScrolled) => [
-            SliverAppBar(
-              title: Text(context.read<LocalizationProvider>().isTr
+            CustomSliverAppBar(
+              title: context.read<LocalizationProvider>().isTr
+                  ? info.trTitle!
+                  : info.enTitle!,
+              subtitle: context.read<LocalizationProvider>().isTr
                   ? TrAppStrings.description
-                  : EnAppStrings.description),
+                  : EnAppStrings.description,
+              leadingIcon: SvgPicture.asset(
+                info.svg!,
+                colorFilter:
+                    const ColorFilter.mode(AppColors.white, BlendMode.srcIn),
+                width: 24,
+                height: 24,
+              ),
+              patternPainter: BasePatternPainter(),
             ),
           ],
           body: Padding(

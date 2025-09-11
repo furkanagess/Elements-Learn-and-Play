@@ -1,3 +1,4 @@
+import 'package:elements_app/product/widget/button/back_button.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:elements_app/feature/provider/quiz_provider.dart';
@@ -91,7 +92,7 @@ class _QuizStatisticsViewState extends State<QuizStatisticsView>
           fontWeight: FontWeight.bold,
         ),
       ),
-      leading: BackButton(),
+      leading: ModernBackButton(),
       actions: [
         TextButton.icon(
           onPressed: () => _showClearStatsDialog(context),

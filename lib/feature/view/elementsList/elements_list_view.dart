@@ -1,21 +1,23 @@
 import 'package:elements_app/feature/model/periodic_element.dart';
 import 'package:elements_app/feature/mixin/elementList/elements_list_view_mixin.dart';
+import 'package:elements_app/product/widget/button/back_button.dart';
 import 'package:elements_app/feature/view/quiz/modern_quiz_home.dart';
 
 import 'package:elements_app/feature/view/elementDetail/element_detail_view.dart';
+import 'package:elements_app/feature/view/elementsList/elements_loading_view.dart';
 import 'package:elements_app/feature/provider/localization_provider.dart';
 import 'package:elements_app/product/constants/app_colors.dart';
 import 'package:elements_app/product/constants/assets_constants.dart';
-import 'package:elements_app/product/extensions/context_extensions.dart';
 import 'package:elements_app/product/extensions/color_extension.dart';
 import 'package:elements_app/product/widget/ads/banner_ads_widget.dart';
-import 'package:elements_app/product/widget/loadingBar/loading_bar.dart';
 import 'package:elements_app/product/widget/scaffold/app_scaffold.dart';
+import 'package:elements_app/core/mixin/animation_mixin.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
+import 'package:elements_app/core/services/pattern/pattern_service.dart';
 
 class ElementsListView extends StatefulWidget {
   final String apiType;
@@ -31,59 +33,57 @@ class ElementsListView extends StatefulWidget {
 }
 
 class _ElementsListViewState extends State<ElementsListView>
-    with TickerProviderStateMixin, ElementsListViewMixin {
+    with
+        TickerProviderStateMixin,
+        ElementsListViewMixin,
+        AnimationMixin<ElementsListView> {
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _searchController = TextEditingController();
 
   List<PeriodicElement> _filteredElements = [];
   bool _isGridView = false;
   String _searchQuery = '';
-  bool _showSearchBar = false;
 
-  late AnimationController _mainAnimationController;
-  late Animation<double> _fadeAnimation;
-  late Animation<Offset> _slideAnimation;
+  // Animation controllers for card interactions
+  final Map<int, AnimationController> _cardControllers = {};
+  final Map<int, Animation<double>> _cardAnimations = {};
+
+  // Pattern service for background patterns
+  final PatternService _patternService = PatternService();
 
   @override
   void initState() {
     super.initState();
     _searchController.addListener(_onSearchChanged);
     _scrollController.addListener(_onScrollChanged);
-
-    _mainAnimationController = AnimationController(
-      duration:
-          const Duration(milliseconds: 400), // Animasyon süresini kısalttık
-      vsync: this,
-    );
-
-    _fadeAnimation = Tween<double>(
-      begin: 0.3, // Başlangıç opaklığını artırdık
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _mainAnimationController,
-      curve: const Interval(0.0, 0.4,
-          curve: Curves.easeOut), // Interval'i kısalttık
-    ));
-
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.1), // Başlangıç offset'ini azalttık
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _mainAnimationController,
-      curve: const Interval(0.0, 0.4,
-          curve: Curves.easeOutCubic), // Interval'i kısalttık
-    ));
-
-    // Animasyonu hemen başlatıyoruz
-    _mainAnimationController.forward();
   }
 
   @override
   void dispose() {
     _searchController.dispose();
     _scrollController.dispose();
-    _mainAnimationController.dispose();
+    // Dispose all card animation controllers
+    for (var controller in _cardControllers.values) {
+      controller.dispose();
+    }
     super.dispose();
+  }
+
+  AnimationController _getCardController(int index) {
+    if (!_cardControllers.containsKey(index)) {
+      _cardControllers[index] = AnimationController(
+        duration: const Duration(milliseconds: 150),
+        vsync: this,
+      );
+      _cardAnimations[index] = Tween<double>(
+        begin: 1.0,
+        end: 0.95,
+      ).animate(CurvedAnimation(
+        parent: _cardControllers[index]!,
+        curve: Curves.easeInOut,
+      ));
+    }
+    return _cardControllers[index]!;
   }
 
   void _onSearchChanged() {
@@ -93,14 +93,7 @@ class _ElementsListViewState extends State<ElementsListView>
   }
 
   void _onScrollChanged() {
-    final scrollOffset = _scrollController.offset;
-    final shouldShowSearchBar = scrollOffset > 100;
-
-    if (shouldShowSearchBar != _showSearchBar) {
-      setState(() {
-        _showSearchBar = shouldShowSearchBar;
-      });
-    }
+    // Search bar is now always visible in app bar
   }
 
   void _toggleViewMode() {
@@ -125,17 +118,9 @@ class _ElementsListViewState extends State<ElementsListView>
 
   @override
   Widget build(BuildContext context) {
-    // Loading durumunu daha akıcı yönetiyoruz
+    // Loading durumunu yeni sayfa ile yönetiyoruz
     if (isLoading) {
-      _mainAnimationController.forward(); // Loading sırasında animasyonu başlat
-      return const AppScaffold(
-        child: Scaffold(
-          backgroundColor: AppColors.background,
-          body: ComprehensiveLoadingBar(
-            loadingText: 'Elementler yükleniyor...',
-          ),
-        ),
-      );
+      return const ElementsLoadingView();
     }
 
     return AppScaffold(
@@ -147,49 +132,29 @@ class _ElementsListViewState extends State<ElementsListView>
         },
         child: Scaffold(
           backgroundColor: AppColors.background,
-          body: CustomScrollView(
-            controller: _scrollController,
-            slivers: [
-              // Modern Hero Header with Search
-              SliverAppBar(
-                expandedHeight: 200,
-                floating: false,
-                pinned: true,
-                elevation: 0,
-                backgroundColor: AppColors.darkBlue,
-                systemOverlayStyle: SystemUiOverlayStyle.light,
-                flexibleSpace: FlexibleSpaceBar(
-                  background: _buildHeroHeader(context),
-                ),
-                title: _showSearchBar ? _buildSearchBar() : null,
-                leading: _buildBackButton(),
-                actions: _buildActionButtons(),
-              ),
-
+          appBar: _buildAppBar(context),
+          body: Column(
+            children: [
               // Content
-              SliverToBoxAdapter(
-                child: FadeTransition(
-                  opacity: _fadeAnimation,
-                  child: SlideTransition(
-                    position: _slideAnimation,
-                    child: FutureBuilder<List<PeriodicElement>>(
-                      future: elementList,
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          _mainAnimationController
-                              .forward(); // Loading sırasında animasyonu başlat
-                          return Container(); // Boş container döndürüyoruz çünkü ana loading zaten gösteriliyor
-                        } else {
-                          final elements = snapshot.data ?? [];
-                          _filteredElements = _filterElements(elements);
+              Expanded(
+                child: fadeSlideInWidget(
+                  child: FutureBuilder<List<PeriodicElement>>(
+                    future: elementList,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return Container(); // Boş container döndürüyoruz çünkü ana loading zaten gösteriliyor
+                      } else {
+                        final elements = snapshot.data ?? [];
+                        _filteredElements = _filterElements(elements);
 
-                          if (_filteredElements.isEmpty &&
-                              _searchQuery.isNotEmpty) {
-                            return _buildEmptySearchState();
-                          }
+                        if (_filteredElements.isEmpty &&
+                            _searchQuery.isNotEmpty) {
+                          return _buildEmptySearchState();
+                        }
 
-                          return Padding(
+                        return SingleChildScrollView(
+                          controller: _scrollController,
+                          child: Padding(
                             padding: const EdgeInsets.all(20),
                             child: Column(
                               children: [
@@ -205,10 +170,10 @@ class _ElementsListViewState extends State<ElementsListView>
                                 const SizedBox(height: 100), // Bottom padding
                               ],
                             ),
-                          );
-                        }
-                      },
-                    ),
+                          ),
+                        );
+                      }
+                    },
                   ),
                 ),
               ),
@@ -222,121 +187,88 @@ class _ElementsListViewState extends State<ElementsListView>
     );
   }
 
-  Widget _buildHeroHeader(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [AppColors.darkBlue, AppColors.background],
-          stops: [0.0, 1.0],
-        ),
-      ),
-      child: Stack(
-        children: [
-          // Animated background pattern
-          Positioned.fill(
-            child: CustomPaint(
-              painter: ElementsListPatternPainter(),
-            ),
+  AppBar _buildAppBar(BuildContext context) {
+    return AppBar(
+      backgroundColor: AppColors.darkBlue,
+      leading: const ModernBackButton(),
+      title: Container(
+        height: 40,
+        decoration: BoxDecoration(
+          color: AppColors.white.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: AppColors.white.withValues(alpha: 0.2),
+            width: 1,
           ),
-
-          // Main content
-          Positioned.fill(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 60, 20, 20),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.end,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: AppColors.white.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: AppColors.white.withValues(alpha: 0.3),
-                            width: 1,
-                          ),
-                        ),
-                        child: SvgPicture.asset(
-                          AssetConstants.instance.svgElementGroup,
-                          colorFilter: const ColorFilter.mode(
-                              AppColors.white, BlendMode.srcIn),
-                          width: 24,
-                          height: 24,
-                        ),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.darkBlue.withValues(alpha: 0.2),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Center(
+          child: TextField(
+            controller: _searchController,
+            textAlignVertical: TextAlignVertical.center,
+            style: const TextStyle(
+              color: AppColors.white,
+              fontSize: 14,
+              height: 1,
+            ),
+            decoration: InputDecoration(
+              isDense: true,
+              hintText: context.read<LocalizationProvider>().isTr
+                  ? 'Element adı, sembol veya numara ara...'
+                  : 'Search by element name, symbol or number...',
+              hintStyle: TextStyle(
+                color: AppColors.white.withValues(alpha: 0.5),
+                fontSize: 12,
+                height: 1,
+              ),
+              prefixIcon: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Icon(
+                  Icons.search,
+                  color: AppColors.white.withValues(alpha: 0.7),
+                  size: 20,
+                ),
+              ),
+              prefixIconConstraints: const BoxConstraints(
+                minWidth: 36,
+                minHeight: 36,
+              ),
+              suffixIcon: _searchQuery.isNotEmpty
+                  ? IconButton(
+                      icon: Icon(
+                        Icons.clear,
+                        color: AppColors.white.withValues(alpha: 0.7),
+                        size: 18,
                       ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              widget.title,
-                              style: context.textTheme.headlineMedium?.copyWith(
-                                color: AppColors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 28,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            FutureBuilder<List<PeriodicElement>>(
-                              future: elementList,
-                              builder: (context, snapshot) {
-                                if (snapshot.hasData) {
-                                  final elements = snapshot.data ?? [];
-                                  final filteredElements =
-                                      _filterElements(elements);
-                                  return Text(
-                                    '${filteredElements.length} element',
-                                    style:
-                                        context.textTheme.bodyMedium?.copyWith(
-                                      color: AppColors.white
-                                          .withValues(alpha: 0.8),
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  );
-                                } else {
-                                  return Text(
-                                    '0 element',
-                                    style:
-                                        context.textTheme.bodyMedium?.copyWith(
-                                      color: AppColors.white
-                                          .withValues(alpha: 0.8),
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  );
-                                }
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+                      onPressed: () {
+                        _searchController.clear();
+                        setState(() {
+                          _searchQuery = '';
+                        });
+                      },
+                    )
+                  : null,
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 8,
               ),
             ),
+            onChanged: (value) {
+              setState(() {
+                _searchQuery = value;
+              });
+            },
           ),
-        ],
+        ),
       ),
-    );
-  }
-
-  Widget _buildBackButton() {
-    return Container(
-      margin: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: AppColors.white.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: IconButton(
-        icon: const Icon(Icons.arrow_back_ios_new, color: AppColors.white),
-        onPressed: () => Navigator.pop(context),
-      ),
+      actions: _buildActionButtons(),
     );
   }
 
@@ -510,87 +442,6 @@ class _ElementsListViewState extends State<ElementsListView>
     });
   }
 
-  Widget _buildSearchBar() {
-    return Container(
-      height: 40,
-      margin: const EdgeInsets.symmetric(horizontal: 8),
-      decoration: BoxDecoration(
-        color: AppColors.white.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: AppColors.white.withValues(alpha: 0.2),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.darkBlue.withValues(alpha: 0.2),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Center(
-        child: TextField(
-          controller: _searchController,
-          textAlignVertical: TextAlignVertical.center,
-          style: const TextStyle(
-            color: AppColors.white,
-            fontSize: 14,
-            height: 1,
-          ),
-          decoration: InputDecoration(
-            isDense: true,
-            hintText: context.read<LocalizationProvider>().isTr
-                ? 'Element adı, sembol veya numara ara...'
-                : 'Search by element name, symbol or number...',
-            hintStyle: TextStyle(
-              color: AppColors.white.withValues(alpha: 0.5),
-              fontSize: 12,
-              height: 1,
-            ),
-            prefixIcon: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: Icon(
-                Icons.search,
-                color: AppColors.white.withValues(alpha: 0.7),
-                size: 20,
-              ),
-            ),
-            prefixIconConstraints: const BoxConstraints(
-              minWidth: 36,
-              minHeight: 36,
-            ),
-            suffixIcon: _searchQuery.isNotEmpty
-                ? IconButton(
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(
-                      minWidth: 36,
-                      minHeight: 36,
-                    ),
-                    icon: Icon(
-                      Icons.clear,
-                      color: AppColors.white.withValues(alpha: 0.7),
-                      size: 18,
-                    ),
-                    onPressed: () {
-                      _searchController.clear();
-                      setState(() {
-                        _searchQuery = '';
-                      });
-                    },
-                  )
-                : null,
-            border: InputBorder.none,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 8,
-              vertical: 0,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildViewModeToggle() {
     return Column(
       children: [
@@ -699,7 +550,7 @@ class _ElementsListViewState extends State<ElementsListView>
             ],
           ),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 10),
         // Banner Ads
         const BannerAdsWidget(
           margin: EdgeInsets.symmetric(horizontal: 10),
@@ -710,8 +561,6 @@ class _ElementsListViewState extends State<ElementsListView>
   }
 
   Widget _buildEmptySearchState() {
-    final isTr = context.read<LocalizationProvider>().isTr;
-
     return Container(
       height: MediaQuery.of(context).size.height * 0.6,
       padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -800,117 +649,231 @@ class _ElementsListViewState extends State<ElementsListView>
     }
 
     final isTr = Provider.of<LocalizationProvider>(context, listen: false).isTr;
+    final cardController = _getCardController(index);
+    final cardAnimation = _cardAnimations[index]!;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            elementColor,
-            elementColor.withValues(alpha: 0.8),
-          ],
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: shadowColor.withValues(alpha: 0.3),
-            offset: const Offset(0, 8),
-            blurRadius: 20,
-            spreadRadius: 2,
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(20),
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => ElementDetailView(element: element),
+    return AnimatedBuilder(
+      animation: cardAnimation,
+      builder: (context, child) {
+        return Transform.scale(
+            scale: cardAnimation.value,
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(24),
+                gradient: LinearGradient(
+                  colors: [
+                    elementColor.withValues(alpha: 0.9),
+                    elementColor.withValues(alpha: 0.7),
+                    elementColor.withValues(alpha: 0.5),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  stops: const [0.0, 0.6, 1.0],
+                ),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  width: 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: shadowColor.withValues(alpha: 0.4),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                    spreadRadius: 0,
+                  ),
+                  BoxShadow(
+                    color: shadowColor.withValues(alpha: 0.2),
+                    blurRadius: 40,
+                    offset: const Offset(0, 20),
+                    spreadRadius: 0,
+                  ),
+                ],
               ),
-            );
-          },
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Row(
-              children: [
-                // Element number
-                Container(
-                  width: 60,
-                  height: 60,
-                  decoration: BoxDecoration(
-                    color: AppColors.white.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: AppColors.white.withValues(alpha: 0.3),
-                      width: 1,
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(24),
+                  onTapDown: (_) => cardController.forward(),
+                  onTapUp: (_) {
+                    cardController.reverse();
+                    // Add haptic feedback
+                    HapticFeedback.lightImpact();
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            ElementDetailView(element: element),
+                      ),
+                    );
+                  },
+                  onTapCancel: () => cardController.reverse(),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(24),
+                    child: Stack(
+                      children: [
+                        // Background Pattern
+                        Positioned.fill(
+                          child: CustomPaint(
+                            painter: _patternService.getRandomPatternPainter(
+                              seed: element.number ?? index,
+                              color: Colors.white,
+                              opacity: 0.1,
+                            ),
+                          ),
+                        ),
+
+                        // Decorative Elements
+                        Positioned(
+                          top: -20,
+                          right: -20,
+                          child: Container(
+                            width: 80,
+                            height: 80,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.1),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ),
+
+                        Positioned(
+                          bottom: -10,
+                          left: -10,
+                          child: Container(
+                            width: 60,
+                            height: 60,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.05),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ),
+
+                        // Main Content
+                        Padding(
+                          padding: const EdgeInsets.all(20),
+                          child: Row(
+                            children: [
+                              // Element number
+                              Container(
+                                width: 60,
+                                height: 60,
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.25),
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(
+                                    color: Colors.white.withValues(alpha: 0.3),
+                                    width: 1,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color:
+                                          Colors.black.withValues(alpha: 0.1),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    element.number?.toString() ?? '',
+                                    style: const TextStyle(
+                                      color: AppColors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 20,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 20),
+
+                              // Element info with improved typography
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    // Element symbol with better spacing
+                                    Text(
+                                      element.symbol ?? '',
+                                      style: const TextStyle(
+                                        color: AppColors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 32,
+                                        height: 1.1,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 6),
+
+                                    // Element name with better contrast
+                                    Text(
+                                      isTr
+                                          ? element.trName ?? ''
+                                          : element.enName ?? '',
+                                      style: TextStyle(
+                                        color: AppColors.white
+                                            .withValues(alpha: 0.95),
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 16,
+                                        height: 1.2,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 6),
+
+                                    // Atomic weight with improved styling
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white
+                                            .withValues(alpha: 0.15),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Text(
+                                        _formatWeight(element.weight),
+                                        style: TextStyle(
+                                          color: AppColors.white
+                                              .withValues(alpha: 0.8),
+                                          fontWeight: FontWeight.w500,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              // Enhanced arrow icon with better visual feedback
+                              Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.2),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: Colors.white.withValues(alpha: 0.1),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Icon(
+                                  Icons.arrow_forward_ios_rounded,
+                                  color: AppColors.white,
+                                  size: 16,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  child: Center(
-                    child: Text(
-                      element.number?.toString() ?? '',
-                      style: const TextStyle(
-                        color: AppColors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 20,
-                      ),
-                    ),
-                  ),
                 ),
-                const SizedBox(width: 20),
-
-                // Element info
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        element.symbol ?? '',
-                        style: const TextStyle(
-                          color: AppColors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 32,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        isTr ? element.trName ?? '' : element.enName ?? '',
-                        style: TextStyle(
-                          color: AppColors.white.withValues(alpha: 0.9),
-                          fontWeight: FontWeight.w600,
-                          fontSize: 16,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        _formatWeight(element.weight),
-                        style: TextStyle(
-                          color: AppColors.white.withValues(alpha: 0.7),
-                          fontWeight: FontWeight.w500,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Arrow icon
-                Icon(
-                  Icons.arrow_forward_ios,
-                  color: AppColors.white.withValues(alpha: 0.7),
-                  size: 20,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
+              ),
+            ));
+      },
     );
   }
 
@@ -958,160 +921,280 @@ class _ElementsListViewState extends State<ElementsListView>
     }
 
     final isTr = Provider.of<LocalizationProvider>(context, listen: false).isTr;
+    final cardController = _getCardController(index);
+    final cardAnimation = _cardAnimations[index]!;
 
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            elementColor,
-            elementColor.withValues(alpha: 0.8),
-          ],
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: shadowColor.withValues(alpha: 0.3),
-            offset: const Offset(0, 8),
-            blurRadius: 20,
-            spreadRadius: 2,
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(20),
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => ElementDetailView(element: element),
+    return AnimatedBuilder(
+      animation: cardAnimation,
+      builder: (context, child) {
+        return Transform.scale(
+            scale: cardAnimation.value,
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(24),
+                gradient: LinearGradient(
+                  colors: [
+                    elementColor.withValues(alpha: 0.9),
+                    elementColor.withValues(alpha: 0.7),
+                    elementColor.withValues(alpha: 0.5),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  stops: const [0.0, 0.6, 1.0],
+                ),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  width: 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: shadowColor.withValues(alpha: 0.4),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                    spreadRadius: 0,
+                  ),
+                  BoxShadow(
+                    color: shadowColor.withValues(alpha: 0.2),
+                    blurRadius: 40,
+                    offset: const Offset(0, 20),
+                    spreadRadius: 0,
+                  ),
+                ],
               ),
-            );
-          },
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // Element number
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: AppColors.white.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: AppColors.white.withValues(alpha: 0.3),
-                      width: 1,
-                    ),
-                  ),
-                  child: Center(
-                    child: Text(
-                      element.number?.toString() ?? '',
-                      style: const TextStyle(
-                        color: AppColors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(24),
+                  onTapDown: (_) => cardController.forward(),
+                  onTapUp: (_) {
+                    cardController.reverse();
+                    // Add haptic feedback
+                    HapticFeedback.lightImpact();
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            ElementDetailView(element: element),
                       ),
+                    );
+                  },
+                  onTapCancel: () => cardController.reverse(),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(24),
+                    child: Stack(
+                      children: [
+                        // Background Pattern
+                        Positioned.fill(
+                          child: CustomPaint(
+                            painter: _patternService.getRandomPatternPainter(
+                              seed: element.number ?? index,
+                              color: Colors.white,
+                              opacity: 0.1,
+                            ),
+                          ),
+                        ),
+
+                        // Decorative Elements
+                        Positioned(
+                          top: -15,
+                          right: -15,
+                          child: Container(
+                            width: 50,
+                            height: 50,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.1),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ),
+
+                        Positioned(
+                          bottom: -8,
+                          left: -8,
+                          child: Container(
+                            width: 35,
+                            height: 35,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.05),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ),
+
+                        // Main Content
+                        Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              // Element number
+                              Center(
+                                child: Container(
+                                  width: 40,
+                                  height: 40,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.25),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color:
+                                          Colors.white.withValues(alpha: 0.3),
+                                      width: 1,
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color:
+                                            Colors.black.withValues(alpha: 0.1),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      element.number?.toString() ?? '',
+                                      style: const TextStyle(
+                                        color: AppColors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+
+                              // Element symbol
+                              Center(
+                                child: Text(
+                                  element.symbol ?? '',
+                                  style: const TextStyle(
+                                    color: AppColors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 28,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+
+                              // Element name
+                              Center(
+                                child: Text(
+                                  isTr
+                                      ? element.trName ?? ''
+                                      : element.enName ?? '',
+                                  style: TextStyle(
+                                    color:
+                                        AppColors.white.withValues(alpha: 0.9),
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+
+                              // Element weight
+                              Center(
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.2),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    _formatWeight(element.weight),
+                                    style: const TextStyle(
+                                      color: AppColors.white,
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 12,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
-                const SizedBox(height: 12),
-
-                // Element symbol
-                Text(
-                  element.symbol ?? '',
-                  style: const TextStyle(
-                    color: AppColors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 28,
-                  ),
-                ),
-                const SizedBox(height: 8),
-
-                // Element name
-                Text(
-                  isTr ? element.trName ?? '' : element.enName ?? '',
-                  style: TextStyle(
-                    color: AppColors.white.withValues(alpha: 0.9),
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                  ),
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 8),
-
-                // Element weight
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: AppColors.white.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    _formatWeight(element.weight),
-                    style: const TextStyle(
-                      color: AppColors.white,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
+              ),
+            ));
+      },
     );
   }
 
   Widget _buildModernFAB(BuildContext context) {
     return Container(
+      margin: const EdgeInsets.only(right: 8, bottom: 8),
+      width: 60,
+      height: 60,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [AppColors.glowGreen, AppColors.darkBlue],
+          colors: [AppColors.glowGreen, Color(0xFF2E7D32)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(16),
+        shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: AppColors.glowGreen.withValues(alpha: 0.4),
-            offset: const Offset(0, 8),
-            blurRadius: 20,
+            color: AppColors.glowGreen.withValues(alpha: 0.35),
+            offset: const Offset(0, 6),
+            blurRadius: 18,
             spreadRadius: 2,
           ),
+          BoxShadow(
+            color: AppColors.darkBlue.withValues(alpha: 0.2),
+            offset: const Offset(0, 10),
+            blurRadius: 22,
+            spreadRadius: 1,
+          ),
         ],
-      ),
-      child: FloatingActionButton.extended(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const ModernQuizHome(),
-            ),
-          );
-        },
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        icon: SvgPicture.asset(
-          AssetConstants.instance.svgGameThree,
-          colorFilter: const ColorFilter.mode(AppColors.white, BlendMode.srcIn),
-          width: 24,
-          height: 24,
+        border: Border.all(
+          color: AppColors.white.withValues(alpha: 0.22),
+          width: 1,
         ),
-        label: const Text(
-          'Quiz Başlat',
-          style: TextStyle(
-            color: AppColors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          customBorder: const CircleBorder(),
+          onTap: () {
+            HapticFeedback.lightImpact();
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const ModernQuizHome(),
+              ),
+            );
+          },
+          child: Center(
+            child: Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.2),
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.25),
+                  width: 1,
+                ),
+              ),
+              child: SvgPicture.asset(
+                AssetConstants.instance.svgGameThree,
+                colorFilter: const ColorFilter.mode(
+                  AppColors.white,
+                  BlendMode.srcIn,
+                ),
+                width: 22,
+                height: 22,
+              ),
+            ),
           ),
         ),
       ),
@@ -1136,45 +1219,6 @@ class _ElementsListViewState extends State<ElementsListView>
           number.contains(query);
     }).toList();
   }
-}
-
-class ElementsListPatternPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = AppColors.white.withValues(alpha: 0.05)
-      ..strokeWidth = 1;
-
-    // Draw subtle pattern
-    for (int i = 0; i < size.width; i += 40) {
-      canvas.drawLine(
-        Offset(i.toDouble(), 0),
-        Offset(i.toDouble(), size.height),
-        paint,
-      );
-    }
-    for (int i = 0; i < size.height; i += 40) {
-      canvas.drawLine(
-        Offset(0, i.toDouble()),
-        Offset(size.width, i.toDouble()),
-        paint,
-      );
-    }
-
-    // Draw some circles for visual interest
-    final circlePaint = Paint()
-      ..color = AppColors.white.withValues(alpha: 0.03)
-      ..style = PaintingStyle.fill;
-
-    for (int i = 0; i < 5; i++) {
-      final x = (i * 80) % size.width;
-      final y = (i * 60) % size.height;
-      canvas.drawCircle(Offset(x, y), 20, circlePaint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 class EmptyStatePatternPainter extends CustomPainter {

@@ -5,6 +5,7 @@ import 'package:elements_app/product/constants/app_colors.dart';
 import 'package:elements_app/product/constants/assets_constants.dart';
 import 'package:elements_app/product/constants/stringConstants/en_app_strings.dart';
 import 'package:elements_app/product/constants/stringConstants/tr_app_strings.dart';
+import 'package:elements_app/product/widget/button/back_button.dart';
 import 'package:elements_app/product/widget/scaffold/app_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -25,7 +26,7 @@ class SettingsView extends StatelessWidget {
             SliverAppBar(
               pinned: true,
               backgroundColor: AppColors.darkBlue,
-              leading: BackButton(),
+              leading: ModernBackButton(),
               expandedHeight: 180,
               stretch: true,
               flexibleSpace: FlexibleSpaceBar(

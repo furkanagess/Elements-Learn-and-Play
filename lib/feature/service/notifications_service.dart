@@ -1,26 +1,11 @@
-import 'package:firebase_messaging/firebase_messaging.dart';
-
-/// The `NotificationService` class is responsible for managing notifications within your Flutter application
-/// using Firebase Cloud Messaging (FCM). It provides methods for initializing notifications and handling
-/// background messages.
+/// The `NotificationService` class is responsible for managing notifications within your Flutter application.
+/// Firebase dependencies have been removed for iOS, so this is a no-op stub.
 class NotificationService {
-  final _firebaseMessaging = FirebaseMessaging.instance;
-
-  /// Initializes notifications and requests permission from the user.
   Future<void> initNotifications() async {
-    try {
-      await _firebaseMessaging.requestPermission();
-
-      FirebaseMessaging.onBackgroundMessage(handleBackgroundMessage);
-    } catch (e) {
-      // Handle any exceptions during notification initialization
-      print('Error initializing notifications: $e');
-    }
+    // No-op: Firebase Messaging removed from iOS build
   }
 }
 
-/// Handles background messages received by the application from Firebase Cloud Messaging (FCM).
-///
-/// This function is called when a background message is received by the application. You can implement
-/// custom logic to process the message or perform actions in response to the notification.
-Future<void> handleBackgroundMessage(RemoteMessage message) async {}
+Future<void> handleBackgroundMessage(dynamic message) async {
+  // No-op
+}

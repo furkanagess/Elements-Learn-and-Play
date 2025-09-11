@@ -1,8 +1,13 @@
-import 'package:elements_app/product/constants/app_colors.dart';
 import 'package:flutter/material.dart';
+import 'package:elements_app/product/constants/app_colors.dart';
 
-class BackButton extends StatelessWidget {
-  const BackButton({super.key});
+class ModernBackButton extends StatelessWidget {
+  final bool navigateToHome;
+
+  const ModernBackButton({
+    super.key,
+    this.navigateToHome = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -14,7 +19,15 @@ class BackButton extends StatelessWidget {
       ),
       child: IconButton(
         icon: const Icon(Icons.arrow_back_ios_new, color: AppColors.white),
-        onPressed: () => Navigator.pop(context),
+        onPressed: () {
+          if (navigateToHome) {
+            // Pop until we reach the root/home screen
+            Navigator.of(context).popUntil((route) => route.isFirst);
+          } else {
+            // Normal pop behavior
+            Navigator.pop(context);
+          }
+        },
       ),
     );
   }

@@ -4,6 +4,8 @@ import 'package:elements_app/product/extensions/context_extensions.dart';
 import 'package:elements_app/feature/model/quiz/quiz_models.dart';
 import 'package:lottie/lottie.dart';
 import 'package:elements_app/product/constants/assets_constants.dart';
+import 'package:provider/provider.dart';
+import 'package:elements_app/feature/provider/localization_provider.dart';
 
 /// Modern quiz header with progress and stats
 class QuizHeader extends StatelessWidget {
@@ -16,8 +18,25 @@ class QuizHeader extends StatelessWidget {
     this.onClose,
   });
 
+  String _localizedDifficulty(BuildContext context, String difficulty) {
+    final isTr = context.read<LocalizationProvider>().isTr;
+    final d = difficulty.toLowerCase();
+    if (isTr) {
+      if (d == 'easy' || d == 'kolay') return 'Kolay';
+      if (d == 'medium' || d == 'orta') return 'Orta';
+      if (d == 'hard' || d == 'zor') return 'Zor';
+      return difficulty;
+    } else {
+      if (d == 'easy' || d == 'kolay') return 'Easy';
+      if (d == 'medium' || d == 'orta') return 'Medium';
+      if (d == 'hard' || d == 'zor') return 'Hard';
+      return difficulty;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final isTr = context.watch<LocalizationProvider>().isTr;
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
       decoration: BoxDecoration(
@@ -65,7 +84,9 @@ class QuizHeader extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    session.type.turkishTitle,
+                    isTr
+                        ? session.type.turkishTitle
+                        : session.type.englishTitle,
                     style: context.textTheme.titleMedium?.copyWith(
                       color: AppColors.white,
                       fontWeight: FontWeight.bold,
@@ -89,7 +110,7 @@ class QuizHeader extends StatelessWidget {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        session.type.difficulty,
+                        _localizedDifficulty(context, session.type.difficulty),
                         style: context.textTheme.bodySmall?.copyWith(
                           color: _getDifficultyColor(),
                           fontWeight: FontWeight.w600,
@@ -629,6 +650,7 @@ class QuizResultDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final isWin = session.state == QuizState.completed;
     final score = (session.scorePercentage * 100).toInt();
+    final isTr = context.watch<LocalizationProvider>().isTr;
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -671,7 +693,9 @@ class QuizResultDialog extends StatelessWidget {
 
             // Title
             Text(
-              isWin ? 'Tebrikler!' : 'Tekrar Deneyin!',
+              isWin
+                  ? (isTr ? 'Tebrikler!' : 'Congratulations!')
+                  : (isTr ? 'Tekrar Deneyin!' : 'Try Again!'),
               style: context.textTheme.headlineMedium?.copyWith(
                 color: AppColors.white,
                 fontWeight: FontWeight.bold,
@@ -681,7 +705,7 @@ class QuizResultDialog extends StatelessWidget {
 
             // Score
             Text(
-              'Skorunuz: %$score',
+              isTr ? 'Skorunuz: %$score' : 'Your Score: %$score',
               style: context.textTheme.titleLarge?.copyWith(
                 color: isWin ? AppColors.glowGreen : AppColors.powderRed,
                 fontWeight: FontWeight.w600,
@@ -694,17 +718,17 @@ class QuizResultDialog extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 _buildStatColumn(
-                  'Doğru',
+                  isTr ? 'Doğru' : 'Correct',
                   session.correctAnswers.toString(),
                   AppColors.glowGreen,
                 ),
                 _buildStatColumn(
-                  'Yanlış',
+                  isTr ? 'Yanlış' : 'Wrong',
                   session.wrongAnswers.toString(),
                   AppColors.powderRed,
                 ),
                 _buildStatColumn(
-                  'Süre',
+                  isTr ? 'Süre' : 'Time',
                   _formatDuration(session.duration),
                   AppColors.yellow,
                 ),
@@ -727,8 +751,8 @@ class QuizResultDialog extends StatelessWidget {
                       ),
                     ),
                     child: Text(
-                      'Ana Sayfa',
-                      style: TextStyle(color: AppColors.white),
+                      isTr ? 'Ana Sayfa' : 'Home',
+                      style: const TextStyle(color: AppColors.white),
                     ),
                   ),
                 ),
@@ -745,8 +769,8 @@ class QuizResultDialog extends StatelessWidget {
                       ),
                     ),
                     child: Text(
-                      'Tekrar Oyna',
-                      style: TextStyle(
+                      isTr ? 'Tekrar Oyna' : 'Play Again',
+                      style: const TextStyle(
                           color: AppColors.white, fontWeight: FontWeight.w600),
                     ),
                   ),

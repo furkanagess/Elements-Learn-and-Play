@@ -35,6 +35,19 @@
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="ca-app-pub-3499593115543692~1498506854"/>
+
+        <!-- Element of the Day AppWidget Provider -->
+        <receiver
+            android:name=".ElementOfDayWidgetProvider"
+            android:exported="false"
+            android:label="Element of the Day">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/element_of_day_widget_info" />
+        </receiver>
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

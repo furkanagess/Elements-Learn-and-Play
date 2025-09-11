@@ -1,7 +1,8 @@
 import 'package:elements_app/feature/service/google_ads_service.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'package:elements_app/product/widget/loadingBar/loading_chemistry.dart';
+import 'package:lottie/lottie.dart';
+import 'package:elements_app/product/constants/assets_constants.dart';
 
 /// The `BannerAdsProvider` class is responsible for managing banner ads using the
 /// AdMob service. It provides methods for creating and displaying banner ads
@@ -73,8 +74,16 @@ class BannerAdsProvider with ChangeNotifier {
       height: AdSize.banner.height.toDouble(),
       child: _isBannerAdLoaded && bannerAd != null
           ? AdWidget(ad: bannerAd!)
-          : const Center(
-              child: LoadingChemistry(size: 30),
+          : Center(
+              child: SizedBox(
+                width: 30,
+                height: 30,
+                child: Lottie.asset(
+                  AssetConstants.instance.lottieLoadingChemistry,
+                  fit: BoxFit.cover,
+                  repeat: true,
+                ),
+              ),
             ),
     );
   }

@@ -5,6 +5,7 @@ import 'package:elements_app/feature/provider/localization_provider.dart';
 import 'package:elements_app/product/constants/app_colors.dart';
 import 'package:elements_app/product/extensions/color_extension.dart';
 import 'package:elements_app/product/extensions/context_extensions.dart';
+import 'package:elements_app/product/widget/button/back_button.dart';
 import 'package:elements_app/product/widget/scaffold/app_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -131,6 +132,27 @@ class _ElementDetailViewState extends State<ElementDetailView>
     return weight;
   }
 
+  /// Gets the category text with fallback
+  String _getCategoryText(bool isTr) {
+    String category = isTr
+        ? (widget.element.trCategory ?? '')
+        : (widget.element.enCategory ?? '');
+
+    // If category is empty, try the other language
+    if (category.isEmpty) {
+      category = isTr
+          ? (widget.element.enCategory ?? '')
+          : (widget.element.trCategory ?? '');
+    }
+
+    // If still empty, use group as fallback
+    if (category.isEmpty) {
+      category = widget.element.group ?? 'Bilinmiyor';
+    }
+
+    return category.toUpperCase();
+  }
+
   @override
   Widget build(BuildContext context) {
     Color elementColor;
@@ -152,32 +174,22 @@ class _ElementDetailViewState extends State<ElementDetailView>
     return AppScaffold(
       child: Scaffold(
         backgroundColor: AppColors.background,
-        body: CustomScrollView(
-          slivers: [
-            // Modern Hero Header
-            SliverAppBar(
-              expandedHeight: 280,
-              floating: false,
-              pinned: true,
-              elevation: 0,
-              backgroundColor: elementColor,
-              systemOverlayStyle: SystemUiOverlayStyle.light,
-              flexibleSpace: FlexibleSpaceBar(
-                background: _buildHeroHeader(context, elementColor, isTr),
-              ),
-              leading: const BackButton(),
-              actions: _buildActionButtons(elementColor),
-            ),
+        appBar: _buildAppBar(context, elementColor, isTr),
+        body: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          child: FadeTransition(
+            opacity: _fadeAnimation,
+            child: SlideTransition(
+              position: _slideAnimation,
+              child: ScaleTransition(
+                scale: _scaleAnimation,
+                child: Column(
+                  children: [
+                    // Hero Header
+                    _buildHeroHeader(context, elementColor, isTr),
 
-            // Content
-            SliverToBoxAdapter(
-              child: FadeTransition(
-                opacity: _fadeAnimation,
-                child: SlideTransition(
-                  position: _slideAnimation,
-                  child: ScaleTransition(
-                    scale: _scaleAnimation,
-                    child: Padding(
+                    // Content
+                    Padding(
                       padding: const EdgeInsets.all(20),
                       child: Column(
                         children: [
@@ -189,144 +201,276 @@ class _ElementDetailViewState extends State<ElementDetailView>
                           _buildTabNavigation(context, elementColor),
                           const SizedBox(height: 20),
 
-                          // Tab Content - Integrated into main scroll
+                          // Tab Content
                           _buildTabContent(context, elementColor, isTr),
 
-                          const SizedBox(height: 100), // Bottom padding for FAB
+                          const SizedBox(height: 100), // Bottom padding
                         ],
                       ),
                     ),
-                  ),
+                  ],
                 ),
               ),
             ),
-          ],
+          ),
         ),
-
-        // Quiz functionality removed
       ),
+    );
+  }
+
+  AppBar _buildAppBar(BuildContext context, Color elementColor, bool isTr) {
+    return AppBar(
+      backgroundColor: elementColor,
+      leading: const ModernBackButton(),
+      actions: _buildActionButtons(elementColor),
+      systemOverlayStyle: SystemUiOverlayStyle.light,
     );
   }
 
   Widget _buildHeroHeader(BuildContext context, Color elementColor, bool isTr) {
     return Container(
+      height: 180,
+      margin: const EdgeInsets.all(20),
       decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
         gradient: LinearGradient(
+          colors: [
+            elementColor.withValues(alpha: 0.4),
+            elementColor.withValues(alpha: 0.3),
+            elementColor.withValues(alpha: 0.2),
+          ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            elementColor,
-            elementColor.withValues(alpha: 0.8),
-            elementColor.withValues(alpha: 0.6),
-          ],
-          stops: const [0.0, 0.7, 1.0],
+          stops: const [0.0, 0.5, 1.0],
         ),
-      ),
-      child: Stack(
-        children: [
-          // Animated background particles
-          Positioned.fill(
-            child: CustomPaint(
-              painter: ElementParticlesPainter(elementColor),
-            ),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.2),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: elementColor.withValues(alpha: 0.4),
+            blurRadius: 30,
+            offset: const Offset(0, 15),
           ),
-
-          // Main content
-          Positioned.fill(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 60, 20, 20),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  // Element symbol and number
-                  Row(
-                    children: [
-                      // Element number
-                      Container(
-                        width: 80,
-                        height: 80,
-                        decoration: BoxDecoration(
-                          color: AppColors.white.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: AppColors.white.withValues(alpha: 0.3),
-                            width: 2,
-                          ),
-                        ),
-                        child: Center(
-                          child: Text(
-                            widget.element.number?.toString() ?? '',
-                            style: context.textTheme.headlineLarge?.copyWith(
-                              color: AppColors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 28,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 20),
-
-                      // Element symbol and name
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              widget.element.symbol ?? '',
-                              style: context.textTheme.displayMedium?.copyWith(
-                                color: AppColors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 48,
-                                height: 1.0,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              isTr
-                                  ? widget.element.trName ?? ''
-                                  : widget.element.enName ?? '',
-                              style: context.textTheme.headlineSmall?.copyWith(
-                                color: AppColors.white.withValues(alpha: 0.9),
-                                fontWeight: FontWeight.w500,
-                                fontSize: 20,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  // Category badge
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: AppColors.white.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: AppColors.white.withValues(alpha: 0.3),
-                        width: 1,
-                      ),
-                    ),
-                    child: Text(
-                      isTr
-                          ? widget.element.trCategory?.toUpperCase() ?? ''
-                          : widget.element.enCategory?.toUpperCase() ?? '',
-                      style: context.textTheme.titleMedium?.copyWith(
-                        color: AppColors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+          BoxShadow(
+            color: elementColor.withValues(alpha: 0.2),
+            blurRadius: 50,
+            offset: const Offset(0, 25),
           ),
         ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: Stack(
+          children: [
+            // Background Pattern
+            Positioned.fill(
+              child: CustomPaint(
+                painter: _ElementPatternPainter(
+                  color: Colors.white.withValues(alpha: 0.15),
+                ),
+              ),
+            ),
+
+            // Decorative Elements
+            Positioned(
+              right: -30,
+              top: -30,
+              child: Container(
+                width: 120,
+                height: 120,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white.withValues(alpha: 0.1),
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: -20,
+              left: -20,
+              child: Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white.withValues(alpha: 0.08),
+                ),
+              ),
+            ),
+
+            // Main content
+            Positioned.fill(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Top row - Element number and symbol
+                    Row(
+                      children: [
+                        // Element number with modern design
+                        Container(
+                          width: 60,
+                          height: 60,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                AppColors.white.withValues(alpha: 0.25),
+                                AppColors.white.withValues(alpha: 0.15),
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(18),
+                            border: Border.all(
+                              color: AppColors.white.withValues(alpha: 0.4),
+                              width: 1.5,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.white.withValues(alpha: 0.2),
+                                blurRadius: 12,
+                                offset: const Offset(0, 6),
+                              ),
+                            ],
+                          ),
+                          child: Center(
+                            child: Text(
+                              widget.element.number?.toString() ?? '',
+                              style: context.textTheme.headlineMedium?.copyWith(
+                                color: AppColors.white,
+                                fontWeight: FontWeight.w900,
+                                fontSize: 20,
+                                letterSpacing: -0.5,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 20),
+
+                        // Element symbol with enhanced styling
+                        Expanded(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 12,
+                            ),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  AppColors.white.withValues(alpha: 0.2),
+                                  AppColors.white.withValues(alpha: 0.1),
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: AppColors.white.withValues(alpha: 0.3),
+                                width: 1,
+                              ),
+                            ),
+                            child: Text(
+                              widget.element.symbol ?? '',
+                              style: context.textTheme.displayLarge?.copyWith(
+                                color: AppColors.white,
+                                fontWeight: FontWeight.w900,
+                                fontSize: 32,
+                                height: 1.0,
+                                letterSpacing: -1,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    // Bottom row - Element name and category
+                    Row(
+                      children: [
+                        // Element name
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'ELEMENT',
+                                style: context.textTheme.labelSmall?.copyWith(
+                                  color: AppColors.white.withValues(alpha: 0.7),
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 10,
+                                  letterSpacing: 1.5,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                isTr
+                                    ? widget.element.trName ?? ''
+                                    : widget.element.enName ?? '',
+                                style:
+                                    context.textTheme.headlineSmall?.copyWith(
+                                  color: AppColors.white,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 18,
+                                  letterSpacing: 0.5,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+
+                        // Category badge - now takes more space
+                        Expanded(
+                          flex: 2,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 12,
+                            ),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  AppColors.white.withValues(alpha: 0.25),
+                                  AppColors.white.withValues(alpha: 0.15),
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: AppColors.white.withValues(alpha: 0.4),
+                                width: 1,
+                              ),
+                            ),
+                            child: Center(
+                              child: Text(
+                                _getCategoryText(isTr),
+                                style: context.textTheme.titleSmall?.copyWith(
+                                  color: AppColors.white,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 12,
+                                  letterSpacing: 0.3,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -371,27 +515,6 @@ class _ElementDetailViewState extends State<ElementDetailView>
             ),
           );
         },
-      ),
-      Container(
-        margin: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: AppColors.white.withValues(alpha: 0.2),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: IconButton(
-          icon: const Icon(Icons.share, color: AppColors.white),
-          onPressed: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('${widget.element.symbol} paylaşıldı!'),
-                backgroundColor: elementColor,
-                behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
-              ),
-            );
-          },
-        ),
       ),
     ];
   }
@@ -913,4 +1036,67 @@ class _ElementDetailViewState extends State<ElementDetailView>
       ),
     );
   }
+}
+
+class _ElementPatternPainter extends CustomPainter {
+  final Color color;
+
+  _ElementPatternPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+
+    // Draw atomic structure pattern with larger circles
+    for (int i = 0; i < 4; i++) {
+      for (int j = 0; j < 4; j++) {
+        final x = (size.width / 5) * (i + 1);
+        final y = (size.height / 5) * (j + 1);
+
+        canvas.drawCircle(
+          Offset(x, y),
+          3,
+          paint,
+        );
+      }
+    }
+
+    // Draw connecting lines with thicker strokes
+    paint.strokeWidth = 1.0;
+    paint.style = PaintingStyle.stroke;
+
+    for (int i = 0; i < 3; i++) {
+      for (int j = 0; j < 4; j++) {
+        final x1 = (size.width / 5) * (i + 1);
+        final x2 = (size.width / 5) * (i + 2);
+        final y = (size.height / 5) * (j + 1);
+
+        canvas.drawLine(
+          Offset(x1, y),
+          Offset(x2, y),
+          paint,
+        );
+      }
+    }
+
+    // Draw vertical connecting lines
+    for (int i = 0; i < 4; i++) {
+      for (int j = 0; j < 3; j++) {
+        final x = (size.width / 5) * (i + 1);
+        final y1 = (size.height / 5) * (j + 1);
+        final y2 = (size.height / 5) * (j + 2);
+
+        canvas.drawLine(
+          Offset(x, y1),
+          Offset(x, y2),
+          paint,
+        );
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
