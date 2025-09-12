@@ -75,13 +75,12 @@ class _ElementsListViewState extends State<ElementsListView>
         duration: const Duration(milliseconds: 150),
         vsync: this,
       );
-      _cardAnimations[index] = Tween<double>(
-        begin: 1.0,
-        end: 0.95,
-      ).animate(CurvedAnimation(
-        parent: _cardControllers[index]!,
-        curve: Curves.easeInOut,
-      ));
+      _cardAnimations[index] = Tween<double>(begin: 1.0, end: 0.95).animate(
+        CurvedAnimation(
+          parent: _cardControllers[index]!,
+          curve: Curves.easeInOut,
+        ),
+      );
     }
     return _cardControllers[index]!;
   }
@@ -189,7 +188,20 @@ class _ElementsListViewState extends State<ElementsListView>
 
   AppBar _buildAppBar(BuildContext context) {
     return AppBar(
-      backgroundColor: AppColors.darkBlue,
+      backgroundColor: Colors.transparent,
+      flexibleSpace: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppColors.darkBlue,
+              AppColors.steelBlue.withValues(alpha: 0.95),
+              AppColors.purple.withValues(alpha: 0.9),
+            ],
+          ),
+        ),
+      ),
       leading: const ModernBackButton(),
       title: Container(
         height: 40,
@@ -390,11 +402,7 @@ class _ElementsListViewState extends State<ElementsListView>
                 color: AppColors.white.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Icon(
-                icon,
-                color: AppColors.white,
-                size: 20,
-              ),
+              child: Icon(icon, color: AppColors.white, size: 20),
             ),
             const SizedBox(width: 16),
             Text(
@@ -415,8 +423,9 @@ class _ElementsListViewState extends State<ElementsListView>
     setState(() {
       switch (criteria) {
         case 'number':
-          _filteredElements
-              .sort((a, b) => (a.number ?? 0).compareTo(b.number ?? 0));
+          _filteredElements.sort(
+            (a, b) => (a.number ?? 0).compareTo(b.number ?? 0),
+          );
           break;
         case 'name':
           _filteredElements.sort((a, b) {
@@ -485,7 +494,9 @@ class _ElementsListViewState extends State<ElementsListView>
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            'Liste',
+                            context.read<LocalizationProvider>().isTr
+                                ? 'Liste'
+                                : 'List',
                             style: TextStyle(
                               color: !_isGridView
                                   ? AppColors.darkBlue
@@ -530,7 +541,9 @@ class _ElementsListViewState extends State<ElementsListView>
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            'Grid',
+                            context.read<LocalizationProvider>().isTr
+                                ? 'Tablo'
+                                : 'Table',
                             style: TextStyle(
                               color: _isGridView
                                   ? AppColors.darkBlue
@@ -590,9 +603,7 @@ class _ElementsListViewState extends State<ElementsListView>
               children: [
                 // Background pattern
                 Positioned.fill(
-                  child: CustomPaint(
-                    painter: EmptyStatePatternPainter(),
-                  ),
+                  child: CustomPaint(painter: EmptyStatePatternPainter()),
                 ),
                 // Lottie animation
                 Positioned.fill(
@@ -656,223 +667,225 @@ class _ElementsListViewState extends State<ElementsListView>
       animation: cardAnimation,
       builder: (context, child) {
         return Transform.scale(
-            scale: cardAnimation.value,
-            child: Container(
-              margin: const EdgeInsets.only(bottom: 16),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(24),
-                gradient: LinearGradient(
-                  colors: [
-                    elementColor.withValues(alpha: 0.9),
-                    elementColor.withValues(alpha: 0.7),
-                    elementColor.withValues(alpha: 0.5),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  stops: const [0.0, 0.6, 1.0],
-                ),
-                border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  width: 1,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: shadowColor.withValues(alpha: 0.4),
-                    blurRadius: 20,
-                    offset: const Offset(0, 10),
-                    spreadRadius: 0,
-                  ),
-                  BoxShadow(
-                    color: shadowColor.withValues(alpha: 0.2),
-                    blurRadius: 40,
-                    offset: const Offset(0, 20),
-                    spreadRadius: 0,
-                  ),
+          scale: cardAnimation.value,
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 16),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(24),
+              gradient: LinearGradient(
+                colors: [
+                  elementColor.withValues(alpha: 0.9),
+                  elementColor.withValues(alpha: 0.7),
+                  elementColor.withValues(alpha: 0.5),
                 ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                stops: const [0.0, 0.6, 1.0],
               ),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.2),
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: shadowColor.withValues(alpha: 0.4),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                  spreadRadius: 0,
+                ),
+                BoxShadow(
+                  color: shadowColor.withValues(alpha: 0.2),
+                  blurRadius: 40,
+                  offset: const Offset(0, 20),
+                  spreadRadius: 0,
+                ),
+              ],
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(24),
+                onTapDown: (_) => cardController.forward(),
+                onTapUp: (_) {
+                  cardController.reverse();
+                  // Add haptic feedback
+                  HapticFeedback.lightImpact();
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ElementDetailView(element: element),
+                    ),
+                  );
+                },
+                onTapCancel: () => cardController.reverse(),
+                child: ClipRRect(
                   borderRadius: BorderRadius.circular(24),
-                  onTapDown: (_) => cardController.forward(),
-                  onTapUp: (_) {
-                    cardController.reverse();
-                    // Add haptic feedback
-                    HapticFeedback.lightImpact();
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            ElementDetailView(element: element),
+                  child: Stack(
+                    children: [
+                      // Background Pattern
+                      Positioned.fill(
+                        child: CustomPaint(
+                          painter: _patternService.getRandomPatternPainter(
+                            seed: element.number ?? index,
+                            color: Colors.white,
+                            opacity: 0.1,
+                          ),
+                        ),
                       ),
-                    );
-                  },
-                  onTapCancel: () => cardController.reverse(),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(24),
-                    child: Stack(
-                      children: [
-                        // Background Pattern
-                        Positioned.fill(
-                          child: CustomPaint(
-                            painter: _patternService.getRandomPatternPainter(
-                              seed: element.number ?? index,
-                              color: Colors.white,
-                              opacity: 0.1,
-                            ),
+
+                      // Decorative Elements
+                      Positioned(
+                        top: -20,
+                        right: -20,
+                        child: Container(
+                          width: 80,
+                          height: 80,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.1),
+                            shape: BoxShape.circle,
                           ),
                         ),
+                      ),
 
-                        // Decorative Elements
-                        Positioned(
-                          top: -20,
-                          right: -20,
-                          child: Container(
-                            width: 80,
-                            height: 80,
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.1),
-                              shape: BoxShape.circle,
-                            ),
+                      Positioned(
+                        bottom: -10,
+                        left: -10,
+                        child: Container(
+                          width: 60,
+                          height: 60,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.05),
+                            shape: BoxShape.circle,
                           ),
                         ),
+                      ),
 
-                        Positioned(
-                          bottom: -10,
-                          left: -10,
-                          child: Container(
-                            width: 60,
-                            height: 60,
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.05),
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                        ),
-
-                        // Main Content
-                        Padding(
-                          padding: const EdgeInsets.all(20),
-                          child: Row(
-                            children: [
-                              // Element number
-                              Container(
-                                width: 60,
-                                height: 60,
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.25),
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(
-                                    color: Colors.white.withValues(alpha: 0.3),
-                                    width: 1,
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color:
-                                          Colors.black.withValues(alpha: 0.1),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 4),
-                                    ),
-                                  ],
+                      // Main Content
+                      Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Row(
+                          children: [
+                            // Element number
+                            Container(
+                              width: 60,
+                              height: 60,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.25),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.3),
+                                  width: 1,
                                 ),
-                                child: Center(
-                                  child: Text(
-                                    element.number?.toString() ?? '',
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.1),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: Center(
+                                child: Text(
+                                  element.number?.toString() ?? '',
+                                  style: const TextStyle(
+                                    color: AppColors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 20,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 20),
+
+                            // Element info with improved typography
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // Element symbol with better spacing
+                                  Text(
+                                    element.symbol ?? '',
                                     style: const TextStyle(
                                       color: AppColors.white,
                                       fontWeight: FontWeight.bold,
-                                      fontSize: 20,
+                                      fontSize: 32,
+                                      height: 1.1,
                                     ),
                                   ),
-                                ),
-                              ),
-                              const SizedBox(width: 20),
+                                  const SizedBox(height: 6),
 
-                              // Element info with improved typography
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    // Element symbol with better spacing
-                                    Text(
-                                      element.symbol ?? '',
-                                      style: const TextStyle(
-                                        color: AppColors.white,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 32,
-                                        height: 1.1,
+                                  // Element name with better contrast
+                                  Text(
+                                    isTr
+                                        ? element.trName ?? ''
+                                        : element.enName ?? '',
+                                    style: TextStyle(
+                                      color: AppColors.white.withValues(
+                                        alpha: 0.95,
                                       ),
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 16,
+                                      height: 1.2,
                                     ),
-                                    const SizedBox(height: 6),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 6),
 
-                                    // Element name with better contrast
-                                    Text(
-                                      isTr
-                                          ? element.trName ?? ''
-                                          : element.enName ?? '',
+                                  // Atomic weight with improved styling
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withValues(
+                                        alpha: 0.15,
+                                      ),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Text(
+                                      _formatWeight(element.weight),
                                       style: TextStyle(
-                                        color: AppColors.white
-                                            .withValues(alpha: 0.95),
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 16,
-                                        height: 1.2,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    const SizedBox(height: 6),
-
-                                    // Atomic weight with improved styling
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 4,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: Colors.white
-                                            .withValues(alpha: 0.15),
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: Text(
-                                        _formatWeight(element.weight),
-                                        style: TextStyle(
-                                          color: AppColors.white
-                                              .withValues(alpha: 0.8),
-                                          fontWeight: FontWeight.w500,
-                                          fontSize: 13,
+                                        color: AppColors.white.withValues(
+                                          alpha: 0.8,
                                         ),
+                                        fontWeight: FontWeight.w500,
+                                        fontSize: 13,
                                       ),
                                     ),
-                                  ],
-                                ),
-                              ),
-
-                              // Enhanced arrow icon with better visual feedback
-                              Container(
-                                padding: const EdgeInsets.all(10),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.2),
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: Colors.white.withValues(alpha: 0.1),
-                                    width: 1,
                                   ),
-                                ),
-                                child: Icon(
-                                  Icons.arrow_forward_ios_rounded,
-                                  color: AppColors.white,
-                                  size: 16,
+                                ],
+                              ),
+                            ),
+
+                            // Enhanced arrow icon with better visual feedback
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.1),
+                                  width: 1,
                                 ),
                               ),
-                            ],
-                          ),
+                              child: Icon(
+                                Icons.arrow_forward_ios_rounded,
+                                color: AppColors.white,
+                                size: 16,
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               ),
-            ));
+            ),
+          ),
+        );
       },
     );
   }
@@ -928,204 +941,205 @@ class _ElementsListViewState extends State<ElementsListView>
       animation: cardAnimation,
       builder: (context, child) {
         return Transform.scale(
-            scale: cardAnimation.value,
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(24),
-                gradient: LinearGradient(
-                  colors: [
-                    elementColor.withValues(alpha: 0.9),
-                    elementColor.withValues(alpha: 0.7),
-                    elementColor.withValues(alpha: 0.5),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  stops: const [0.0, 0.6, 1.0],
-                ),
-                border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  width: 1,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: shadowColor.withValues(alpha: 0.4),
-                    blurRadius: 20,
-                    offset: const Offset(0, 10),
-                    spreadRadius: 0,
-                  ),
-                  BoxShadow(
-                    color: shadowColor.withValues(alpha: 0.2),
-                    blurRadius: 40,
-                    offset: const Offset(0, 20),
-                    spreadRadius: 0,
-                  ),
+          scale: cardAnimation.value,
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(24),
+              gradient: LinearGradient(
+                colors: [
+                  elementColor.withValues(alpha: 0.9),
+                  elementColor.withValues(alpha: 0.7),
+                  elementColor.withValues(alpha: 0.5),
                 ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                stops: const [0.0, 0.6, 1.0],
               ),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.2),
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: shadowColor.withValues(alpha: 0.4),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                  spreadRadius: 0,
+                ),
+                BoxShadow(
+                  color: shadowColor.withValues(alpha: 0.2),
+                  blurRadius: 40,
+                  offset: const Offset(0, 20),
+                  spreadRadius: 0,
+                ),
+              ],
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(24),
+                onTapDown: (_) => cardController.forward(),
+                onTapUp: (_) {
+                  cardController.reverse();
+                  // Add haptic feedback
+                  HapticFeedback.lightImpact();
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ElementDetailView(element: element),
+                    ),
+                  );
+                },
+                onTapCancel: () => cardController.reverse(),
+                child: ClipRRect(
                   borderRadius: BorderRadius.circular(24),
-                  onTapDown: (_) => cardController.forward(),
-                  onTapUp: (_) {
-                    cardController.reverse();
-                    // Add haptic feedback
-                    HapticFeedback.lightImpact();
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            ElementDetailView(element: element),
+                  child: Stack(
+                    children: [
+                      // Background Pattern
+                      Positioned.fill(
+                        child: CustomPaint(
+                          painter: _patternService.getRandomPatternPainter(
+                            seed: element.number ?? index,
+                            color: Colors.white,
+                            opacity: 0.1,
+                          ),
+                        ),
                       ),
-                    );
-                  },
-                  onTapCancel: () => cardController.reverse(),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(24),
-                    child: Stack(
-                      children: [
-                        // Background Pattern
-                        Positioned.fill(
-                          child: CustomPaint(
-                            painter: _patternService.getRandomPatternPainter(
-                              seed: element.number ?? index,
-                              color: Colors.white,
-                              opacity: 0.1,
-                            ),
+
+                      // Decorative Elements
+                      Positioned(
+                        top: -15,
+                        right: -15,
+                        child: Container(
+                          width: 50,
+                          height: 50,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.1),
+                            shape: BoxShape.circle,
                           ),
                         ),
+                      ),
 
-                        // Decorative Elements
-                        Positioned(
-                          top: -15,
-                          right: -15,
-                          child: Container(
-                            width: 50,
-                            height: 50,
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.1),
-                              shape: BoxShape.circle,
-                            ),
+                      Positioned(
+                        bottom: -8,
+                        left: -8,
+                        child: Container(
+                          width: 35,
+                          height: 35,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.05),
+                            shape: BoxShape.circle,
                           ),
                         ),
+                      ),
 
-                        Positioned(
-                          bottom: -8,
-                          left: -8,
-                          child: Container(
-                            width: 35,
-                            height: 35,
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.05),
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                        ),
-
-                        // Main Content
-                        Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              // Element number
-                              Center(
-                                child: Container(
-                                  width: 40,
-                                  height: 40,
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.25),
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(
-                                      color:
-                                          Colors.white.withValues(alpha: 0.3),
-                                      width: 1,
-                                    ),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color:
-                                            Colors.black.withValues(alpha: 0.1),
-                                        blurRadius: 8,
-                                        offset: const Offset(0, 4),
+                      // Main Content
+                      Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            // Element number
+                            Center(
+                              child: Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.25),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: Colors.white.withValues(alpha: 0.3),
+                                    width: 1,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(
+                                        alpha: 0.1,
                                       ),
-                                    ],
-                                  ),
-                                  child: Center(
-                                    child: Text(
-                                      element.number?.toString() ?? '',
-                                      style: const TextStyle(
-                                        color: AppColors.white,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16,
-                                      ),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 4),
                                     ),
-                                  ),
+                                  ],
                                 ),
-                              ),
-                              const SizedBox(height: 12),
-
-                              // Element symbol
-                              Center(
-                                child: Text(
-                                  element.symbol ?? '',
-                                  style: const TextStyle(
-                                    color: AppColors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 28,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-
-                              // Element name
-                              Center(
-                                child: Text(
-                                  isTr
-                                      ? element.trName ?? ''
-                                      : element.enName ?? '',
-                                  style: TextStyle(
-                                    color:
-                                        AppColors.white.withValues(alpha: 0.9),
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 14,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-
-                              // Element weight
-                              Center(
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 8, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.2),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
+                                child: Center(
                                   child: Text(
-                                    _formatWeight(element.weight),
+                                    element.number?.toString() ?? '',
                                     style: const TextStyle(
                                       color: AppColors.white,
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
                                     ),
-                                    textAlign: TextAlign.center,
                                   ),
                                 ),
                               ),
-                            ],
-                          ),
+                            ),
+                            const SizedBox(height: 12),
+
+                            // Element symbol
+                            Center(
+                              child: Text(
+                                element.symbol ?? '',
+                                style: const TextStyle(
+                                  color: AppColors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 28,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+
+                            // Element name
+                            Center(
+                              child: Text(
+                                isTr
+                                    ? element.trName ?? ''
+                                    : element.enName ?? '',
+                                style: TextStyle(
+                                  color: AppColors.white.withValues(alpha: 0.9),
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                ),
+                                textAlign: TextAlign.center,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+
+                            // Element weight
+                            Center(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.2),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  _formatWeight(element.weight),
+                                  style: const TextStyle(
+                                    color: AppColors.white,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 12,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               ),
-            ));
+            ),
+          ),
+        );
       },
     );
   }
@@ -1169,9 +1183,7 @@ class _ElementsListViewState extends State<ElementsListView>
             HapticFeedback.lightImpact();
             Navigator.push(
               context,
-              MaterialPageRoute(
-                builder: (context) => const ModernQuizHome(),
-              ),
+              MaterialPageRoute(builder: (context) => const ModernQuizHome()),
             );
           },
           child: Center(
@@ -1263,11 +1275,7 @@ class EmptyStatePatternPainter extends CustomPainter {
       final y = (i * 60) % size.height;
 
       // Draw outer glow
-      canvas.drawCircle(
-        Offset(x.toDouble(), y.toDouble()),
-        8,
-        decorPaint,
-      );
+      canvas.drawCircle(Offset(x.toDouble(), y.toDouble()), 8, decorPaint);
 
       // Draw inner dot
       canvas.drawCircle(

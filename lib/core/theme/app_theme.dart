@@ -2,7 +2,7 @@ import 'package:elements_app/product/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  ThemeData get theme {
+  static ThemeData get theme {
     return ThemeData(
       brightness: Brightness.dark,
       appBarTheme: appBarTheme(),
@@ -12,20 +12,18 @@ class AppTheme {
     );
   }
 
-  FloatingActionButtonThemeData floatingActionButtonTheme() {
+  static FloatingActionButtonThemeData floatingActionButtonTheme() {
     return const FloatingActionButtonThemeData(
       backgroundColor: AppColors.purple,
       elevation: 5,
     );
   }
 
-  IconThemeData iconTheme() {
-    return const IconThemeData(
-      size: 30,
-    );
+  static IconThemeData iconTheme() {
+    return const IconThemeData(size: 30);
   }
 
-  AppBarTheme appBarTheme() {
+  static AppBarTheme appBarTheme() {
     return const AppBarTheme(
       elevation: 0,
       backgroundColor: AppColors.background,

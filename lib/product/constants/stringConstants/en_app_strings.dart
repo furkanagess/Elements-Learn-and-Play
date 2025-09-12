@@ -5,7 +5,7 @@ final class EnAppStrings {
   const EnAppStrings._();
 
   // General
-  static const String appName = 'Elements ~ Learn & Quiz';
+  static const String appName = 'Periodic Table';
   static const String errorMsg = 'An error occured';
   static const String space = '';
 

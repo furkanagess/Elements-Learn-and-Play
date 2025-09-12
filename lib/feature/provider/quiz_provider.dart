@@ -1,15 +1,66 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:elements_app/feature/model/quiz/quiz_models.dart';
 import 'package:elements_app/feature/service/quiz/quiz_service.dart';
 import 'package:elements_app/product/constants/api_types.dart';
+import 'package:elements_app/product/widget/ads/interstitial_ad_widget.dart';
 
 /// Provider class for managing quiz state and operations
 class QuizProvider extends ChangeNotifier {
   final QuizService _quizService = QuizService();
+  final String _storageKey = 'quiz_statistics';
+  late SharedPreferences _prefs;
 
   QuizSession? _currentSession;
   Map<QuizType, QuizStatistics> _statistics = {};
+
+  QuizProvider() {
+    _initPrefs();
+  }
+
+  /// Initialize SharedPreferences and load cached statistics
+  Future<void> _initPrefs() async {
+    _prefs = await SharedPreferences.getInstance();
+    _loadStatistics();
+  }
+
+  /// Load statistics from SharedPreferences cache
+  void _loadStatistics() {
+    final String? statisticsJson = _prefs.getString(_storageKey);
+    if (statisticsJson != null) {
+      try {
+        final Map<String, dynamic> decoded = jsonDecode(statisticsJson);
+        _statistics = decoded.map((key, value) {
+          final quizType = QuizType.values.firstWhere(
+            (type) => type.name == key,
+            orElse: () => QuizType.symbol,
+          );
+          return MapEntry(quizType, QuizStatistics.fromJson(value));
+        });
+        debugPrint('📊 Loaded cached quiz statistics');
+      } catch (e) {
+        debugPrint('❌ Error loading cached statistics: $e');
+        _statistics = {};
+      }
+    }
+  }
+
+  /// Save statistics to SharedPreferences cache
+  Future<void> _saveStatistics() async {
+    try {
+      final Map<String, dynamic> statisticsMap = _statistics.map(
+        (key, value) => MapEntry(key.name, value.toJson()),
+      );
+      final String encoded = jsonEncode(statisticsMap);
+      await _prefs.setString(_storageKey, encoded);
+      debugPrint('💾 Saved quiz statistics to cache');
+    } catch (e) {
+      debugPrint('❌ Error saving statistics: $e');
+    }
+  }
+
   // Getters
   QuizSession? get currentSession => _currentSession;
   Map<QuizType, QuizStatistics> get statistics => _statistics;
@@ -23,6 +74,8 @@ class QuizProvider extends ChangeNotifier {
   /// Starts a new quiz session
   Future<void> startQuiz(QuizType type) async {
     try {
+      // Ensure we start completely fresh
+      _currentSession = null;
       _updateSessionState(QuizState.loading);
 
       final apiUrl = _getApiUrlForQuizType(type);
@@ -37,13 +90,43 @@ class QuizProvider extends ChangeNotifier {
       );
 
       _updateSessionState(QuizState.loaded);
-      debugPrint('✅ Quiz started: ${type.turkishTitle}');
+      debugPrint('✅ New quiz started from scratch: ${type.turkishTitle}');
+      debugPrint('📊 Questions loaded: ${questions.length}');
     } catch (e) {
       _updateSessionState(QuizState.error);
-      _currentSession = _currentSession?.copyWith(
-        errorMessage: e.toString(),
-      );
+      _currentSession = _currentSession?.copyWith(errorMessage: e.toString());
       debugPrint('❌ Error starting quiz: $e');
+    }
+  }
+
+  /// Starts a new quiz session with specific retry count
+  Future<void> _startQuizWithRetryCount(QuizType type, int retryCount) async {
+    try {
+      // Ensure we start completely fresh
+      _currentSession = null;
+      _updateSessionState(QuizState.loading);
+
+      final apiUrl = _getApiUrlForQuizType(type);
+      final questions = await _quizService.generateQuestions(
+        type: type,
+        apiUrl: apiUrl,
+      );
+
+      _currentSession = _quizService.createQuizSession(
+        type: type,
+        questions: questions,
+      );
+
+      // Update retry count to the specified value
+      _currentSession = _currentSession!.copyWith(retryCount: retryCount);
+
+      _updateSessionState(QuizState.loaded);
+      debugPrint('✅ Quiz restarted with retry count: $retryCount');
+      debugPrint('📊 Questions loaded: ${questions.length}');
+    } catch (e) {
+      _updateSessionState(QuizState.error);
+      _currentSession = _currentSession?.copyWith(errorMessage: e.toString());
+      debugPrint('❌ Error restarting quiz: $e');
     }
   }
 
@@ -53,8 +136,10 @@ class QuizProvider extends ChangeNotifier {
 
     _updateSessionState(QuizState.answering);
 
-    final isCorrect =
-        _quizService.validateAnswer(currentQuestion!, selectedAnswer);
+    final isCorrect = _quizService.validateAnswer(
+      currentQuestion!,
+      selectedAnswer,
+    );
 
     _currentSession = _currentSession!.copyWith(
       selectedAnswer: selectedAnswer,
@@ -72,11 +157,12 @@ class QuizProvider extends ChangeNotifier {
     } else {
       _updateSessionState(QuizState.incorrect);
       debugPrint(
-          '❌ Wrong answer: $selectedAnswer (correct: ${currentQuestion!.correctAnswer})');
+        '❌ Wrong answer: $selectedAnswer (correct: ${currentQuestion!.correctAnswer})',
+      );
     }
 
-    // Auto-advance to next question after a delay
-    Timer(const Duration(seconds: 2), () {
+    // Auto-advance to next question after a shorter delay for better UX
+    Timer(const Duration(milliseconds: 1200), () {
       _moveToNextQuestion();
     });
   }
@@ -94,7 +180,9 @@ class QuizProvider extends ChangeNotifier {
     // Move to next question
     final nextIndex = _currentSession!.currentQuestionIndex + 1;
 
+    // Check if all questions are answered (quiz completed)
     if (nextIndex >= _currentSession!.questions.length) {
+      debugPrint('🏁 All questions answered! Quiz completed.');
       _endQuiz(QuizState.completed);
       return;
     }
@@ -105,6 +193,9 @@ class QuizProvider extends ChangeNotifier {
     );
 
     _updateSessionState(QuizState.loaded);
+    debugPrint(
+      '➡️ Moved to question ${nextIndex + 1}/${_currentSession!.questions.length}',
+    );
   }
 
   /// Ends the current quiz session
@@ -120,10 +211,28 @@ class QuizProvider extends ChangeNotifier {
 
     debugPrint('🏁 Quiz ended: ${endState.name}');
     debugPrint(
-        '📊 Score: ${_currentSession!.correctAnswers}/${_currentSession!.questions.length}');
+      '📊 Score: ${_currentSession!.correctAnswers}/${_currentSession!.questions.length}',
+    );
+    debugPrint(
+      '📊 Questions answered: ${_currentSession!.correctAnswers + _currentSession!.wrongAnswers}',
+    );
+    debugPrint(
+      '📊 Current question index: ${_currentSession!.currentQuestionIndex}',
+    );
+    debugPrint('📊 Total questions: ${_currentSession!.questions.length}');
+    debugPrint('📊 Is completed: ${_currentSession!.isCompleted}');
+
+    // Pre-load next interstitial ad for better user experience
+    if (endState == QuizState.completed) {
+      debugPrint('🎯 Pre-loading next interstitial ad for quiz completion');
+      InterstitialAdWidget.loadInterstitialAd();
+    }
+
+    // Force notify listeners to trigger UI update
+    notifyListeners();
   }
 
-  /// Retries the current question
+  /// Retries the current question (legacy method - now restarts entire quiz)
   void retryQuestion() {
     if (_currentSession == null || !canRetry) return;
 
@@ -134,7 +243,24 @@ class QuizProvider extends ChangeNotifier {
 
     _updateSessionState(QuizState.loaded);
     debugPrint(
-        '🔄 Question retried. Retries left: ${_currentSession!.retryCount}');
+      '🔄 Question retried. Retries left: ${_currentSession!.retryCount}',
+    );
+  }
+
+  /// Restarts the entire quiz from the beginning
+  void restartQuizFromBeginning() {
+    if (_currentSession == null) return;
+
+    // Store quiz type and retry count before resetting
+    final quizType = _currentSession!.type;
+    final newRetryCount = _currentSession!.retryCount - 1;
+
+    debugPrint(
+      '🔄 Quiz restarted from beginning. Retries left: $newRetryCount',
+    );
+
+    // Start a new quiz with the same type and updated retry count
+    _startQuizWithRetryCount(quizType, newRetryCount);
   }
 
   /// Resets the current quiz session
@@ -142,7 +268,7 @@ class QuizProvider extends ChangeNotifier {
     _currentSession = null;
     notifyListeners();
 
-    debugPrint('🔄 Quiz reset');
+    debugPrint('🔄 Quiz reset - Starting fresh');
   }
 
   /// Updates session state and notifies listeners
@@ -183,9 +309,11 @@ class QuizProvider extends ChangeNotifier {
       totalWrongAnswers:
           currentStats.totalWrongAnswers + _currentSession!.wrongAnswers,
       totalTimePlayed: currentStats.totalTimePlayed + _currentSession!.duration,
-      bestScore:
-          score > currentStats.bestScore ? score : currentStats.bestScore,
-      bestTime: _currentSession!.duration < currentStats.bestTime ||
+      bestScore: score > currentStats.bestScore
+          ? score
+          : currentStats.bestScore,
+      bestTime:
+          _currentSession!.duration < currentStats.bestTime ||
               currentStats.bestTime == Duration.zero
           ? _currentSession!.duration
           : currentStats.bestTime,
@@ -195,6 +323,8 @@ class QuizProvider extends ChangeNotifier {
           : currentStats.longestStreak,
     );
 
+    // Save to cache after updating
+    _saveStatistics();
     notifyListeners();
   }
 
@@ -205,22 +335,27 @@ class QuizProvider extends ChangeNotifier {
 
   /// Gets total games played across all quiz types
   int getTotalGamesPlayed() {
-    return _statistics.values
-        .fold(0, (sum, stats) => sum + stats.totalGamesPlayed);
+    return _statistics.values.fold(
+      0,
+      (sum, stats) => sum + stats.totalGamesPlayed,
+    );
   }
 
   /// Gets average accuracy across all quiz types
   double getAverageAccuracy() {
     if (_statistics.isEmpty) return 0.0;
-    final accuracies =
-        _statistics.values.map((stats) => stats.accuracy).toList();
+    final accuracies = _statistics.values
+        .map((stats) => stats.accuracy)
+        .toList();
     return accuracies.reduce((a, b) => a + b) / accuracies.length;
   }
 
   /// Gets total streak across all quiz types
   int getTotalStreak() {
-    return _statistics.values
-        .fold(0, (sum, stats) => sum + stats.currentStreak);
+    return _statistics.values.fold(
+      0,
+      (sum, stats) => sum + stats.currentStreak,
+    );
   }
 
   /// Gets best score across all quiz types
@@ -234,9 +369,10 @@ class QuizProvider extends ChangeNotifier {
   /// Clears all statistics
   void clearStatistics() {
     _statistics.clear();
+    _prefs.remove(_storageKey);
     notifyListeners();
 
-    debugPrint('🗑️ Statistics cleared');
+    debugPrint('🗑️ Statistics cleared from memory and cache');
   }
 
   /// Gets formatted time string

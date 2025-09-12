@@ -8,7 +8,11 @@ enum QuizType {
   number('Number Quiz', 'Atom Numara Testi', Icons.numbers, 'Hard');
 
   const QuizType(
-      this.englishTitle, this.turkishTitle, this.icon, this.difficulty);
+    this.englishTitle,
+    this.turkishTitle,
+    this.icon,
+    this.difficulty,
+  );
 
   final String englishTitle;
   final String turkishTitle;
@@ -26,7 +30,7 @@ enum QuizState {
   incorrect,
   completed,
   failed,
-  error
+  error,
 }
 
 /// Model representing a quiz question
@@ -66,8 +70,14 @@ class QuizQuestion extends Equatable {
   }
 
   @override
-  List<Object?> get props =>
-      [id, questionText, correctAnswer, options, type, additionalInfo];
+  List<Object?> get props => [
+    id,
+    questionText,
+    correctAnswer,
+    options,
+    type,
+    additionalInfo,
+  ];
 }
 
 /// Model representing quiz session data
@@ -178,21 +188,21 @@ class QuizSession extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        type,
-        questions,
-        currentQuestionIndex,
-        correctAnswers,
-        wrongAnswers,
-        maxWrongAnswers,
-        retryCount,
-        maxRetries,
-        state,
-        selectedAnswer,
-        startTime,
-        endTime,
-        errorMessage,
-      ];
+    id,
+    type,
+    questions,
+    currentQuestionIndex,
+    correctAnswers,
+    wrongAnswers,
+    maxWrongAnswers,
+    retryCount,
+    maxRetries,
+    state,
+    selectedAnswer,
+    startTime,
+    endTime,
+    errorMessage,
+  ];
 }
 
 /// Model representing quiz statistics
@@ -258,16 +268,49 @@ class QuizStatistics extends Equatable {
     );
   }
 
+  /// Convert QuizStatistics to JSON
+  Map<String, dynamic> toJson() {
+    return {
+      'type': type.name,
+      'totalGamesPlayed': totalGamesPlayed,
+      'totalCorrectAnswers': totalCorrectAnswers,
+      'totalWrongAnswers': totalWrongAnswers,
+      'totalTimePlayed': totalTimePlayed.inMilliseconds,
+      'bestScore': bestScore,
+      'bestTime': bestTime.inMilliseconds,
+      'currentStreak': currentStreak,
+      'longestStreak': longestStreak,
+    };
+  }
+
+  /// Create QuizStatistics from JSON
+  factory QuizStatistics.fromJson(Map<String, dynamic> json) {
+    return QuizStatistics(
+      type: QuizType.values.firstWhere(
+        (type) => type.name == json['type'],
+        orElse: () => QuizType.symbol,
+      ),
+      totalGamesPlayed: json['totalGamesPlayed'] ?? 0,
+      totalCorrectAnswers: json['totalCorrectAnswers'] ?? 0,
+      totalWrongAnswers: json['totalWrongAnswers'] ?? 0,
+      totalTimePlayed: Duration(milliseconds: json['totalTimePlayed'] ?? 0),
+      bestScore: (json['bestScore'] ?? 0.0).toDouble(),
+      bestTime: Duration(milliseconds: json['bestTime'] ?? 0),
+      currentStreak: json['currentStreak'] ?? 0,
+      longestStreak: json['longestStreak'] ?? 0,
+    );
+  }
+
   @override
   List<Object?> get props => [
-        type,
-        totalGamesPlayed,
-        totalCorrectAnswers,
-        totalWrongAnswers,
-        totalTimePlayed,
-        bestScore,
-        bestTime,
-        currentStreak,
-        longestStreak,
-      ];
+    type,
+    totalGamesPlayed,
+    totalCorrectAnswers,
+    totalWrongAnswers,
+    totalTimePlayed,
+    bestScore,
+    bestTime,
+    currentStreak,
+    longestStreak,
+  ];
 }

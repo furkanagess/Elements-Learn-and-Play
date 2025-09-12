@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "893934423884",
+    "project_id": "periodictable-e0d8e",
+    "storage_bucket": "periodictable-e0d8e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:893934423884:android:4dcfef9008a93b900fc9e9",
+        "android_client_info": {
+          "package_name": "com.furkanages.elements"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD18J00ysHbImK-Kis8JKBmFP6dywuKM-0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

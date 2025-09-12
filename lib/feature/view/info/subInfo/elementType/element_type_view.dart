@@ -35,6 +35,7 @@ class _ElementTypeViewState extends State<ElementTypeView>
 
   // Pattern service for background patterns
   final PatternService _patternService = PatternService();
+  int? _pressedCardIndex;
 
   @override
   void initState() {
@@ -114,8 +115,10 @@ class _ElementTypeViewState extends State<ElementTypeView>
             ),
             child: SvgPicture.asset(
               AssetConstants.instance.svgElementGroup,
-              colorFilter:
-                  const ColorFilter.mode(AppColors.white, BlendMode.srcIn),
+              colorFilter: const ColorFilter.mode(
+                AppColors.white,
+                BlendMode.srcIn,
+              ),
               width: 20,
               height: 20,
             ),
@@ -144,7 +147,7 @@ class _ElementTypeViewState extends State<ElementTypeView>
         } else {
           final infos = snapshot.data;
           return ListView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
             itemCount: infos!.length,
             itemBuilder: (context, index) {
               final info = infos[index];
@@ -173,6 +176,16 @@ class _ElementTypeViewState extends State<ElementTypeView>
       child: Material(
         color: Colors.transparent,
         child: InkWell(
+          onTapDown: (_) {
+            setState(() {
+              _pressedCardIndex = index;
+            });
+          },
+          onTapCancel: () {
+            setState(() {
+              _pressedCardIndex = null;
+            });
+          },
           onTap: () {
             HapticFeedback.lightImpact();
             context.read<AdmobProvider>().onRouteChanged();
@@ -182,182 +195,202 @@ class _ElementTypeViewState extends State<ElementTypeView>
                 builder: (context) => InfoDetailView(info: info),
               ),
             );
+            setState(() {
+              _pressedCardIndex = null;
+            });
+          },
+          onTapUp: (_) {
+            setState(() {
+              _pressedCardIndex = null;
+            });
           },
           borderRadius: BorderRadius.circular(20),
-          child: Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              gradient: LinearGradient(
-                colors: [
-                  (info.colors?.toColor() ?? AppColors.darkBlue)
-                      .withValues(alpha: 0.9),
-                  (info.colors?.toColor() ?? AppColors.darkBlue)
-                      .withValues(alpha: 0.7),
-                  (info.colors?.toColor() ?? AppColors.darkBlue)
-                      .withValues(alpha: 0.5),
+          child: AnimatedScale(
+            scale: _pressedCardIndex == index ? 0.97 : 1.0,
+            duration: const Duration(milliseconds: 100),
+            curve: Curves.easeOut,
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                gradient: LinearGradient(
+                  colors: [
+                    (info.colors?.toColor() ?? AppColors.darkBlue).withValues(
+                      alpha: 0.9,
+                    ),
+                    (info.colors?.toColor() ?? AppColors.darkBlue).withValues(
+                      alpha: 0.7,
+                    ),
+                    (info.colors?.toColor() ?? AppColors.darkBlue).withValues(
+                      alpha: 0.5,
+                    ),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  stops: const [0.0, 0.6, 1.0],
+                ),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  width: 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: (info.colors?.toColor() ?? AppColors.darkBlue)
+                        .withValues(alpha: 0.3),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                  ),
+                  BoxShadow(
+                    color: (info.colors?.toColor() ?? AppColors.darkBlue)
+                        .withValues(alpha: 0.2),
+                    blurRadius: 40,
+                    offset: const Offset(0, 20),
+                  ),
                 ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                stops: const [0.0, 0.6, 1.0],
               ),
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.2),
-                width: 1,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: (info.colors?.toColor() ?? AppColors.darkBlue)
-                      .withValues(alpha: 0.3),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
-                ),
-                BoxShadow(
-                  color: (info.colors?.toColor() ?? AppColors.darkBlue)
-                      .withValues(alpha: 0.2),
-                  blurRadius: 40,
-                  offset: const Offset(0, 20),
-                ),
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(20),
-              child: Stack(
-                children: [
-                  // Background Pattern
-                  Positioned.fill(
-                    child: CustomPaint(
-                      painter: _patternService.getRandomPatternPainter(
-                        seed: index,
-                        color: Colors.white,
-                        opacity: 0.1,
-                      ),
-                    ),
-                  ),
-
-                  // Decorative Elements
-                  Positioned(
-                    top: -15,
-                    right: -15,
-                    child: Container(
-                      width: 60,
-                      height: 60,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.1),
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ),
-
-                  Positioned(
-                    bottom: -10,
-                    left: -10,
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.05),
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ),
-
-                  // Main Content
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Row(
-                      children: [
-                        // Icon
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.3),
-                              width: 1,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.1),
-                                blurRadius: 8,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: SvgPicture.asset(
-                            AssetConstants.instance.svgElementGroup,
-                            colorFilter: const ColorFilter.mode(
-                                AppColors.white, BlendMode.srcIn),
-                            width: 24,
-                            height: 24,
-                          ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: Stack(
+                  children: [
+                    // Background Pattern
+                    Positioned.fill(
+                      child: CustomPaint(
+                        painter: _patternService.getRandomPatternPainter(
+                          seed: index,
+                          color: Colors.white,
+                          opacity: 0.1,
                         ),
+                      ),
+                    ),
 
-                        const SizedBox(width: 16),
+                    // Decorative Elements
+                    Positioned(
+                      top: -15,
+                      right: -15,
+                      child: Container(
+                        width: 60,
+                        height: 60,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.1),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
 
-                        // Text Content
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                context.read<LocalizationProvider>().isTr
-                                    ? info.trTitle ?? ''
-                                    : info.enTitle ?? '',
-                                style: const TextStyle(
-                                  color: AppColors.white,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  shadows: [
-                                    Shadow(
-                                      color: Colors.black26,
-                                      offset: Offset(1, 1),
-                                      blurRadius: 2,
+                    Positioned(
+                      bottom: -10,
+                      left: -10,
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.05),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+
+                    // Main Content
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        children: [
+                          // Icon
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.3),
+                                width: 1,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.1),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: SvgPicture.asset(
+                              AssetConstants.instance.svgElementGroup,
+                              colorFilter: const ColorFilter.mode(
+                                AppColors.white,
+                                BlendMode.srcIn,
+                              ),
+                              width: 24,
+                              height: 24,
+                            ),
+                          ),
+
+                          const SizedBox(width: 16),
+
+                          // Text Content
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  context.read<LocalizationProvider>().isTr
+                                      ? info.trTitle ?? ''
+                                      : info.enTitle ?? '',
+                                  style: const TextStyle(
+                                    color: AppColors.white,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    shadows: [
+                                      Shadow(
+                                        color: Colors.black26,
+                                        offset: Offset(1, 1),
+                                        blurRadius: 2,
+                                      ),
+                                    ],
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  context.read<LocalizationProvider>().isTr
+                                      ? info.trDesc1 ?? ''
+                                      : info.enDesc1 ?? '',
+                                  style: TextStyle(
+                                    color: AppColors.white.withValues(
+                                      alpha: 0.8,
                                     ),
-                                  ],
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                context.read<LocalizationProvider>().isTr
-                                    ? info.trDesc1 ?? ''
-                                    : info.enDesc1 ?? '',
-                                style: TextStyle(
-                                  color: AppColors.white.withValues(alpha: 0.8),
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        // Arrow Icon
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.3),
-                              width: 1,
+                              ],
                             ),
                           ),
-                          child: const Icon(
-                            Icons.arrow_forward_ios_rounded,
-                            color: AppColors.white,
-                            size: 16,
+
+                          // Arrow Icon
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.3),
+                                width: 1,
+                              ),
+                            ),
+                            child: const Icon(
+                              Icons.arrow_forward_ios_rounded,
+                              color: AppColors.white,
+                              size: 16,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),

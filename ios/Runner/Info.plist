@@ -60,5 +60,9 @@
 	<!-- iOS 12+ provisional authorization support (optional) -->
 	<key>NSUserNotificationAlertStyle</key>
 	<string>alert</string>
+
+	<!-- AdMob Application ID -->
+	<key>GADApplicationIdentifier</key>
+	<string>ca-app-pub-3499593115543692~7549075426</string>
 </dict>
 </plist>

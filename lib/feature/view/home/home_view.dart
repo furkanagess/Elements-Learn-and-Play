@@ -6,7 +6,9 @@ import 'package:elements_app/feature/view/home/widgets/hero_section_widget.dart'
 import 'package:elements_app/product/constants/app_colors.dart';
 import 'package:elements_app/product/widget/navigation/app_bottom_navbar.dart';
 import 'package:elements_app/product/widget/scaffold/app_scaffold.dart';
+import 'package:elements_app/product/widget/ads/banner_ad_widget.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 
 final class HomeView extends StatefulWidget {
@@ -31,61 +33,92 @@ class _HomeViewState extends State<StatefulWidget> {
     return AppScaffold(
       child: Scaffold(
         backgroundColor: AppColors.background,
-        body: Stack(
-          children: [
-            // Background Pattern
-            Positioned.fill(
-              child: RepaintBoundary(
-                child: CustomPaint(
-                  painter: HomePatternPainter(
-                    color: Colors.white.withValues(alpha: 0.03),
+        body: SizedBox.expand(
+          child: Stack(
+            children: [
+              // Background Pattern
+              Positioned.fill(
+                child: RepaintBoundary(
+                  child: CustomPaint(
+                    painter: HomePatternPainter(
+                      color: Colors.white.withValues(alpha: 0.03),
+                    ),
                   ),
                 ),
               ),
-            ),
 
-            // Main Content
-            const SafeArea(
-              child: SingleChildScrollView(
-                physics: BouncingScrollPhysics(),
-                padding: EdgeInsets.fromLTRB(20, 20, 20, 80),
-                child: Column(
-                  children: const [
-                    SizedBox(height: 20),
+              // Main Content
+              Positioned.fill(
+                child: SafeArea(
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      return SingleChildScrollView(
+                        physics: const BouncingScrollPhysics(),
+                        padding: const EdgeInsets.fromLTRB(20, 20, 20, 80),
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            minHeight: constraints.maxHeight - 100,
+                          ),
+                          child: const Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              SizedBox(height: 20),
 
-                    // Element of the Day Section
-                    RepaintBoundary(
-                      child: ElementOfDayWidget(),
-                    ),
+                              // Element of the Day Section
+                              RepaintBoundary(child: ElementOfDayWidget()),
 
-                    SizedBox(height: 20),
+                              SizedBox(height: 20),
 
-                    // Hero Image Section (Periodic Table)
-                    RepaintBoundary(
-                      child: HeroSectionWidget(),
-                    ),
+                              // Hero Image Section (Periodic Table)
+                              RepaintBoundary(child: HeroSectionWidget()),
 
-                    SizedBox(height: 20),
+                              SizedBox(height: 20),
 
-                    // Main Features Grid
-                    RepaintBoundary(
-                      child: FeaturesGridWidget(),
-                    ),
-                  ],
+                              // Main Features Grid
+                              RepaintBoundary(child: FeaturesGridWidget()),
+
+                              SizedBox(height: 20),
+
+                              SizedBox(height: 20),
+
+                              // // Test Interstitial Ad Button (only in debug mode)
+                              // if (kDebugMode)
+                              //   RepaintBoundary(
+                              //     child: Container(
+                              //       margin: EdgeInsets.symmetric(horizontal: 8.0),
+                              //       child: ElevatedButton.icon(
+                              //         onPressed: () {
+                              //           InterstitialAdManager.instance.showAdOnAction();
+                              //         },
+                              //         icon: Icon(Icons.ads_click),
+                              //         label: Text('Test Interstitial Ad'),
+                              //         style: ElevatedButton.styleFrom(
+                              //           backgroundColor: Colors.orange,
+                              //           foregroundColor: Colors.white,
+                              //           padding: EdgeInsets.symmetric(vertical: 12),
+                              //         ),
+                              //       ),
+                              //     ),
+                              //   ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
                 ),
               ),
-            ),
 
-            // Bottom Navigation Bar
-            const Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: RepaintBoundary(
-                child: AppBottomNavBar(),
+              // Bottom Navigation Bar
+              const Positioned(
+                left: 0,
+                right: 0,
+                bottom: 40,
+                child: RepaintBoundary(child: AppBottomNavBar()),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

@@ -1,5 +1,6 @@
 import 'package:elements_app/feature/view/quiz/modern_quiz_home.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:elements_app/feature/provider/quiz_provider.dart';
 import 'package:elements_app/feature/provider/admob_provider.dart';
@@ -17,10 +18,7 @@ import 'package:elements_app/core/services/pattern/pattern_service.dart';
 class UnifiedQuizView extends StatefulWidget {
   final QuizType quizType;
 
-  const UnifiedQuizView({
-    super.key,
-    required this.quizType,
-  });
+  const UnifiedQuizView({super.key, required this.quizType});
 
   @override
   State<UnifiedQuizView> createState() => _UnifiedQuizViewState();
@@ -44,30 +42,23 @@ class _UnifiedQuizViewState extends State<UnifiedQuizView>
 
   void _initializeAnimations() {
     _fadeController = AnimationController(
-      duration: const Duration(milliseconds: 600),
+      duration: const Duration(milliseconds: 400),
       vsync: this,
     );
 
     _slideController = AnimationController(
-      duration: const Duration(milliseconds: 800),
+      duration: const Duration(milliseconds: 500),
       vsync: this,
     );
 
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _fadeController,
-      curve: Curves.easeInOut,
-    ));
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _fadeController, curve: Curves.easeInOut),
+    );
 
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.3),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _slideController,
-      curve: Curves.easeOutBack,
-    ));
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.2), end: Offset.zero).animate(
+          CurvedAnimation(parent: _slideController, curve: Curves.easeOutCubic),
+        );
 
     _fadeController.forward();
     _slideController.forward();
@@ -76,6 +67,24 @@ class _UnifiedQuizViewState extends State<UnifiedQuizView>
   void _startQuiz() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<QuizProvider>().startQuiz(widget.quizType);
+    });
+  }
+
+  void _startNewQuiz() {
+    // Reset the quiz provider completely and start fresh
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final quizProvider = context.read<QuizProvider>();
+      quizProvider.resetQuiz();
+      // Start a completely new quiz session
+      quizProvider.startQuiz(widget.quizType);
+    });
+  }
+
+  void _restartQuizFromBeginning() {
+    // Restart the entire quiz from the beginning (0/10)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final quizProvider = context.read<QuizProvider>();
+      quizProvider.restartQuizFromBeginning();
     });
   }
 
@@ -132,9 +141,9 @@ class _UnifiedQuizViewState extends State<UnifiedQuizView>
                       ? TrAppStrings.loadingQuiz
                       : EnAppStrings.loadingQuiz,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        color: AppColors.white,
-                        fontWeight: FontWeight.w600,
-                      ),
+                    color: AppColors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Text(
@@ -142,8 +151,8 @@ class _UnifiedQuizViewState extends State<UnifiedQuizView>
                       ? widget.quizType.turkishTitle
                       : widget.quizType.englishTitle,
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: AppColors.white.withValues(alpha: 0.7),
-                      ),
+                    color: AppColors.white.withValues(alpha: 0.7),
+                  ),
                 ),
               ],
             ),
@@ -183,17 +192,17 @@ class _UnifiedQuizViewState extends State<UnifiedQuizView>
                   Text(
                     isTr ? 'Quiz Yüklenemedi' : 'Failed to Load Quiz',
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          color: AppColors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      color: AppColors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 12),
                   Text(
                     errorMessage,
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: AppColors.white.withValues(alpha: 0.7),
-                        ),
+                      color: AppColors.white.withValues(alpha: 0.7),
+                    ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 32),
@@ -204,7 +213,8 @@ class _UnifiedQuizViewState extends State<UnifiedQuizView>
                           onPressed: () => Navigator.of(context).pop(),
                           style: OutlinedButton.styleFrom(
                             side: BorderSide(
-                                color: AppColors.white.withValues(alpha: 0.5)),
+                              color: AppColors.white.withValues(alpha: 0.5),
+                            ),
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
@@ -248,13 +258,28 @@ class _UnifiedQuizViewState extends State<UnifiedQuizView>
   }
 
   Widget _buildQuizState(
-      BuildContext context, QuizProvider quizProvider, QuizSession session) {
+    BuildContext context,
+    QuizProvider quizProvider,
+    QuizSession session,
+  ) {
     // Show result dialog if quiz is completed or failed
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      debugPrint('🔍 Checking quiz completion...');
+      debugPrint('🔍 Session isCompleted: ${session.isCompleted}');
+      debugPrint('🔍 Session state: ${session.state}');
+      debugPrint('🔍 Current question index: ${session.currentQuestionIndex}');
+      debugPrint('🔍 Total questions: ${session.questions.length}');
+
       if (session.isCompleted &&
           (session.state == QuizState.completed ||
               session.state == QuizState.failed)) {
-        _showResultDialog(context, quizProvider, session);
+        debugPrint('✅ Quiz completed! Showing dialog...');
+        // Add a small delay to ensure UI is ready
+        Future.delayed(const Duration(milliseconds: 100), () {
+          if (mounted) {
+            _showResultDialog(context, quizProvider, session);
+          }
+        });
       }
     });
 
@@ -304,13 +329,16 @@ class _UnifiedQuizViewState extends State<UnifiedQuizView>
                         if (session.currentQuestion != null)
                           Expanded(
                             child: Container(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 16),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                              ),
                               child: AnswerOptionsGrid(
                                 question: session.currentQuestion!,
                                 selectedAnswer: session.selectedAnswer,
                                 state: session.state,
                                 onAnswerSelected: (answer) {
+                                  // Add haptic feedback for better UX
+                                  HapticFeedback.lightImpact();
                                   quizProvider.submitAnswer(answer);
                                 },
                               ),
@@ -325,12 +353,16 @@ class _UnifiedQuizViewState extends State<UnifiedQuizView>
                     Container(
                       height: 80,
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 12),
+                        horizontal: 20,
+                        vertical: 12,
+                      ),
                       child: FloatingActionButton.extended(
-                        onPressed: () => quizProvider.retryQuestion(),
+                        onPressed: () => _restartQuizFromBeginning(),
                         backgroundColor: AppColors.yellow,
-                        icon: const Icon(Icons.refresh,
-                            color: AppColors.background),
+                        icon: const Icon(
+                          Icons.refresh,
+                          color: AppColors.background,
+                        ),
                         label: Text(
                           context.watch<LocalizationProvider>().isTr
                               ? 'Tekrar Dene (${session.retryCount})'
@@ -352,7 +384,14 @@ class _UnifiedQuizViewState extends State<UnifiedQuizView>
   }
 
   void _showResultDialog(
-      BuildContext context, QuizProvider quizProvider, QuizSession session) {
+    BuildContext context,
+    QuizProvider quizProvider,
+    QuizSession session,
+  ) {
+    debugPrint('🎯 Showing result dialog for session: ${session.id}');
+    debugPrint('🎯 Session state: ${session.state}');
+    debugPrint('🎯 Session isCompleted: ${session.isCompleted}');
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -361,7 +400,8 @@ class _UnifiedQuizViewState extends State<UnifiedQuizView>
         onRestart: () {
           Navigator.of(context).pop(); // Close dialog
           quizProvider.resetQuiz();
-          _startQuiz();
+          // Start a completely new quiz from scratch
+          _startNewQuiz();
         },
         onHome: () {
           Navigator.of(context).pop(); // Close dialog
@@ -384,7 +424,9 @@ class _UnifiedQuizViewState extends State<UnifiedQuizView>
           title: Text(
             isTr ? 'Quiz\'den Çık' : 'Exit Quiz',
             style: const TextStyle(
-                color: AppColors.white, fontWeight: FontWeight.bold),
+              color: AppColors.white,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           content: Text(
             isTr
@@ -414,7 +456,9 @@ class _UnifiedQuizViewState extends State<UnifiedQuizView>
               child: Text(
                 isTr ? 'Çık' : 'Exit',
                 style: const TextStyle(
-                    color: AppColors.white, fontWeight: FontWeight.w600),
+                  color: AppColors.white,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ],

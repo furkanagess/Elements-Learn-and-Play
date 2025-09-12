@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import '../../product/widget/ads/interstitial_ad_widget.dart';
 
 /// The `AppInitializer` class is used to manage the initialization process
 /// of your Flutter application. It orchestrates and executes crucial tasks that
@@ -25,10 +25,11 @@ class AppInitializer {
   Future<void> initialize() async {
     if (!_isInitialized) {
       try {
-        WidgetsFlutterBinding.ensureInitialized();
-
-        // Initialize Google Mobile Ads.
+        // Initialize Google Mobile Ads with error handling
         await MobileAds.instance.initialize();
+
+        // Initialize Interstitial Ad Manager
+        await InterstitialAdManager.instance.initialize();
 
         // Marks the completion of the initialization process.
         _isInitialized = true;

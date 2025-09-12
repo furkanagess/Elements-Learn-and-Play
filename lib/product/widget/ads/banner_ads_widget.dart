@@ -16,7 +16,7 @@ class BannerAdsWidget extends StatefulWidget {
     super.key,
     this.margin,
     this.padding,
-    this.showLoadingIndicator = true,
+    this.showLoadingIndicator = false,
     this.backgroundColor,
     this.borderRadius,
   });
@@ -50,14 +50,15 @@ class _BannerAdsWidgetState extends State<BannerAdsWidget> {
           margin: widget.margin ?? const EdgeInsets.symmetric(vertical: 8),
           padding: widget.padding,
           decoration: BoxDecoration(
-            color: widget.backgroundColor ??
+            color:
+                widget.backgroundColor ??
                 AppColors.white.withValues(alpha: 0.05),
             borderRadius: widget.borderRadius ?? BorderRadius.circular(12),
           ),
           child: widget.showLoadingIndicator
               ? bannerAdsProvider.getBannerAdWidgetWithLoading()
               : bannerAdsProvider.getBannerAdWidget() ??
-                  const SizedBox.shrink(),
+                    const SizedBox.shrink(),
         );
       },
     );

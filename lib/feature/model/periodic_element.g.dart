@@ -8,13 +8,14 @@ part of 'periodic_element.dart';
 
 PeriodicElement _$PeriodicElementFromJson(Map<String, dynamic> json) =>
     PeriodicElement(
-      number: json['number'] as int?,
+      number: (json['number'] as num?)?.toInt(),
       enName: json['enName'] as String?,
       symbol: json['symbol'] as String?,
       weight: json['weight'] as String?,
       enCategory: json['enCategory'] as String?,
       block: json['block'] as String?,
       period: json['period'] as String?,
+      electronConfiguration: json['electronConfiguration'] as String?,
       group: json['group'] as String?,
       enDescription: json['enDescription'] as String?,
       enUsage: json['enUsage'] as String?,
@@ -37,6 +38,7 @@ Map<String, dynamic> _$PeriodicElementToJson(PeriodicElement instance) =>
       'enCategory': instance.enCategory,
       'block': instance.block,
       'period': instance.period,
+      'electronConfiguration': instance.electronConfiguration,
       'group': instance.group,
       'enDescription': instance.enDescription,
       'enUsage': instance.enUsage,

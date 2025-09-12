@@ -7,39 +7,38 @@ import 'package:elements_app/core/observer/route_observer.dart';
 import 'package:elements_app/core/services/widget/element_home_widget_service.dart';
 
 import 'package:flutter/material.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:provider/provider.dart';
 import 'package:device_preview/device_preview.dart';
 import 'package:home_widget/home_widget.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Google Mobile Ads
-  await MobileAds.instance.initialize();
+  // Initialize Firebase
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   await AppInitializer().initialize();
 
   // Register HomeWidget background callback (no-op placeholder)
-  await HomeWidget.registerBackgroundCallback(_backgroundCallback);
+  //await HomeWidget.registerInteractivityCallback(_backgroundCallback);
 
   runApp(
     DevicePreview(
       enabled: false, // Set to false for production
       builder: (context) => MultiProvider(
-        providers: [
-          ...ApplicationProvider.instance.appProviders,
-        ],
+        providers: [...ApplicationProvider.instance.appProviders],
         child: const MyApp(),
       ),
     ),
   );
 }
 
-@pragma('vm:entry-point')
-Future<void> _backgroundCallback(Uri? uri) async {
-  // Reserved for future background updates (e.g., periodic refresh)
-}
+// @pragma('vm:entry-point')
+// Future<void> _backgroundCallback(Uri? uri) async {
+//   // Reserved for future background updates (e.g., periodic refresh)
+// }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -49,11 +48,9 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: EnAppStrings.appName,
-      theme: AppTheme().theme,
+      theme: AppTheme.theme,
       home: const HomeView(),
-      navigatorObservers: [
-        AdRouteObserver(),
-      ],
+      navigatorObservers: [AdRouteObserver()],
       // Device Preview Configuration
       locale: DevicePreview.locale(context),
       builder: (context, child) {

@@ -1,69 +1,86 @@
-import 'package:elements_app/core/painter/settings_pattern_painter.dart';
 import 'package:elements_app/feature/provider/localization_provider.dart';
 import 'package:elements_app/feature/view/help/help_view.dart';
+import 'package:elements_app/feature/view/ads/ios_admob_test_view.dart';
 import 'package:elements_app/product/constants/app_colors.dart';
 import 'package:elements_app/product/constants/assets_constants.dart';
 import 'package:elements_app/product/constants/stringConstants/en_app_strings.dart';
 import 'package:elements_app/product/constants/stringConstants/tr_app_strings.dart';
 import 'package:elements_app/product/widget/button/back_button.dart';
 import 'package:elements_app/product/widget/scaffold/app_scaffold.dart';
+import 'package:elements_app/core/services/pattern/pattern_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:in_app_review/in_app_review.dart';
 import 'package:provider/provider.dart';
 
-class SettingsView extends StatelessWidget {
+class SettingsView extends StatefulWidget {
   const SettingsView({super.key});
+
+  @override
+  State<SettingsView> createState() => _SettingsViewState();
+}
+
+class _SettingsViewState extends State<SettingsView>
+    with TickerProviderStateMixin {
+  late AnimationController _fadeController;
+  late Animation<double> _fadeAnimation;
+  final PatternService _patternService = PatternService();
+  int? _pressedCardIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _fadeController = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
+    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _fadeController, curve: Curves.easeInOut),
+    );
+    _fadeController.forward();
+  }
+
+  @override
+  void dispose() {
+    _fadeController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return AppScaffold(
       child: Scaffold(
         backgroundColor: AppColors.background,
-        body: CustomScrollView(
-          slivers: [
-            // Modern App Bar
-            SliverAppBar(
-              pinned: true,
-              backgroundColor: AppColors.darkBlue,
-              leading: ModernBackButton(),
-              expandedHeight: 180,
-              stretch: true,
-              flexibleSpace: FlexibleSpaceBar(
-                stretchModes: const [
-                  StretchMode.zoomBackground,
-                  StretchMode.blurBackground,
-                ],
-                background: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        AppColors.darkBlue,
-                        AppColors.darkBlue.withOpacity(0.85),
-                      ],
-                    ),
-                  ),
-                  child: _buildHeader(),
+        appBar: _buildModernAppBar(),
+        body: Stack(
+          children: [
+            // Background Pattern
+            Positioned.fill(
+              child: CustomPaint(
+                painter: _patternService.getPatternPainter(
+                  type: PatternType.atomic,
+                  color: Colors.white,
+                  opacity: 0.03,
                 ),
               ),
             ),
-
-            // Settings Content
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+            // Content
+            SafeArea(
+              child: FadeTransition(
+                opacity: _fadeAnimation,
+                child: ListView(
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
                   children: [
                     // Language Settings
-                    _buildLanguageSelector(context),
+                    _buildLanguageSelector(context, 0),
                     const SizedBox(height: 16),
 
                     // App Actions
                     _buildActionCard(
                       context,
+                      index: 1,
                       icon: AssetConstants.instance.svgStarTwo,
                       title: context.read<LocalizationProvider>().isTr
                           ? TrAppStrings.rateTitle
@@ -84,6 +101,7 @@ class SettingsView extends StatelessWidget {
                     const SizedBox(height: 16),
                     _buildActionCard(
                       context,
+                      index: 2,
                       icon: AssetConstants.instance.svgQuestion,
                       title: context.read<LocalizationProvider>().isTr
                           ? 'Yardım ve İpuçları'
@@ -101,6 +119,27 @@ class SettingsView extends StatelessWidget {
                         ],
                       ),
                     ),
+                    const SizedBox(height: 16),
+                    _buildActionCard(
+                      context,
+                      index: 3,
+                      icon: AssetConstants.instance.svgStarTwo,
+                      title: context.read<LocalizationProvider>().isTr
+                          ? 'iOS AdMob Test'
+                          : 'iOS AdMob Test',
+                      subtitle: context.read<LocalizationProvider>().isTr
+                          ? 'iOS reklam entegrasyonunu test edin'
+                          : 'Test iOS ad integration',
+                      onTap: () => _showIOSAdMobTest(context),
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          AppColors.purple,
+                          AppColors.pink.withValues(alpha: 0.8),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -111,160 +150,241 @@ class SettingsView extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader() {
-    return Stack(
-      children: [
-        // Background pattern
-        Positioned.fill(
-          child: CustomPaint(
-            painter: SettingsPatternPainter(),
+  AppBar _buildModernAppBar() {
+    final isTr = context.watch<LocalizationProvider>().isTr;
+
+    return AppBar(
+      backgroundColor: Colors.transparent,
+      flexibleSpace: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppColors.steelBlue,
+              AppColors.darkBlue.withValues(alpha: 0.95),
+              AppColors.purple.withValues(alpha: 0.9),
+            ],
           ),
         ),
-        // Content
-        Padding(
-          padding: const EdgeInsets.fromLTRB(24, 100, 24, 24),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
+      ),
+      leading: const ModernBackButton(),
+      title: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.white.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              Icons.settings_rounded,
+              color: AppColors.white,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            isTr ? 'Ayarlar' : 'Settings',
+            style: const TextStyle(
+              color: AppColors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+      elevation: 0,
+    );
+  }
+
+  Widget _buildLanguageSelector(BuildContext context, int index) {
+    final isTr = context.watch<LocalizationProvider>().isTr;
+    final isPressed = _pressedCardIndex == index;
+
+    return AnimatedScale(
+      scale: isPressed ? 0.95 : 1.0,
+      duration: const Duration(milliseconds: 150),
+      curve: Curves.easeInOut,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppColors.purple.withValues(alpha: 0.9),
+              AppColors.pink.withValues(alpha: 0.7),
+              AppColors.turquoise.withValues(alpha: 0.5),
+            ],
+            stops: const [0.0, 0.6, 1.0],
+          ),
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.2),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.purple.withValues(alpha: 0.3),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
+            BoxShadow(
+              color: AppColors.pink.withValues(alpha: 0.2),
+              blurRadius: 40,
+              offset: const Offset(0, 20),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: Stack(
             children: [
-              Container(
-                padding: const EdgeInsets.all(14),
-                margin: const EdgeInsets.only(top: 4),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(
-                    color: Colors.white.withOpacity(0.2),
-                    width: 1,
+              // Background pattern
+              Positioned.fill(
+                child: CustomPaint(
+                  painter: _patternService.getPatternPainter(
+                    type: PatternType.molecular,
+                    color: Colors.white,
+                    opacity: 0.05,
                   ),
                 ),
-                child: Icon(
-                  Icons.settings_rounded,
-                  color: Colors.white,
-                  size: 28,
+              ),
+              // Decorative elements
+              Positioned(
+                top: 20,
+                right: 20,
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      width: 1,
+                    ),
+                  ),
                 ),
               ),
-              const SizedBox(width: 20),
-              Expanded(
-                child: Builder(
-                  builder: (context) => Text(
-                    context.read<LocalizationProvider>().isTr
-                        ? 'Ayarlar'
-                        : 'Settings',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                      height: 1.2,
+              Positioned(
+                bottom: 20,
+                left: 20,
+                child: Container(
+                  width: 30,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.08),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+              // Content
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(24),
+                  onTapDown: (_) {
+                    setState(() {
+                      _pressedCardIndex = index;
+                    });
+                  },
+                  onTapUp: (_) {
+                    setState(() {
+                      _pressedCardIndex = null;
+                    });
+                    HapticFeedback.lightImpact();
+                    context.read<LocalizationProvider>().toggleBool();
+                  },
+                  onTapCancel: () {
+                    setState(() {
+                      _pressedCardIndex = null;
+                    });
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.3),
+                              width: 1,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.1),
+                                blurRadius: 8,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: SvgPicture.asset(
+                            isTr
+                                ? AssetConstants.instance.svgUsFlag
+                                : AssetConstants.instance.svgTrFlag,
+                            width: 28,
+                            height: 28,
+                          ),
+                        ),
+                        const SizedBox(width: 20),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                isTr ? 'English' : 'Türkçe',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  height: 1.2,
+                                  shadows: [
+                                    Shadow(
+                                      color: Colors.black26,
+                                      offset: Offset(1, 1),
+                                      blurRadius: 2,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                isTr ? 'Switch to English' : 'Türkçeye geç',
+                                style: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.8),
+                                  fontSize: 16,
+                                  height: 1.2,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.3),
+                              width: 1,
+                            ),
+                          ),
+                          child: const Icon(
+                            Icons.chevron_right_rounded,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
               ),
             ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildLanguageSelector(BuildContext context) {
-    final isTr = context.watch<LocalizationProvider>().isTr;
-
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppColors.darkBlue.withOpacity(0.7),
-            AppColors.darkBlue.withOpacity(0.5),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.1),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 16,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(20),
-          onTap: () {
-            context.read<LocalizationProvider>().toggleBool();
-          },
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: Colors.white.withOpacity(0.2),
-                      width: 1,
-                    ),
-                  ),
-                  child: SvgPicture.asset(
-                    isTr
-                        ? AssetConstants.instance.svgUsFlag
-                        : AssetConstants.instance.svgTrFlag,
-                    width: 28,
-                    height: 28,
-                  ),
-                ),
-                const SizedBox(width: 20),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        isTr ? 'English' : 'Türkçe',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          height: 1.2,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        isTr ? 'Switch to English' : 'Türkçeye geç',
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.7),
-                          fontSize: 16,
-                          height: 1.2,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: Colors.white.withOpacity(0.2),
-                      width: 1,
-                    ),
-                  ),
-                  child: const Icon(
-                    Icons.chevron_right_rounded,
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                ),
-              ],
-            ),
           ),
         ),
       ),
@@ -273,108 +393,191 @@ class SettingsView extends StatelessWidget {
 
   Widget _buildActionCard(
     BuildContext context, {
+    required int index,
     required String icon,
     required String title,
     required String subtitle,
     required VoidCallback onTap,
     required Gradient gradient,
   }) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppColors.darkBlue.withOpacity(0.7),
-            AppColors.darkBlue.withOpacity(0.5),
+    final isPressed = _pressedCardIndex == index;
+
+    return AnimatedScale(
+      scale: isPressed ? 0.95 : 1.0,
+      duration: const Duration(milliseconds: 150),
+      curve: Curves.easeInOut,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          gradient: gradient,
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.2),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: gradient.colors.first.withValues(alpha: 0.3),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
+            BoxShadow(
+              color: gradient.colors.first.withValues(alpha: 0.2),
+              blurRadius: 40,
+              offset: const Offset(0, 20),
+            ),
           ],
         ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.1),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 16,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(20),
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: Colors.white.withOpacity(0.2),
-                      width: 1,
-                    ),
-                  ),
-                  child: SvgPicture.asset(
-                    icon,
-                    width: 28,
-                    height: 28,
-                    colorFilter: ColorFilter.mode(
-                      Colors.white.withOpacity(0.9),
-                      BlendMode.srcIn,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 20),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          height: 1.2,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        subtitle,
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.7),
-                          fontSize: 16,
-                          height: 1.2,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: Colors.white.withOpacity(0.2),
-                      width: 1,
-                    ),
-                  ),
-                  child: const Icon(
-                    Icons.chevron_right_rounded,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: Stack(
+            children: [
+              // Background pattern
+              Positioned.fill(
+                child: CustomPaint(
+                  painter: _patternService.getPatternPainter(
+                    type: PatternType.molecular,
                     color: Colors.white,
-                    size: 20,
+                    opacity: 0.05,
                   ),
                 ),
-              ],
-            ),
+              ),
+              // Decorative elements
+              Positioned(
+                top: 20,
+                right: 20,
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      width: 1,
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                bottom: 20,
+                left: 20,
+                child: Container(
+                  width: 30,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.08),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+              // Content
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(24),
+                  onTapDown: (_) {
+                    setState(() {
+                      _pressedCardIndex = index;
+                    });
+                  },
+                  onTapUp: (_) {
+                    setState(() {
+                      _pressedCardIndex = null;
+                    });
+                    HapticFeedback.lightImpact();
+                    onTap();
+                  },
+                  onTapCancel: () {
+                    setState(() {
+                      _pressedCardIndex = null;
+                    });
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.3),
+                              width: 1,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.1),
+                                blurRadius: 8,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: SvgPicture.asset(
+                            icon,
+                            width: 28,
+                            height: 28,
+                            colorFilter: const ColorFilter.mode(
+                              Colors.white,
+                              BlendMode.srcIn,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 20),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                title,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  height: 1.2,
+                                  shadows: [
+                                    Shadow(
+                                      color: Colors.black26,
+                                      offset: Offset(1, 1),
+                                      blurRadius: 2,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                subtitle,
+                                style: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.8),
+                                  fontSize: 16,
+                                  height: 1.2,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.3),
+                              width: 1,
+                            ),
+                          ),
+                          child: const Icon(
+                            Icons.chevron_right_rounded,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -391,9 +594,14 @@ class SettingsView extends StatelessWidget {
   void _showHelpView(BuildContext context) {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => const HelpView(),
-      ),
+      MaterialPageRoute(builder: (context) => const HelpView()),
+    );
+  }
+
+  void _showIOSAdMobTest(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const IOSAdMobTestView()),
     );
   }
 }

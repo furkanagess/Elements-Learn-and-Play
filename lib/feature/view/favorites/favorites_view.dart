@@ -7,185 +7,272 @@ import 'package:elements_app/product/constants/stringConstants/tr_app_strings.da
 import 'package:elements_app/product/extensions/color_extension.dart';
 import 'package:elements_app/product/extensions/context_extensions.dart';
 import 'package:elements_app/product/widget/scaffold/app_scaffold.dart';
+import 'package:elements_app/product/widget/button/back_button.dart';
+import 'package:elements_app/core/services/pattern/pattern_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:lottie/lottie.dart';
 import 'package:elements_app/product/constants/assets_constants.dart';
 
-class FavoritesView extends StatelessWidget {
+class FavoritesView extends StatefulWidget {
   const FavoritesView({super.key});
+
+  @override
+  State<FavoritesView> createState() => _FavoritesViewState();
+}
+
+class _FavoritesViewState extends State<FavoritesView>
+    with TickerProviderStateMixin {
+  late AnimationController _fadeController;
+  late Animation<double> _fadeAnimation;
+  final PatternService _patternService = PatternService();
+  int? _pressedCardIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _fadeController = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
+    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _fadeController, curve: Curves.easeInOut),
+    );
+    _fadeController.forward();
+  }
+
+  @override
+  void dispose() {
+    _fadeController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return AppScaffold(
       child: Scaffold(
         backgroundColor: AppColors.background,
-        body: SafeArea(
-          child: CustomScrollView(
-            physics: const BouncingScrollPhysics(),
-            slivers: [
-              // Modern App Bar
-              SliverAppBar(
-                expandedHeight: 200,
-                pinned: true,
-                backgroundColor: AppColors.darkBlue,
-                flexibleSpace: FlexibleSpaceBar(
-                  background: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          AppColors.darkBlue,
-                          AppColors.darkBlue.withValues(alpha: 0.8),
-                        ],
-                      ),
-                    ),
-                    child: _buildHeader(context),
-                  ),
+        appBar: _buildModernAppBar(),
+        body: Stack(
+          children: [
+            // Background Pattern
+            Positioned.fill(
+              child: CustomPaint(
+                painter: _patternService.getPatternPainter(
+                  type: PatternType.atomic,
+                  color: Colors.white,
+                  opacity: 0.03,
                 ),
-                leading: BackButton(),
               ),
+            ),
+            // Content
+            SafeArea(
+              child: FadeTransition(
+                opacity: _fadeAnimation,
+                child: Consumer<FavoriteElementsProvider>(
+                  builder: (context, provider, child) {
+                    if (provider.favoriteElements.isEmpty) {
+                      return _buildEmptyState(context);
+                    }
 
-              // Content
-              Consumer<FavoriteElementsProvider>(
-                builder: (context, provider, child) {
-                  if (provider.favoriteElements.isEmpty) {
-                    return SliverFillRemaining(
-                      child: _buildEmptyState(context),
+                    return ListView.builder(
+                      physics: const BouncingScrollPhysics(),
+                      padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                      itemCount: provider.favoriteElements.length,
+                      itemBuilder: (context, index) {
+                        final element = provider.favoriteElements[index];
+                        return _buildFavoriteCard(context, element, index);
+                      },
                     );
-                  }
-
-                  return SliverPadding(
-                    padding: const EdgeInsets.all(16),
-                    sliver: SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) {
-                          final element = provider.favoriteElements[index];
-                          return _buildFavoriteCard(context, element);
-                        },
-                        childCount: provider.favoriteElements.length,
-                      ),
-                    ),
-                  );
-                },
+                  },
+                ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
-    return Stack(
-      children: [
-        // Background pattern
-        Positioned.fill(
-          child: CustomPaint(
-            painter: FavoritesPatternPainter(),
-          ),
-        ),
-        // Content
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 60, 20, 20),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppColors.white.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: AppColors.white.withValues(alpha: 0.3),
-                    width: 1,
-                  ),
-                ),
-                child: Icon(
-                  Icons.favorite,
-                  color: AppColors.white,
-                  size: 24,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      context.read<LocalizationProvider>().isTr
-                          ? 'Favori Elementler'
-                          : 'Favorite Elements',
-                      style: context.textTheme.headlineMedium?.copyWith(
-                        color: AppColors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 28,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Consumer<FavoriteElementsProvider>(
-                      builder: (context, provider, child) {
-                        return Text(
-                          context.read<LocalizationProvider>().isTr
-                              ? '${provider.favoriteElements.length} element'
-                              : '${provider.favoriteElements.length} elements',
-                          style: TextStyle(
-                            color: AppColors.white.withValues(alpha: 0.9),
-                            fontSize: 16,
-                          ),
-                        );
-                      },
-                    ),
-                  ],
-                ),
-              ),
+  AppBar _buildModernAppBar() {
+    final isTr = context.watch<LocalizationProvider>().isTr;
+
+    return AppBar(
+      backgroundColor: Colors.transparent,
+      flexibleSpace: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppColors.powderRed,
+              AppColors.pink.withValues(alpha: 0.95),
+              AppColors.purple.withValues(alpha: 0.9),
             ],
           ),
         ),
-      ],
+      ),
+      leading: const ModernBackButton(),
+      title: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.white.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(Icons.favorite, color: AppColors.white, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            isTr ? 'Favori Elementler' : 'Favorite Elements',
+            style: const TextStyle(
+              color: AppColors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+      elevation: 0,
     );
   }
 
   Widget _buildEmptyState(BuildContext context) {
+    final isTr = context.read<LocalizationProvider>().isTr;
+
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Lottie.asset(
-            AssetConstants.instance.lottieNewHeart,
-            height: 200,
-            repeat: true,
+      child: Container(
+        margin: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(32),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppColors.purple.withValues(alpha: 0.1),
+              AppColors.pink.withValues(alpha: 0.1),
+              AppColors.turquoise.withValues(alpha: 0.1),
+            ],
           ),
-          const SizedBox(height: 24),
-          Text(
-            context.read<LocalizationProvider>().isTr
-                ? 'Henüz favori element eklemediniz'
-                : 'No favorite elements yet',
-            style: TextStyle(
-              color: AppColors.white.withValues(alpha: 0.8),
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.2),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.purple.withValues(alpha: 0.2),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
             ),
-            textAlign: TextAlign.center,
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: Stack(
+            children: [
+              // Background pattern
+              Positioned.fill(
+                child: CustomPaint(
+                  painter: _patternService.getPatternPainter(
+                    type: PatternType.molecular,
+                    color: Colors.white,
+                    opacity: 0.05,
+                  ),
+                ),
+              ),
+              // Decorative elements
+              Positioned(
+                top: 20,
+                right: 20,
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      width: 1,
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                bottom: 20,
+                left: 20,
+                child: Container(
+                  width: 30,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.08),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+              // Content
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.3),
+                        width: 1,
+                      ),
+                    ),
+                    child: Lottie.asset(
+                      AssetConstants.instance.lottieNewHeart,
+                      height: 120,
+                      repeat: true,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    isTr
+                        ? 'Henüz favori element eklemediniz'
+                        : 'No favorite elements yet',
+                    style: const TextStyle(
+                      color: AppColors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      shadows: [
+                        Shadow(
+                          color: Colors.black26,
+                          offset: Offset(1, 1),
+                          blurRadius: 2,
+                        ),
+                      ],
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    isTr
+                        ? 'Element detay sayfasından favorilerinize element ekleyebilirsiniz'
+                        : 'You can add elements to your favorites from the element detail page',
+                    style: TextStyle(
+                      color: AppColors.white.withValues(alpha: 0.8),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ],
           ),
-          const SizedBox(height: 8),
-          Text(
-            context.read<LocalizationProvider>().isTr
-                ? 'Element detay sayfasından favorilerinize element ekleyebilirsiniz'
-                : 'You can add elements to your favorites from the element detail page',
-            style: TextStyle(
-              color: AppColors.white.withValues(alpha: 0.6),
-              fontSize: 14,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildFavoriteCard(BuildContext context, element) {
+  Widget _buildFavoriteCard(BuildContext context, element, int index) {
     Color elementColor;
     Color shadowColor;
 
@@ -211,121 +298,233 @@ class FavoritesView extends StatelessWidget {
     }
 
     final isTr = context.read<LocalizationProvider>().isTr;
+    final isPressed = _pressedCardIndex == index;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            elementColor,
-            elementColor.withValues(alpha: 0.8),
+    return AnimatedScale(
+      scale: isPressed ? 0.95 : 1.0,
+      duration: const Duration(milliseconds: 150),
+      curve: Curves.easeInOut,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              elementColor.withValues(alpha: 0.9),
+              elementColor.withValues(alpha: 0.7),
+              elementColor.withValues(alpha: 0.5),
+            ],
+            stops: const [0.0, 0.6, 1.0],
+          ),
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.2),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: shadowColor.withValues(alpha: 0.3),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
+            BoxShadow(
+              color: shadowColor.withValues(alpha: 0.2),
+              blurRadius: 40,
+              offset: const Offset(0, 20),
+            ),
           ],
         ),
-        boxShadow: [
-          BoxShadow(
-            color: shadowColor.withValues(alpha: 0.3),
-            offset: const Offset(0, 8),
-            blurRadius: 20,
-            spreadRadius: 2,
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(20),
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => ElementDetailView(element: element),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: Stack(
+            children: [
+              // Background pattern
+              Positioned.fill(
+                child: CustomPaint(
+                  painter: _patternService.getPatternPainter(
+                    type: PatternType.molecular,
+                    color: Colors.white,
+                    opacity: 0.05,
+                  ),
+                ),
               ),
-            );
-          },
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Row(
-              children: [
-                // Element number
-                Container(
-                  width: 60,
-                  height: 60,
+              // Decorative elements
+              Positioned(
+                top: 20,
+                right: 20,
+                child: Container(
+                  width: 40,
+                  height: 40,
                   decoration: BoxDecoration(
-                    color: AppColors.white.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(16),
+                    color: Colors.white.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
                     border: Border.all(
-                      color: AppColors.white.withValues(alpha: 0.3),
+                      color: Colors.white.withValues(alpha: 0.2),
                       width: 1,
                     ),
                   ),
-                  child: Center(
-                    child: Text(
-                      element.number?.toString() ?? '',
-                      style: const TextStyle(
-                        color: AppColors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 20,
+                ),
+              ),
+              Positioned(
+                bottom: 20,
+                left: 20,
+                child: Container(
+                  width: 30,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.08),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+              // Content
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(24),
+                  onTapDown: (_) {
+                    setState(() {
+                      _pressedCardIndex = index;
+                    });
+                  },
+                  onTapUp: (_) {
+                    setState(() {
+                      _pressedCardIndex = null;
+                    });
+                    HapticFeedback.lightImpact();
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            ElementDetailView(element: element),
                       ),
+                    );
+                  },
+                  onTapCancel: () {
+                    setState(() {
+                      _pressedCardIndex = null;
+                    });
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Row(
+                      children: [
+                        // Element number
+                        Container(
+                          width: 60,
+                          height: 60,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.3),
+                              width: 1,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.1),
+                                blurRadius: 8,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Center(
+                            child: Text(
+                              element.number?.toString() ?? '',
+                              style: const TextStyle(
+                                color: AppColors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 20,
+                                shadows: [
+                                  Shadow(
+                                    color: Colors.black26,
+                                    offset: Offset(1, 1),
+                                    blurRadius: 2,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 20),
+
+                        // Element info
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                element.symbol ?? '',
+                                style: const TextStyle(
+                                  color: AppColors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 32,
+                                  shadows: [
+                                    Shadow(
+                                      color: Colors.black26,
+                                      offset: Offset(1, 1),
+                                      blurRadius: 2,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                isTr
+                                    ? element.trName ?? ''
+                                    : element.enName ?? '',
+                                style: TextStyle(
+                                  color: AppColors.white.withValues(alpha: 0.9),
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 16,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                _formatWeight(element.weight),
+                                style: TextStyle(
+                                  color: AppColors.white.withValues(alpha: 0.7),
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        // Remove from favorites button
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.3),
+                              width: 1,
+                            ),
+                          ),
+                          child: IconButton(
+                            icon: const Icon(
+                              Icons.favorite,
+                              color: AppColors.white,
+                              size: 24,
+                            ),
+                            onPressed: () {
+                              HapticFeedback.lightImpact();
+                              context
+                                  .read<FavoriteElementsProvider>()
+                                  .toggleFavorite(element);
+                            },
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
-                const SizedBox(width: 20),
-
-                // Element info
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        element.symbol ?? '',
-                        style: const TextStyle(
-                          color: AppColors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 32,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        isTr ? element.trName ?? '' : element.enName ?? '',
-                        style: TextStyle(
-                          color: AppColors.white.withValues(alpha: 0.9),
-                          fontWeight: FontWeight.w600,
-                          fontSize: 16,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        _formatWeight(element.weight),
-                        style: TextStyle(
-                          color: AppColors.white.withValues(alpha: 0.7),
-                          fontWeight: FontWeight.w500,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Remove from favorites button
-                IconButton(
-                  icon: Icon(
-                    Icons.favorite,
-                    color: AppColors.white.withValues(alpha: 0.9),
-                    size: 24,
-                  ),
-                  onPressed: () {
-                    context
-                        .read<FavoriteElementsProvider>()
-                        .toggleFavorite(element);
-                  },
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -345,43 +544,4 @@ class FavoritesView extends StatelessWidget {
     // If parsing fails, return original value
     return weight;
   }
-}
-
-class FavoritesPatternPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = AppColors.white.withValues(alpha: 0.05)
-      ..strokeWidth = 1;
-
-    // Draw subtle pattern
-    for (int i = 0; i < size.width; i += 40) {
-      canvas.drawLine(
-        Offset(i.toDouble(), 0),
-        Offset(i.toDouble(), size.height),
-        paint,
-      );
-    }
-    for (int i = 0; i < size.height; i += 40) {
-      canvas.drawLine(
-        Offset(0, i.toDouble()),
-        Offset(size.width, i.toDouble()),
-        paint,
-      );
-    }
-
-    // Draw some circles for visual interest
-    final circlePaint = Paint()
-      ..color = AppColors.white.withValues(alpha: 0.03)
-      ..style = PaintingStyle.fill;
-
-    for (int i = 0; i < 5; i++) {
-      final x = (i * 80) % size.width;
-      final y = (i * 60) % size.height;
-      canvas.drawCircle(Offset(x, y), 20, circlePaint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:elements_app/product/constants/app_colors.dart';
 import 'package:elements_app/product/extensions/context_extensions.dart';
 import 'package:elements_app/feature/model/quiz/quiz_models.dart';
@@ -6,17 +7,15 @@ import 'package:lottie/lottie.dart';
 import 'package:elements_app/product/constants/assets_constants.dart';
 import 'package:provider/provider.dart';
 import 'package:elements_app/feature/provider/localization_provider.dart';
+import 'package:elements_app/core/services/pattern/pattern_service.dart';
+import 'package:elements_app/product/widget/ads/interstitial_ad_widget.dart';
 
 /// Modern quiz header with progress and stats
 class QuizHeader extends StatelessWidget {
   final QuizSession session;
   final VoidCallback? onClose;
 
-  const QuizHeader({
-    super.key,
-    required this.session,
-    this.onClose,
-  });
+  const QuizHeader({super.key, required this.session, this.onClose});
 
   String _localizedDifficulty(BuildContext context, String difficulty) {
     final isTr = context.read<LocalizationProvider>().isTr;
@@ -77,8 +76,11 @@ class QuizHeader extends StatelessWidget {
                     child: IconButton(
                       padding: EdgeInsets.zero,
                       onPressed: onClose,
-                      icon: const Icon(Icons.close,
-                          color: AppColors.white, size: 20),
+                      icon: const Icon(
+                        Icons.close,
+                        color: AppColors.white,
+                        size: 20,
+                      ),
                     ),
                   ),
                 const SizedBox(width: 12),
@@ -94,8 +96,10 @@ class QuizHeader extends StatelessWidget {
                   ),
                 ),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: _getDifficultyColor().withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(8),
@@ -156,10 +160,12 @@ class QuizHeader extends StatelessWidget {
                         borderRadius: BorderRadius.circular(4),
                         child: LinearProgressIndicator(
                           value: session.progress,
-                          backgroundColor:
-                              AppColors.white.withValues(alpha: 0.2),
+                          backgroundColor: AppColors.white.withValues(
+                            alpha: 0.2,
+                          ),
                           valueColor: AlwaysStoppedAnimation<Color>(
-                              _getDifficultyColor()),
+                            _getDifficultyColor(),
+                          ),
                           minHeight: 3,
                         ),
                       ),
@@ -256,11 +262,7 @@ class QuestionCard extends StatelessWidget {
   final QuizQuestion question;
   final QuizState state;
 
-  const QuestionCard({
-    super.key,
-    required this.question,
-    required this.state,
-  });
+  const QuestionCard({super.key, required this.question, required this.state});
 
   @override
   Widget build(BuildContext context) {
@@ -337,10 +339,7 @@ class QuestionCard extends StatelessWidget {
                         ),
                         child: FittedBox(
                           fit: BoxFit.contain,
-                          child: Icon(
-                            question.type.icon,
-                            color: questionColor,
-                          ),
+                          child: Icon(question.type.icon, color: questionColor),
                         ),
                       ),
                     ),
@@ -364,7 +363,8 @@ class QuestionCard extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: AppColors.white.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(
-                              constraints.maxWidth * 0.035),
+                            constraints.maxWidth * 0.035,
+                          ),
                           border: Border.all(
                             color: AppColors.white.withValues(alpha: 0.2),
                             width: 1,
@@ -411,7 +411,8 @@ class QuestionCard extends StatelessWidget {
                           decoration: BoxDecoration(
                             color: questionColor.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(
-                                constraints.maxWidth * 0.02),
+                              constraints.maxWidth * 0.02,
+                            ),
                             border: Border.all(
                               color: questionColor.withValues(alpha: 0.2),
                               width: 1,
@@ -502,7 +503,10 @@ class AnswerOptionsGrid extends StatelessWidget {
   }
 
   Widget _buildAnswerOption(
-      BuildContext context, String option, BoxConstraints constraints) {
+    BuildContext context,
+    String option,
+    BoxConstraints constraints,
+  ) {
     final isSelected = selectedAnswer == option;
     final isCorrect = question.correctAnswer == option;
     final showResult =
@@ -578,7 +582,13 @@ class AnswerOptionsGrid extends StatelessWidget {
                   children: [
                     if (showResult) ...[
                       AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 400),
+                        duration: const Duration(milliseconds: 300),
+                        transitionBuilder: (child, animation) {
+                          return ScaleTransition(
+                            scale: animation,
+                            child: child,
+                          );
+                        },
                         child: isCorrect
                             ? Icon(
                                 Icons.check_circle_rounded,
@@ -587,13 +597,13 @@ class AnswerOptionsGrid extends StatelessWidget {
                                 key: const ValueKey('correct'),
                               )
                             : isSelected
-                                ? Icon(
-                                    Icons.cancel_rounded,
-                                    color: AppColors.powderRed,
-                                    size: iconSize * 1.2,
-                                    key: const ValueKey('wrong'),
-                                  )
-                                : const SizedBox.shrink(),
+                            ? Icon(
+                                Icons.cancel_rounded,
+                                color: AppColors.powderRed,
+                                size: iconSize * 1.2,
+                                key: const ValueKey('wrong'),
+                              )
+                            : const SizedBox.shrink(),
                       ),
                       SizedBox(height: padding * 0.5),
                     ],
@@ -634,7 +644,7 @@ class AnswerOptionsGrid extends StatelessWidget {
 }
 
 /// Quiz result dialog
-class QuizResultDialog extends StatelessWidget {
+class QuizResultDialog extends StatefulWidget {
   final QuizSession session;
   final VoidCallback onRestart;
   final VoidCallback onHome;
@@ -647,138 +657,406 @@ class QuizResultDialog extends StatelessWidget {
   });
 
   @override
+  State<QuizResultDialog> createState() => _QuizResultDialogState();
+}
+
+class _QuizResultDialogState extends State<QuizResultDialog>
+    with TickerProviderStateMixin {
+  late AnimationController _fadeController;
+  late AnimationController _scaleController;
+  late Animation<double> _fadeAnimation;
+  late Animation<double> _scaleAnimation;
+
+  final PatternService _patternService = PatternService();
+
+  @override
+  void initState() {
+    super.initState();
+    _fadeController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+    _scaleController = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
+    );
+
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _fadeController, curve: Curves.easeInOut),
+    );
+    _scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
+      CurvedAnimation(parent: _scaleController, curve: Curves.elasticOut),
+    );
+
+    _fadeController.forward();
+    _scaleController.forward();
+  }
+
+  @override
+  void dispose() {
+    _fadeController.dispose();
+    _scaleController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final isWin = session.state == QuizState.completed;
-    final score = (session.scorePercentage * 100).toInt();
+    final isWin = widget.session.state == QuizState.completed;
+    final score = (widget.session.scorePercentage * 100).toInt();
     final isTr = context.watch<LocalizationProvider>().isTr;
 
     return Dialog(
       backgroundColor: Colors.transparent,
-      child: Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppColors.darkBlue,
-              AppColors.darkBlue.withValues(alpha: 0.9),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.darkBlue.withValues(alpha: 0.5),
-              offset: const Offset(0, 8),
-              blurRadius: 24,
-              spreadRadius: 2,
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Animation
-            SizedBox(
-              width: 120,
-              height: 120,
-              child: Lottie.asset(
-                isWin
-                    ? AssetConstants.instance.lottieCorrect
-                    : AssetConstants.instance.lottieWrong,
-                repeat: false,
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Title
-            Text(
-              isWin
-                  ? (isTr ? 'Tebrikler!' : 'Congratulations!')
-                  : (isTr ? 'Tekrar Deneyin!' : 'Try Again!'),
-              style: context.textTheme.headlineMedium?.copyWith(
-                color: AppColors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-
-            // Score
-            Text(
-              isTr ? 'Skorunuz: %$score' : 'Your Score: %$score',
-              style: context.textTheme.titleLarge?.copyWith(
-                color: isWin ? AppColors.glowGreen : AppColors.powderRed,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Stats
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _buildStatColumn(
-                  isTr ? 'Doğru' : 'Correct',
-                  session.correctAnswers.toString(),
-                  AppColors.glowGreen,
+      child: AnimatedBuilder(
+        animation: _fadeAnimation,
+        builder: (context, child) {
+          return FadeTransition(
+            opacity: _fadeAnimation,
+            child: ScaleTransition(
+              scale: _scaleAnimation,
+              child: Container(
+                padding: const EdgeInsets.all(28),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: isWin
+                        ? [
+                            AppColors.purple.withValues(alpha: 0.95),
+                            AppColors.pink.withValues(alpha: 0.8),
+                            AppColors.turquoise.withValues(alpha: 0.7),
+                          ]
+                        : [
+                            AppColors.darkBlue.withValues(alpha: 0.95),
+                            AppColors.powderRed.withValues(alpha: 0.8),
+                            AppColors.pink.withValues(alpha: 0.7),
+                          ],
+                    stops: const [0.0, 0.6, 1.0],
+                  ),
+                  borderRadius: BorderRadius.circular(28),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    width: 1,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: (isWin ? AppColors.purple : AppColors.darkBlue)
+                          .withValues(alpha: 0.4),
+                      offset: const Offset(0, 12),
+                      blurRadius: 32,
+                      spreadRadius: 0,
+                    ),
+                    BoxShadow(
+                      color: (isWin ? AppColors.pink : AppColors.powderRed)
+                          .withValues(alpha: 0.3),
+                      offset: const Offset(0, 24),
+                      blurRadius: 48,
+                      spreadRadius: 0,
+                    ),
+                  ],
                 ),
-                _buildStatColumn(
-                  isTr ? 'Yanlış' : 'Wrong',
-                  session.wrongAnswers.toString(),
-                  AppColors.powderRed,
-                ),
-                _buildStatColumn(
-                  isTr ? 'Süre' : 'Time',
-                  _formatDuration(session.duration),
-                  AppColors.yellow,
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-
-            // Buttons
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: onHome,
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(
-                          color: AppColors.white.withValues(alpha: 0.5)),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(28),
+                  child: Stack(
+                    children: [
+                      // Background Pattern
+                      Positioned.fill(
+                        child: CustomPaint(
+                          painter: _patternService.getPatternPainter(
+                            type: PatternType.molecular,
+                            color: Colors.white,
+                            opacity: 0.1,
+                          ),
+                        ),
                       ),
-                    ),
-                    child: Text(
-                      isTr ? 'Ana Sayfa' : 'Home',
-                      style: const TextStyle(color: AppColors.white),
-                    ),
+
+                      // Decorative Elements
+                      Positioned(
+                        top: -20,
+                        right: -20,
+                        child: Container(
+                          width: 80,
+                          height: 80,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.1),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ),
+
+                      Positioned(
+                        bottom: -15,
+                        left: -15,
+                        child: Container(
+                          width: 60,
+                          height: 60,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.05),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ),
+
+                      // Main Content
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Animation
+                          Container(
+                            width: 140,
+                            height: 140,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.3),
+                                width: 1,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.1),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 6),
+                                ),
+                              ],
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(20),
+                              child: Lottie.asset(
+                                isWin
+                                    ? AssetConstants.instance.lottieCorrect
+                                    : AssetConstants.instance.lottieWrong,
+                                repeat: false,
+                                fit: BoxFit.contain,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+
+                          // Title
+                          Text(
+                            isWin
+                                ? (isTr ? 'Tebrikler!' : 'Congratulations!')
+                                : (isTr ? 'Tekrar Deneyin!' : 'Try Again!'),
+                            style: const TextStyle(
+                              color: AppColors.white,
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              shadows: [
+                                Shadow(
+                                  color: Colors.black26,
+                                  offset: Offset(1, 1),
+                                  blurRadius: 2,
+                                ),
+                              ],
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 12),
+
+                          // Score
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.3),
+                                width: 1,
+                              ),
+                            ),
+                            child: Text(
+                              isTr
+                                  ? 'Skorunuz: %$score'
+                                  : 'Your Score: %$score',
+                              style: TextStyle(
+                                color: isWin
+                                    ? AppColors.glowGreen
+                                    : AppColors.powderRed,
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                shadows: [
+                                  Shadow(
+                                    color: Colors.black26,
+                                    offset: Offset(1, 1),
+                                    blurRadius: 2,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+
+                          // Stats
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.2),
+                                width: 1,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                _buildStatColumn(
+                                  isTr ? 'Doğru' : 'Correct',
+                                  widget.session.correctAnswers.toString(),
+                                  AppColors.glowGreen,
+                                ),
+                                _buildStatColumn(
+                                  isTr ? 'Yanlış' : 'Wrong',
+                                  widget.session.wrongAnswers.toString(),
+                                  AppColors.powderRed,
+                                ),
+                                _buildStatColumn(
+                                  isTr ? 'Süre' : 'Time',
+                                  _formatDuration(widget.session.duration),
+                                  AppColors.yellow,
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 28),
+
+                          // Buttons
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [
+                                        Colors.white.withValues(alpha: 0.2),
+                                        Colors.white.withValues(alpha: 0.1),
+                                      ],
+                                    ),
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(
+                                      color: Colors.white.withValues(
+                                        alpha: 0.3,
+                                      ),
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: Material(
+                                    color: Colors.transparent,
+                                    child: InkWell(
+                                      borderRadius: BorderRadius.circular(16),
+                                      onTap: () async {
+                                        HapticFeedback.lightImpact();
+                                        Navigator.of(context).pop();
+                                        // Show ad after dialog is closed
+                                        await Future.delayed(
+                                          const Duration(milliseconds: 500),
+                                        );
+                                        await InterstitialAdManager.instance
+                                            .showAdOnAction();
+                                        widget.onHome();
+                                      },
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 14,
+                                        ),
+                                        child: Text(
+                                          isTr ? 'Ana Sayfa' : 'Home',
+                                          style: const TextStyle(
+                                            color: AppColors.white,
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: isWin
+                                          ? [
+                                              AppColors.glowGreen.withValues(
+                                                alpha: 0.9,
+                                              ),
+                                              AppColors.turquoise.withValues(
+                                                alpha: 0.7,
+                                              ),
+                                            ]
+                                          : [
+                                              AppColors.powderRed.withValues(
+                                                alpha: 0.9,
+                                              ),
+                                              AppColors.pink.withValues(
+                                                alpha: 0.7,
+                                              ),
+                                            ],
+                                    ),
+                                    borderRadius: BorderRadius.circular(16),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color:
+                                            (isWin
+                                                    ? AppColors.glowGreen
+                                                    : AppColors.powderRed)
+                                                .withValues(alpha: 0.3),
+                                        blurRadius: 12,
+                                        offset: const Offset(0, 6),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Material(
+                                    color: Colors.transparent,
+                                    child: InkWell(
+                                      borderRadius: BorderRadius.circular(16),
+                                      onTap: () async {
+                                        HapticFeedback.lightImpact();
+                                        Navigator.of(context).pop();
+                                        // Show ad after dialog is closed
+                                        await Future.delayed(
+                                          const Duration(milliseconds: 500),
+                                        );
+                                        await InterstitialAdManager.instance
+                                            .showAdOnAction();
+                                        widget.onRestart();
+                                      },
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 14,
+                                        ),
+                                        child: Text(
+                                          isTr ? 'Tekrar Oyna' : 'Play Again',
+                                          style: const TextStyle(
+                                            color: AppColors.white,
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: onRestart,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                          isWin ? AppColors.glowGreen : AppColors.powderRed,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: Text(
-                      isTr ? 'Tekrar Oyna' : 'Play Again',
-                      style: const TextStyle(
-                          color: AppColors.white, fontWeight: FontWeight.w600),
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
@@ -786,20 +1064,35 @@ class QuizResultDialog extends StatelessWidget {
   Widget _buildStatColumn(String label, String value, Color color) {
     return Column(
       children: [
-        Text(
-          value,
-          style: TextStyle(
-            color: color,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Text(
+            value,
+            style: TextStyle(
+              color: color,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              shadows: [
+                Shadow(
+                  color: Colors.black26,
+                  offset: Offset(1, 1),
+                  blurRadius: 2,
+                ),
+              ],
+            ),
           ),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 6),
         Text(
           label,
           style: TextStyle(
-            color: AppColors.white.withValues(alpha: 0.7),
-            fontSize: 12,
+            color: AppColors.white.withValues(alpha: 0.8),
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
           ),
         ),
       ],

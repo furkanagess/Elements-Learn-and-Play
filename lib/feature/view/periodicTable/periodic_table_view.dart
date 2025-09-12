@@ -58,25 +58,6 @@ class _PeriodicTableViewState extends State<PeriodicTableView> {
       leading: const ModernBackButton(),
       title: Row(
         children: [
-          // Icon
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: SvgPicture.asset(
-              AssetConstants.instance.svgElementGroup,
-              width: 20,
-              height: 20,
-              colorFilter: const ColorFilter.mode(
-                AppColors.white,
-                BlendMode.srcIn,
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-
           // Title
           Text(
             isTr ? TrAppStrings.periodicTable : EnAppStrings.periodicTable,
@@ -184,8 +165,9 @@ class _PeriodicTableViewState extends State<PeriodicTableView> {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(20),
             child: ScrollConfiguration(
-              behavior:
-                  ScrollConfiguration.of(context).copyWith(scrollbars: true),
+              behavior: ScrollConfiguration.of(
+                context,
+              ).copyWith(scrollbars: true),
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: SingleChildScrollView(
@@ -197,8 +179,9 @@ class _PeriodicTableViewState extends State<PeriodicTableView> {
                       minScale: 0.5,
                       maxScale: 3.0,
                       onInteractionUpdate: (details) {
-                        provider.updateScale(_transformationController.value
-                            .getMaxScaleOnAxis());
+                        provider.updateScale(
+                          _transformationController.value.getMaxScaleOnAxis(),
+                        );
                       },
                       child: Stack(
                         children: [
@@ -207,8 +190,9 @@ class _PeriodicTableViewState extends State<PeriodicTableView> {
 
                           // Elements
                           ...provider.filteredElements.map((element) {
-                            final position =
-                                provider.getElementPosition(element);
+                            final position = provider.getElementPosition(
+                              element,
+                            );
                             return Positioned(
                               left: position.dx,
                               top: position.dy,
@@ -337,9 +321,7 @@ class _PeriodicTableViewState extends State<PeriodicTableView> {
     if (provider.state.selectedElement == null) return const SizedBox.shrink();
 
     return CustomPaint(
-      painter: AtomicModelPainter(
-        element: provider.state.selectedElement!,
-      ),
+      painter: AtomicModelPainter(element: provider.state.selectedElement!),
       size: const Size(1200, 800),
     );
   }
