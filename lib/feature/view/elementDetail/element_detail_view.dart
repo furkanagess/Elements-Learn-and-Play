@@ -7,8 +7,10 @@ import 'package:elements_app/product/extensions/color_extension.dart';
 import 'package:elements_app/product/extensions/context_extensions.dart';
 import 'package:elements_app/product/widget/button/back_button.dart';
 import 'package:elements_app/product/widget/scaffold/app_scaffold.dart';
+import 'package:elements_app/product/constants/assets_constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 
 /// Data class for detail card items
@@ -16,6 +18,7 @@ class DetailItem {
   final String label;
   final String value;
   final IconData? icon;
+  final String? svgPath;
   final Color? valueColor;
   final bool isHighlighted;
   final String? unit;
@@ -24,6 +27,7 @@ class DetailItem {
     required this.label,
     required this.value,
     this.icon,
+    this.svgPath,
     this.valueColor,
     this.isHighlighted = false,
     this.unit,
@@ -34,6 +38,7 @@ class DetailItem {
     required this.label,
     required this.value,
     this.icon,
+    this.svgPath,
     this.valueColor,
     this.unit,
   }) : isHighlighted = true;
@@ -44,6 +49,7 @@ class DetailItem {
     required this.value,
     required this.unit,
     this.icon,
+    this.svgPath,
     this.valueColor,
     this.isHighlighted = false,
   });
@@ -54,10 +60,7 @@ class DetailItem {
 
 class ElementDetailView extends StatefulWidget {
   final PeriodicElement element;
-  const ElementDetailView({
-    super.key,
-    required this.element,
-  });
+  const ElementDetailView({super.key, required this.element});
 
   @override
   State<ElementDetailView> createState() => _ElementDetailViewState();
@@ -85,29 +88,27 @@ class _ElementDetailViewState extends State<ElementDetailView>
       vsync: this,
     );
 
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _mainAnimationController,
-      curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
-    ));
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _mainAnimationController,
+        curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
+      ),
+    );
 
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.3),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _mainAnimationController,
-      curve: const Interval(0.2, 0.8, curve: Curves.easeOutCubic),
-    ));
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _mainAnimationController,
+            curve: const Interval(0.2, 0.8, curve: Curves.easeOutCubic),
+          ),
+        );
 
-    _scaleAnimation = Tween<double>(
-      begin: 0.8,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _mainAnimationController,
-      curve: const Interval(0.4, 1.0, curve: Curves.elasticOut),
-    ));
+    _scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _mainAnimationController,
+        curve: const Interval(0.4, 1.0, curve: Curves.elasticOut),
+      ),
+    );
 
     _mainAnimationController.forward();
   }
@@ -125,7 +126,7 @@ class _ElementDetailViewState extends State<ElementDetailView>
     // Try to parse as double and format to 4 decimal places
     final doubleValue = double.tryParse(weight.replaceAll(',', '.'));
     if (doubleValue != null) {
-      return doubleValue.toStringAsFixed(4);
+      return doubleValue.toStringAsFixed(2);
     }
 
     // If parsing fails, return original value
@@ -409,13 +410,13 @@ class _ElementDetailViewState extends State<ElementDetailView>
                                 isTr
                                     ? widget.element.trName ?? ''
                                     : widget.element.enName ?? '',
-                                style:
-                                    context.textTheme.headlineSmall?.copyWith(
-                                  color: AppColors.white,
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 18,
-                                  letterSpacing: 0.5,
-                                ),
+                                style: context.textTheme.headlineSmall
+                                    ?.copyWith(
+                                      color: AppColors.white,
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 18,
+                                      letterSpacing: 0.5,
+                                    ),
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -498,11 +499,11 @@ class _ElementDetailViewState extends State<ElementDetailView>
                     content: Text(
                       context.read<LocalizationProvider>().isTr
                           ? isFavorite
-                              ? 'Favorilerden kaldırıldı'
-                              : 'Favorilere eklendi'
+                                ? 'Favorilerden kaldırıldı'
+                                : 'Favorilere eklendi'
                           : isFavorite
-                              ? 'Removed from favorites'
-                              : 'Added to favorites',
+                          ? 'Removed from favorites'
+                          : 'Added to favorites',
                     ),
                     backgroundColor: elementColor,
                     behavior: SnackBarBehavior.floating,
@@ -555,17 +556,19 @@ class _ElementDetailViewState extends State<ElementDetailView>
     );
   }
 
-  Widget _buildStatCard(BuildContext context, String title, String value,
-      IconData icon, Color color) {
+  Widget _buildStatCard(
+    BuildContext context,
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.darkBlue,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: color.withValues(alpha: 0.3),
-          width: 1,
-        ),
+        border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
         boxShadow: [
           BoxShadow(
             color: color.withValues(alpha: 0.1),
@@ -577,11 +580,7 @@ class _ElementDetailViewState extends State<ElementDetailView>
       ),
       child: Column(
         children: [
-          Icon(
-            icon,
-            color: color,
-            size: 24,
-          ),
+          Icon(icon, color: color, size: 24),
           const SizedBox(height: 8),
           Text(
             title,
@@ -639,8 +638,9 @@ class _ElementDetailViewState extends State<ElementDetailView>
                       color: isSelected
                           ? AppColors.white
                           : AppColors.white.withValues(alpha: 0.7),
-                      fontWeight:
-                          isSelected ? FontWeight.bold : FontWeight.w500,
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.w500,
                     ),
                   ),
                 ),
@@ -666,7 +666,10 @@ class _ElementDetailViewState extends State<ElementDetailView>
   }
 
   Widget _buildOverviewTab(
-      BuildContext context, Color elementColor, bool isTr) {
+    BuildContext context,
+    Color elementColor,
+    bool isTr,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -692,7 +695,10 @@ class _ElementDetailViewState extends State<ElementDetailView>
   }
 
   Widget _buildPropertiesTab(
-      BuildContext context, Color elementColor, bool isTr) {
+    BuildContext context,
+    Color elementColor,
+    bool isTr,
+  ) {
     return Column(
       children: [
         _buildPropertyGrid(context, elementColor),
@@ -716,21 +722,24 @@ class _ElementDetailViewState extends State<ElementDetailView>
           'Fiziksel Özellikler',
           [
             DetailItem.highlighted(
-                label: 'Atom Numarası',
-                value: widget.element.number?.toString() ?? '',
-                icon: Icons.tag),
+              label: 'Atom Numarası',
+              value: widget.element.number?.toString() ?? '',
+              icon: Icons.tag,
+            ),
             DetailItem.withUnit(
-                label: 'Atom Ağırlığı',
-                value: _formatWeight(widget.element.weight),
-                unit: 'u',
-                icon: Icons.scale),
+              label: 'Atom Ağırlığı',
+              value: _formatWeight(widget.element.weight),
+              unit: 'u',
+              icon: Icons.scale,
+            ),
             DetailItem(
-                label: 'Elektron Konfigürasyonu',
-                value: widget.element.electronConfiguration ?? '-',
-                icon: Icons.science_outlined,
-                valueColor: widget.element.electronConfiguration != null
-                    ? null
-                    : AppColors.white.withValues(alpha: 0.5)),
+              label: 'Elektron Konfigürasyonu',
+              value: widget.element.electronConfiguration ?? '-',
+              icon: Icons.science_outlined,
+              valueColor: widget.element.electronConfiguration != null
+                  ? null
+                  : AppColors.white.withValues(alpha: 0.5),
+            ),
           ],
           Icons.science_outlined,
           elementColor,
@@ -740,21 +749,18 @@ class _ElementDetailViewState extends State<ElementDetailView>
           context,
           'Kimyasal Özellikler',
           [
-            const DetailItem.withUnit(
-                label: 'Elektronegatiflik',
-                value: '2.20',
-                unit: '',
-                icon: Icons.electric_bolt),
-            const DetailItem.withUnit(
-                label: 'İyonlaşma Enerjisi',
-                value: '1312',
-                unit: 'kJ/mol',
-                icon: Icons.flash_on),
-            const DetailItem.withUnit(
-                label: 'Atom Yarıçapı',
-                value: '120',
-                unit: 'pm',
-                icon: Icons.radio_button_unchecked),
+            DetailItem.withUnit(
+              label: 'Elektronegatiflik',
+              value: widget.element.electronegativity?.toString() ?? '-',
+              unit: '',
+              svgPath: AssetConstants.instance.svgThunder,
+            ),
+            DetailItem.withUnit(
+              label: 'Atom Yarıçapı',
+              value: widget.element.atomicRadius?.toString() ?? '-',
+              unit: 'pm',
+              svgPath: AssetConstants.instance.svgRadius,
+            ),
           ],
           Icons.science,
           elementColor,
@@ -765,23 +771,27 @@ class _ElementDetailViewState extends State<ElementDetailView>
           'Sınıflandırma',
           [
             DetailItem(
-                label: 'Blok',
-                value: widget.element.block ?? '',
-                icon: Icons.crop_square),
+              label: 'Blok',
+              value: widget.element.block ?? '',
+              icon: Icons.crop_square,
+            ),
             DetailItem(
-                label: 'Periyot',
-                value: widget.element.period ?? '',
-                icon: Icons.timeline),
+              label: 'Periyot',
+              value: widget.element.period ?? '',
+              icon: Icons.timeline,
+            ),
             DetailItem(
-                label: 'Grup',
-                value: widget.element.group ?? '',
-                icon: Icons.group_work),
+              label: 'Grup',
+              value: widget.element.group ?? '',
+              icon: Icons.group_work,
+            ),
             DetailItem(
-                label: 'Kategori',
-                value: isTr
-                    ? widget.element.trCategory ?? ''
-                    : widget.element.enCategory ?? '',
-                icon: Icons.category),
+              label: 'Kategori',
+              value: isTr
+                  ? widget.element.trCategory ?? ''
+                  : widget.element.enCategory ?? '',
+              icon: Icons.category,
+            ),
           ],
           Icons.tune,
           elementColor,
@@ -793,21 +803,25 @@ class _ElementDetailViewState extends State<ElementDetailView>
   Widget _buildPropertyGrid(BuildContext context, Color elementColor) {
     final properties = [
       DetailItem(
-          label: 'Blok',
-          value: widget.element.block ?? '',
-          icon: Icons.crop_square),
+        label: 'Blok',
+        value: widget.element.block ?? '',
+        icon: Icons.crop_square,
+      ),
       DetailItem(
-          label: 'Periyot',
-          value: widget.element.period ?? '',
-          icon: Icons.timeline),
+        label: 'Periyot',
+        value: widget.element.period ?? '',
+        icon: Icons.timeline,
+      ),
       DetailItem(
-          label: 'Grup',
-          value: widget.element.group ?? '',
-          icon: Icons.group_work),
+        label: 'Grup',
+        value: widget.element.group ?? '',
+        icon: Icons.group_work,
+      ),
       DetailItem(
-          label: 'Kategori',
-          value: widget.element.enCategory ?? '',
-          icon: Icons.category),
+        label: 'Kategori',
+        value: widget.element.enCategory ?? '',
+        icon: Icons.category,
+      ),
     ];
 
     return Container(
@@ -867,17 +881,19 @@ class _ElementDetailViewState extends State<ElementDetailView>
     );
   }
 
-  Widget _buildPropertyItem(BuildContext context, String label, String value,
-      IconData icon, Color color) {
+  Widget _buildPropertyItem(
+    BuildContext context,
+    String label,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: AppColors.background,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: color.withValues(alpha: 0.2),
-          width: 1,
-        ),
+        border: Border.all(color: color.withValues(alpha: 0.2), width: 1),
       ),
       child: Row(
         children: [
@@ -915,18 +931,20 @@ class _ElementDetailViewState extends State<ElementDetailView>
     );
   }
 
-  Widget _buildInfoSection(BuildContext context, String title, String content,
-      IconData icon, Color color) {
+  Widget _buildInfoSection(
+    BuildContext context,
+    String title,
+    String content,
+    IconData icon,
+    Color color,
+  ) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: AppColors.darkBlue,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: color.withValues(alpha: 0.3),
-          width: 1,
-        ),
+        border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -957,18 +975,20 @@ class _ElementDetailViewState extends State<ElementDetailView>
     );
   }
 
-  Widget _buildDetailCard(BuildContext context, String title,
-      List<DetailItem> details, IconData icon, Color color) {
+  Widget _buildDetailCard(
+    BuildContext context,
+    String title,
+    List<DetailItem> details,
+    IconData icon,
+    Color color,
+  ) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: AppColors.darkBlue,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: color.withValues(alpha: 0.3),
-          width: 1,
-        ),
+        border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -988,49 +1008,62 @@ class _ElementDetailViewState extends State<ElementDetailView>
           ),
           const SizedBox(height: 16),
           ...details
-              .map((detail) => Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    child: Row(
-                      children: [
-                        if (detail.icon != null) ...[
-                          Icon(
-                            detail.icon,
-                            color: color.withValues(alpha: 0.7),
-                            size: 18,
-                          ),
-                          const SizedBox(width: 8),
-                        ],
-                        Expanded(
-                          flex: 2,
-                          child: Text(
-                            detail.label,
-                            style: context.textTheme.bodyMedium?.copyWith(
-                              color: detail.isHighlighted
-                                  ? AppColors.white
-                                  : AppColors.white.withValues(alpha: 0.7),
-                              fontWeight: detail.isHighlighted
-                                  ? FontWeight.w600
-                                  : FontWeight.w500,
-                            ),
-                          ),
+              .map(
+                (detail) => Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: Row(
+                    children: [
+                      if (detail.icon != null) ...[
+                        Icon(
+                          detail.icon,
+                          color: color.withValues(alpha: 0.7),
+                          size: 18,
                         ),
-                        Expanded(
-                          flex: 3,
-                          child: Text(
-                            detail.displayValue,
-                            textAlign: TextAlign.end,
-                            style: context.textTheme.bodyMedium?.copyWith(
-                              color: detail.valueColor ?? AppColors.white,
-                              fontWeight: detail.isHighlighted
-                                  ? FontWeight.w900
-                                  : FontWeight.bold,
-                              fontSize: detail.isHighlighted ? 16 : null,
-                            ),
+                        const SizedBox(width: 8),
+                      ] else if (detail.svgPath != null) ...[
+                        SvgPicture.asset(
+                          detail.svgPath!,
+                          colorFilter: ColorFilter.mode(
+                            color.withValues(alpha: 0.7),
+                            BlendMode.srcIn,
                           ),
+                          width: 18,
+                          height: 18,
                         ),
+                        const SizedBox(width: 8),
                       ],
-                    ),
-                  ))
+                      Expanded(
+                        flex: 2,
+                        child: Text(
+                          detail.label,
+                          style: context.textTheme.bodyMedium?.copyWith(
+                            color: detail.isHighlighted
+                                ? AppColors.white
+                                : AppColors.white.withValues(alpha: 0.7),
+                            fontWeight: detail.isHighlighted
+                                ? FontWeight.w600
+                                : FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        flex: 3,
+                        child: Text(
+                          detail.displayValue,
+                          textAlign: TextAlign.end,
+                          style: context.textTheme.bodyMedium?.copyWith(
+                            color: detail.valueColor ?? AppColors.white,
+                            fontWeight: detail.isHighlighted
+                                ? FontWeight.w900
+                                : FontWeight.bold,
+                            fontSize: detail.isHighlighted ? 16 : null,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
               .toList(),
         ],
       ),
@@ -1055,11 +1088,7 @@ class _ElementPatternPainter extends CustomPainter {
         final x = (size.width / 5) * (i + 1);
         final y = (size.height / 5) * (j + 1);
 
-        canvas.drawCircle(
-          Offset(x, y),
-          3,
-          paint,
-        );
+        canvas.drawCircle(Offset(x, y), 3, paint);
       }
     }
 
@@ -1073,11 +1102,7 @@ class _ElementPatternPainter extends CustomPainter {
         final x2 = (size.width / 5) * (i + 2);
         final y = (size.height / 5) * (j + 1);
 
-        canvas.drawLine(
-          Offset(x1, y),
-          Offset(x2, y),
-          paint,
-        );
+        canvas.drawLine(Offset(x1, y), Offset(x2, y), paint);
       }
     }
 
@@ -1088,11 +1113,7 @@ class _ElementPatternPainter extends CustomPainter {
         final y1 = (size.height / 5) * (j + 1);
         final y2 = (size.height / 5) * (j + 2);
 
-        canvas.drawLine(
-          Offset(x, y1),
-          Offset(x, y2),
-          paint,
-        );
+        canvas.drawLine(Offset(x, y1), Offset(x, y2), paint);
       }
     }
   }

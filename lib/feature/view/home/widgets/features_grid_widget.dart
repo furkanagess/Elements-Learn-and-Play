@@ -93,8 +93,8 @@ class FeaturesGridWidget extends StatelessWidget {
                             context,
                             MaterialPageRoute(
                               builder: (context) {
-                                final infoProvider =
-                                    context.read<InfoProvider>();
+                                final infoProvider = context
+                                    .read<InfoProvider>();
                                 infoProvider.fetchInfoList();
                                 return const ModernInfoView();
                               },

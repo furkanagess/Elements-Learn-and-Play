@@ -10,10 +10,7 @@ import 'package:provider/provider.dart';
 
 class AppScaffold extends StatelessWidget {
   final Widget child;
-  const AppScaffold({
-    super.key,
-    required this.child,
-  });
+  const AppScaffold({super.key, required this.child});
 
   @override
   Widget build(BuildContext context) {
@@ -22,29 +19,32 @@ class AppScaffold extends StatelessWidget {
     return Scaffold(
       body: networkStatus == NetworkStatus.online
           ? child
-          : Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Column(
-                  children: [
-                    Center(
-                      child: Lottie.asset(
-                        AssetConstants.instance.lottieConnection,
-                        fit: BoxFit.cover,
-                        reverse: true,
-                        repeat: true,
-                        height: context.dynamicHeight(0.3),
+          : SafeArea(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Center(
+                        child: Lottie.asset(
+                          AssetConstants.instance.lottieConnection,
+                          fit: BoxFit.cover,
+                          reverse: true,
+                          repeat: true,
+                          height: context.dynamicHeight(0.3),
+                        ),
                       ),
-                    ),
-                    Text(
-                      isTr
-                          ? TrAppStrings.connectionError
-                          : EnAppStrings.connectionError,
-                      style: context.textTheme.bodyMedium,
-                    )
-                  ],
-                ),
-              ],
+                      Text(
+                        isTr
+                            ? TrAppStrings.connectionError
+                            : EnAppStrings.connectionError,
+                        style: context.textTheme.bodyMedium,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
     );
   }

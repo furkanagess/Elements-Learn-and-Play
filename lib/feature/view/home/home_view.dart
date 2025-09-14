@@ -79,28 +79,6 @@ class _HomeViewState extends State<StatefulWidget> {
                               RepaintBoundary(child: FeaturesGridWidget()),
 
                               SizedBox(height: 20),
-
-                              SizedBox(height: 20),
-
-                              // // Test Interstitial Ad Button (only in debug mode)
-                              // if (kDebugMode)
-                              //   RepaintBoundary(
-                              //     child: Container(
-                              //       margin: EdgeInsets.symmetric(horizontal: 8.0),
-                              //       child: ElevatedButton.icon(
-                              //         onPressed: () {
-                              //           InterstitialAdManager.instance.showAdOnAction();
-                              //         },
-                              //         icon: Icon(Icons.ads_click),
-                              //         label: Text('Test Interstitial Ad'),
-                              //         style: ElevatedButton.styleFrom(
-                              //           backgroundColor: Colors.orange,
-                              //           foregroundColor: Colors.white,
-                              //           padding: EdgeInsets.symmetric(vertical: 12),
-                              //         ),
-                              //       ),
-                              //     ),
-                              //   ),
                             ],
                           ),
                         ),

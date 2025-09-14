@@ -1,5 +1,5 @@
 import 'package:elements_app/feature/model/info.dart';
-import 'package:elements_app/feature/mixin/elementType/element_type_mixin.dart';
+import 'package:elements_app/core/services/data/data_service.dart';
 import 'package:elements_app/feature/view/elementsList/elements_loading_view.dart';
 import 'package:elements_app/product/widget/button/back_button.dart';
 import 'package:elements_app/feature/provider/localization_provider.dart';
@@ -29,13 +29,18 @@ class ElementTypeView extends StatefulWidget {
 }
 
 class _ElementTypeViewState extends State<ElementTypeView>
-    with TickerProviderStateMixin, ElementTypeMixin {
+    with TickerProviderStateMixin {
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
 
   // Pattern service for background patterns
   final PatternService _patternService = PatternService();
   int? _pressedCardIndex;
+
+  // Data service and state
+  final DataService _dataService = DataService();
+  late Future<List<Info>> _infoList;
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -51,6 +56,22 @@ class _ElementTypeViewState extends State<ElementTypeView>
     );
 
     _fadeController.forward();
+
+    // Initialize data fetching
+    _initializeData();
+  }
+
+  void _initializeData() {
+    _infoList = _dataService.fetchInfo(widget.apiType);
+
+    // Simulate loading delay for better UX
+    Future.delayed(const Duration(seconds: 2), () {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    });
   }
 
   @override
@@ -62,7 +83,7 @@ class _ElementTypeViewState extends State<ElementTypeView>
   @override
   Widget build(BuildContext context) {
     // Show only loading screen when loading
-    if (isLoading) {
+    if (_isLoading) {
       return const ElementsLoadingView();
     }
 
@@ -140,7 +161,7 @@ class _ElementTypeViewState extends State<ElementTypeView>
 
   Widget _buildContent() {
     return FutureBuilder<List<Info>>(
-      future: infoList,
+      future: _infoList,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const ElementsLoadingView();

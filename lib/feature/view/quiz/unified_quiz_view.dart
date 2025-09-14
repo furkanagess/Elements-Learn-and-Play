@@ -13,6 +13,7 @@ import 'package:elements_app/product/constants/app_colors.dart';
 import 'package:elements_app/product/constants/stringConstants/en_app_strings.dart';
 import 'package:elements_app/product/constants/stringConstants/tr_app_strings.dart';
 import 'package:elements_app/core/services/pattern/pattern_service.dart';
+import 'package:elements_app/product/widget/ads/interstitial_ad_widget.dart';
 
 /// Unified quiz view that handles all quiz types with modern UI
 class UnifiedQuizView extends StatefulWidget {
@@ -80,10 +81,15 @@ class _UnifiedQuizViewState extends State<UnifiedQuizView>
     });
   }
 
-  void _restartQuizFromBeginning() {
+  void _restartQuizFromBeginning() async {
     // Restart the entire quiz from the beginning (0/10)
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       final quizProvider = context.read<QuizProvider>();
+
+      // Show ad before restarting quiz
+      await Future.delayed(const Duration(milliseconds: 500));
+      await InterstitialAdManager.instance.showAdOnAction();
+
       quizProvider.restartQuizFromBeginning();
     });
   }
@@ -117,9 +123,9 @@ class _UnifiedQuizViewState extends State<UnifiedQuizView>
   }
 
   Widget _buildLoadingState() {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: Stack(
+    return Container(
+      color: AppColors.background,
+      child: Stack(
         children: [
           Positioned.fill(
             child: CustomPaint(
@@ -130,31 +136,45 @@ class _UnifiedQuizViewState extends State<UnifiedQuizView>
               ),
             ),
           ),
-          Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const ElementsLoadingView(),
-                const SizedBox(height: 24),
-                Text(
-                  context.watch<LocalizationProvider>().isTr
-                      ? TrAppStrings.loadingQuiz
-                      : EnAppStrings.loadingQuiz,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: AppColors.white,
-                    fontWeight: FontWeight.w600,
+          SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    maxWidth: 400,
+                    maxHeight: 600,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const ElementsLoadingView(),
+                      const SizedBox(height: 24),
+                      Text(
+                        context.watch<LocalizationProvider>().isTr
+                            ? TrAppStrings.loadingQuiz
+                            : EnAppStrings.loadingQuiz,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: AppColors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        context.watch<LocalizationProvider>().isTr
+                            ? widget.quizType.turkishTitle
+                            : widget.quizType.englishTitle,
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          color: AppColors.white.withValues(alpha: 0.7),
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  context.watch<LocalizationProvider>().isTr
-                      ? widget.quizType.turkishTitle
-                      : widget.quizType.englishTitle,
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: AppColors.white.withValues(alpha: 0.7),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ],
@@ -164,9 +184,9 @@ class _UnifiedQuizViewState extends State<UnifiedQuizView>
 
   Widget _buildErrorState(String errorMessage) {
     final isTr = context.watch<LocalizationProvider>().isTr;
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: Stack(
+    return Container(
+      color: AppColors.background,
+      child: Stack(
         children: [
           Positioned.fill(
             child: CustomPaint(
@@ -177,78 +197,92 @@ class _UnifiedQuizViewState extends State<UnifiedQuizView>
               ),
             ),
           ),
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.error_outline,
-                    size: 80,
-                    color: AppColors.powderRed,
+          SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    maxWidth: 400,
+                    maxHeight: 600,
                   ),
-                  const SizedBox(height: 24),
-                  Text(
-                    isTr ? 'Quiz Yüklenemedi' : 'Failed to Load Quiz',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      color: AppColors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    errorMessage,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: AppColors.white.withValues(alpha: 0.7),
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 32),
-                  Row(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () => Navigator.of(context).pop(),
-                          style: OutlinedButton.styleFrom(
-                            side: BorderSide(
-                              color: AppColors.white.withValues(alpha: 0.5),
-                            ),
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child: Text(
-                            isTr ? 'Geri Dön' : 'Go Back',
-                            style: const TextStyle(color: AppColors.white),
-                          ),
-                        ),
+                      Icon(
+                        Icons.error_outline,
+                        size: 80,
+                        color: AppColors.powderRed,
                       ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: _startQuiz,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.purple,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child: Text(
-                            isTr ? 'Tekrar Dene' : 'Retry',
-                            style: const TextStyle(
+                      const SizedBox(height: 24),
+                      Text(
+                        isTr ? 'Quiz Yüklenemedi' : 'Failed to Load Quiz',
+                        style: Theme.of(context).textTheme.headlineSmall
+                            ?.copyWith(
                               color: AppColors.white,
-                              fontWeight: FontWeight.w600,
+                              fontWeight: FontWeight.bold,
+                            ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        errorMessage,
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          color: AppColors.white.withValues(alpha: 0.7),
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 32),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () => Navigator.of(context).pop(),
+                              style: OutlinedButton.styleFrom(
+                                side: BorderSide(
+                                  color: AppColors.white.withValues(alpha: 0.5),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: Text(
+                                isTr ? 'Geri Dön' : 'Go Back',
+                                style: const TextStyle(color: AppColors.white),
+                              ),
                             ),
                           ),
-                        ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: _startQuiz,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.purple,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: Text(
+                                isTr ? 'Tekrar Dene' : 'Retry',
+                                style: const TextStyle(
+                                  color: AppColors.white,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
@@ -269,13 +303,18 @@ class _UnifiedQuizViewState extends State<UnifiedQuizView>
       debugPrint('🔍 Session state: ${session.state}');
       debugPrint('🔍 Current question index: ${session.currentQuestionIndex}');
       debugPrint('🔍 Total questions: ${session.questions.length}');
+      debugPrint('🔍 Correct answers: ${session.correctAnswers}');
+      debugPrint('🔍 Wrong answers: ${session.wrongAnswers}');
 
       if (session.isCompleted &&
           (session.state == QuizState.completed ||
               session.state == QuizState.failed)) {
         debugPrint('✅ Quiz completed! Showing dialog...');
+        debugPrint(
+          '🎯 Quiz result: ${session.state == QuizState.completed ? "SUCCESS" : "FAILED"}',
+        );
         // Add a small delay to ensure UI is ready
-        Future.delayed(const Duration(milliseconds: 100), () {
+        Future.delayed(const Duration(milliseconds: 200), () {
           if (mounted) {
             _showResultDialog(context, quizProvider, session);
           }
@@ -283,9 +322,9 @@ class _UnifiedQuizViewState extends State<UnifiedQuizView>
       }
     });
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: Stack(
+    return Container(
+      color: AppColors.background,
+      child: Stack(
         children: [
           Positioned.fill(
             child: CustomPaint(
@@ -357,7 +396,10 @@ class _UnifiedQuizViewState extends State<UnifiedQuizView>
                         vertical: 12,
                       ),
                       child: FloatingActionButton.extended(
-                        onPressed: () => _restartQuizFromBeginning(),
+                        onPressed: () {
+                          HapticFeedback.lightImpact();
+                          _restartQuizFromBeginning();
+                        },
                         backgroundColor: AppColors.yellow,
                         icon: const Icon(
                           Icons.refresh,

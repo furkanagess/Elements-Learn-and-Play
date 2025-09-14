@@ -3,14 +3,12 @@ import 'package:elements_app/feature/provider/localization_provider.dart';
 import 'package:elements_app/feature/provider/periodicTable/periodic_table_provider.dart';
 import 'package:elements_app/feature/view/elementDetail/element_detail_view.dart';
 import 'package:elements_app/product/constants/app_colors.dart';
-import 'package:elements_app/product/constants/assets_constants.dart';
 import 'package:elements_app/product/constants/stringConstants/en_app_strings.dart';
 import 'package:elements_app/product/constants/stringConstants/tr_app_strings.dart';
-import 'package:elements_app/product/widget/button/back_button.dart';
 import 'package:elements_app/feature/view/elementsList/elements_loading_view.dart';
 import 'package:elements_app/product/widget/scaffold/app_scaffold.dart';
+import 'package:elements_app/product/widget/appBar/app_bars.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 
 class PeriodicTableView extends StatefulWidget {
@@ -50,75 +48,12 @@ class _PeriodicTableViewState extends State<PeriodicTableView> {
     );
   }
 
-  AppBar _buildAppBar(BuildContext context) {
+  PreferredSizeWidget _buildAppBar(BuildContext context) {
     final isTr = context.read<LocalizationProvider>().isTr;
 
-    return AppBar(
-      backgroundColor: AppColors.purple,
-      leading: const ModernBackButton(),
-      title: Row(
-        children: [
-          // Title
-          Text(
-            isTr ? TrAppStrings.periodicTable : EnAppStrings.periodicTable,
-            style: const TextStyle(
-              color: AppColors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
-      actions: _buildActionButtons(context),
-    );
-  }
-
-  List<Widget> _buildActionButtons(BuildContext context) {
-    final provider = context.watch<PeriodicTableProvider>();
-
-    return [
-      // Atomic Model Toggle
-      Container(
-        margin: const EdgeInsets.only(right: 8),
-        decoration: BoxDecoration(
-          color: provider.state.showAtomicModel
-              ? AppColors.glowGreen.withValues(alpha: 0.2)
-              : Colors.white.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: IconButton(
-          icon: Icon(
-            Icons.science,
-            color: provider.state.showAtomicModel
-                ? AppColors.glowGreen
-                : AppColors.white,
-          ),
-          onPressed: () => provider.toggleAtomicModel(),
-          tooltip: 'Atomic Model',
-        ),
-      ),
-
-      // Electronic Config Toggle
-      Container(
-        margin: const EdgeInsets.only(right: 16),
-        decoration: BoxDecoration(
-          color: provider.state.showElectronicConfig
-              ? AppColors.glowGreen.withValues(alpha: 0.2)
-              : Colors.white.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: IconButton(
-          icon: Icon(
-            Icons.architecture,
-            color: provider.state.showElectronicConfig
-                ? AppColors.glowGreen
-                : AppColors.white,
-          ),
-          onPressed: () => provider.toggleElectronicConfig(),
-          tooltip: 'Electronic Configuration',
-        ),
-      ),
-    ];
+    return AppBarConfigs.periodicTable(
+      title: isTr ? TrAppStrings.periodicTable : EnAppStrings.periodicTable,
+    ).toAppBar();
   }
 
   Widget _buildContent(BuildContext context) {

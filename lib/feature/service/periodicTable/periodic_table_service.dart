@@ -32,8 +32,9 @@ class PeriodicTableService {
       }).toList();
 
       // Atom numarasına göre sırala
-      correctedElements
-          .sort((a, b) => (a.number ?? 0).compareTo(b.number ?? 0));
+      correctedElements.sort(
+        (a, b) => (a.number ?? 0).compareTo(b.number ?? 0),
+      );
 
       return correctedElements;
     } catch (e) {

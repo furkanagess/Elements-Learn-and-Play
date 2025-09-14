@@ -4,7 +4,7 @@ import 'package:elements_app/product/widget/button/back_button.dart';
 import 'package:elements_app/feature/provider/localization_provider.dart';
 import 'package:elements_app/feature/view/info/subInfo/elementType/element_type_view.dart';
 import 'package:elements_app/feature/view/info/subInfo/infoDetail/info_detail_view.dart';
-import 'package:elements_app/feature/mixin/info/info_mixin.dart';
+import 'package:elements_app/core/services/data/data_service.dart';
 import 'package:elements_app/product/constants/api_types.dart';
 import 'package:elements_app/product/constants/app_colors.dart';
 import 'package:elements_app/product/constants/assets_constants.dart';
@@ -22,18 +22,13 @@ import 'package:provider/provider.dart';
 class InfoView extends StatefulWidget {
   final String apiType;
   final String title;
-  const InfoView({
-    super.key,
-    required this.apiType,
-    required this.title,
-  });
+  const InfoView({super.key, required this.apiType, required this.title});
 
   @override
   State<InfoView> createState() => _InfoViewState();
 }
 
-class _InfoViewState extends State<InfoView>
-    with TickerProviderStateMixin, InfoViewMixin {
+class _InfoViewState extends State<InfoView> with TickerProviderStateMixin {
   late AnimationController _fadeController;
   late AnimationController _scaleController;
   late Animation<double> _fadeAnimation;
@@ -41,6 +36,11 @@ class _InfoViewState extends State<InfoView>
 
   // Pattern service for background patterns
   final PatternService _patternService = PatternService();
+
+  // Data service and state
+  final DataService _dataService = DataService();
+  late Future<List<Info>> _infoList;
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -66,6 +66,22 @@ class _InfoViewState extends State<InfoView>
 
     _fadeController.forward();
     _scaleController.forward();
+
+    // Initialize data fetching
+    _initializeData();
+  }
+
+  void _initializeData() {
+    _infoList = _dataService.fetchInfo(widget.apiType);
+
+    // Simulate loading delay for better UX
+    Future.delayed(const Duration(seconds: 2), () {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    });
   }
 
   @override
@@ -78,7 +94,7 @@ class _InfoViewState extends State<InfoView>
   @override
   Widget build(BuildContext context) {
     // Show only loading screen when loading
-    if (isLoading) {
+    if (_isLoading) {
       return const ElementsLoadingView();
     }
 
@@ -112,9 +128,7 @@ class _InfoViewState extends State<InfoView>
                         _buildHeroSection(),
 
                         // Content
-                        Expanded(
-                          child: _buildContent(),
-                        ),
+                        Expanded(child: _buildContent()),
                       ],
                     ),
                   );
@@ -141,8 +155,10 @@ class _InfoViewState extends State<InfoView>
             ),
             child: SvgPicture.asset(
               AssetConstants.instance.svgQuestionTwo,
-              colorFilter:
-                  const ColorFilter.mode(AppColors.white, BlendMode.srcIn),
+              colorFilter: const ColorFilter.mode(
+                AppColors.white,
+                BlendMode.srcIn,
+              ),
               width: 20,
               height: 20,
             ),
@@ -250,15 +266,16 @@ class _InfoViewState extends State<InfoView>
                         HapticFeedback.lightImpact();
                         context.read<AdmobProvider>().onRouteChanged();
                         Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => ElementTypeView(
-                                apiType: ApiTypes.elementTypes,
-                                title: context.read<LocalizationProvider>().isTr
-                                    ? TrAppStrings.elementTypes
-                                    : EnAppStrings.elementTypes,
-                              ),
-                            ));
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ElementTypeView(
+                              apiType: ApiTypes.elementTypes,
+                              title: context.read<LocalizationProvider>().isTr
+                                  ? TrAppStrings.elementTypes
+                                  : EnAppStrings.elementTypes,
+                            ),
+                          ),
+                        );
                       },
                       borderRadius: BorderRadius.circular(20),
                       child: Container(
@@ -294,7 +311,9 @@ class _InfoViewState extends State<InfoView>
                               child: SvgPicture.asset(
                                 AssetConstants.instance.svgQuestionTwo,
                                 colorFilter: const ColorFilter.mode(
-                                    AppColors.white, BlendMode.srcIn),
+                                  AppColors.white,
+                                  BlendMode.srcIn,
+                                ),
                                 width: 24,
                                 height: 24,
                               ),
@@ -330,8 +349,9 @@ class _InfoViewState extends State<InfoView>
                                         ? 'Element türlerini keşfet'
                                         : 'Explore element types',
                                     style: TextStyle(
-                                      color: AppColors.white
-                                          .withValues(alpha: 0.8),
+                                      color: AppColors.white.withValues(
+                                        alpha: 0.8,
+                                      ),
                                       fontSize: 14,
                                       fontWeight: FontWeight.w500,
                                     ),
@@ -373,7 +393,7 @@ class _InfoViewState extends State<InfoView>
 
   Widget _buildContent() {
     return FutureBuilder<List<Info>>(
-      future: infoList,
+      future: _infoList,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const ElementsLoadingView();
@@ -425,12 +445,15 @@ class _InfoViewState extends State<InfoView>
               borderRadius: BorderRadius.circular(20),
               gradient: LinearGradient(
                 colors: [
-                  (info.colors?.toColor() ?? AppColors.darkBlue)
-                      .withValues(alpha: 0.9),
-                  (info.colors?.toColor() ?? AppColors.darkBlue)
-                      .withValues(alpha: 0.7),
-                  (info.colors?.toColor() ?? AppColors.darkBlue)
-                      .withValues(alpha: 0.5),
+                  (info.colors?.toColor() ?? AppColors.darkBlue).withValues(
+                    alpha: 0.9,
+                  ),
+                  (info.colors?.toColor() ?? AppColors.darkBlue).withValues(
+                    alpha: 0.7,
+                  ),
+                  (info.colors?.toColor() ?? AppColors.darkBlue).withValues(
+                    alpha: 0.5,
+                  ),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -523,7 +546,9 @@ class _InfoViewState extends State<InfoView>
                           child: SvgPicture.asset(
                             AssetConstants.instance.svgQuestionTwo,
                             colorFilter: const ColorFilter.mode(
-                                AppColors.white, BlendMode.srcIn),
+                              AppColors.white,
+                              BlendMode.srcIn,
+                            ),
                             width: 24,
                             height: 24,
                           ),

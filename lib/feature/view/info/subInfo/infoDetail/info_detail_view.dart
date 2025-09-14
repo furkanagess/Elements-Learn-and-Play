@@ -260,6 +260,17 @@ class _InfoDetailViewState extends State<InfoDetailView>
 
           const SizedBox(height: 24),
 
+          // Element Properties Card (if data is available)
+          if (widget.info.electronegativity != null ||
+              widget.info.atomicRadius != null ||
+              widget.info.electronConfiguration != null)
+            _buildElementPropertiesCard(),
+
+          if (widget.info.electronegativity != null ||
+              widget.info.atomicRadius != null ||
+              widget.info.electronConfiguration != null)
+            const SizedBox(height: 24),
+
           // Content Card
           Container(
             decoration: BoxDecoration(
@@ -411,5 +422,194 @@ class _InfoDetailViewState extends State<InfoDetailView>
 
   ElementInfoParagraph _usageParagraph(String desc) {
     return ElementInfoParagraph(title: EnAppStrings.space, paragraph: desc);
+  }
+
+  Widget _buildElementPropertiesCard() {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.steelBlue.withValues(alpha: 0.9),
+            AppColors.purple.withValues(alpha: 0.7),
+            AppColors.pink.withValues(alpha: 0.5),
+          ],
+          stops: const [0.0, 0.6, 1.0],
+        ),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.2),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.steelBlue.withValues(alpha: 0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+          BoxShadow(
+            color: AppColors.purple.withValues(alpha: 0.2),
+            blurRadius: 40,
+            offset: const Offset(0, 20),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Stack(
+          children: [
+            // Background pattern
+            Positioned.fill(
+              child: CustomPaint(
+                painter: _patternService.getPatternPainter(
+                  type: PatternType.atomic,
+                  color: Colors.white,
+                  opacity: 0.05,
+                ),
+              ),
+            ),
+            // Decorative elements
+            Positioned(
+              top: 15,
+              right: 15,
+              child: Container(
+                width: 30,
+                height: 30,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    width: 1,
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: 15,
+              left: 15,
+              child: Container(
+                width: 20,
+                height: 20,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.08),
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+            // Content
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Title
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.3),
+                            width: 1,
+                          ),
+                        ),
+                        child: const Icon(
+                          Icons.science,
+                          color: AppColors.white,
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      const Text(
+                        'Element Özellikleri',
+                        style: TextStyle(
+                          color: AppColors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          shadows: [
+                            Shadow(
+                              color: Colors.black26,
+                              offset: Offset(1, 1),
+                              blurRadius: 2,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  // Properties
+                  if (widget.info.electronegativity != null)
+                    _buildPropertyRow(
+                      'Elektronegatiflik',
+                      widget.info.electronegativity!.toString(),
+                      '',
+                      Icons.electric_bolt,
+                    ),
+                  if (widget.info.atomicRadius != null)
+                    _buildPropertyRow(
+                      'Atom Yarıçapı',
+                      widget.info.atomicRadius!.toString(),
+                      'pm',
+                      Icons.radio_button_unchecked,
+                    ),
+                  if (widget.info.electronConfiguration != null)
+                    _buildPropertyRow(
+                      'Elektron Konfigürasyonu',
+                      widget.info.electronConfiguration!,
+                      '',
+                      Icons.science_outlined,
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPropertyRow(
+    String label,
+    String value,
+    String unit,
+    IconData icon,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        children: [
+          Icon(icon, color: Colors.white.withValues(alpha: 0.7), size: 18),
+          const SizedBox(width: 12),
+          Expanded(
+            flex: 2,
+            child: Text(
+              label,
+              style: TextStyle(
+                color: AppColors.white.withValues(alpha: 0.8),
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 3,
+            child: Text(
+              unit.isNotEmpty ? '$value $unit' : value,
+              textAlign: TextAlign.end,
+              style: const TextStyle(
+                color: AppColors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

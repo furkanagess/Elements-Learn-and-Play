@@ -1,13 +1,9 @@
 import 'package:elements_app/feature/provider/favorite_elements_provider.dart';
 import 'package:elements_app/feature/provider/localization_provider.dart';
-import 'package:elements_app/feature/view/elementDetail/element_detail_view.dart';
 import 'package:elements_app/product/constants/app_colors.dart';
-import 'package:elements_app/product/constants/stringConstants/en_app_strings.dart';
-import 'package:elements_app/product/constants/stringConstants/tr_app_strings.dart';
-import 'package:elements_app/product/extensions/color_extension.dart';
-import 'package:elements_app/product/extensions/context_extensions.dart';
 import 'package:elements_app/product/widget/scaffold/app_scaffold.dart';
-import 'package:elements_app/product/widget/button/back_button.dart';
+import 'package:elements_app/product/widget/card/element_card.dart';
+import 'package:elements_app/product/widget/appBar/app_bars.dart';
 import 'package:elements_app/core/services/pattern/pattern_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -27,7 +23,6 @@ class _FavoritesViewState extends State<FavoritesView>
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
   final PatternService _patternService = PatternService();
-  int? _pressedCardIndex;
 
   @override
   void initState() {
@@ -53,7 +48,11 @@ class _FavoritesViewState extends State<FavoritesView>
     return AppScaffold(
       child: Scaffold(
         backgroundColor: AppColors.background,
-        appBar: _buildModernAppBar(),
+        appBar: AppBarConfigs.favorites(
+          title: context.watch<LocalizationProvider>().isTr
+              ? 'Favori Elementler'
+              : 'Favorite Elements',
+        ).toAppBar(),
         body: Stack(
           children: [
             // Background Pattern
@@ -82,7 +81,12 @@ class _FavoritesViewState extends State<FavoritesView>
                       itemCount: provider.favoriteElements.length,
                       itemBuilder: (context, index) {
                         final element = provider.favoriteElements[index];
-                        return _buildFavoriteCard(context, element, index);
+                        return ElementCard(
+                          element: element,
+                          mode: ElementCardMode.favorites,
+                          index: index,
+                          showFavoriteButton: true,
+                        );
                       },
                     );
                   },
@@ -92,50 +96,6 @@ class _FavoritesViewState extends State<FavoritesView>
           ],
         ),
       ),
-    );
-  }
-
-  AppBar _buildModernAppBar() {
-    final isTr = context.watch<LocalizationProvider>().isTr;
-
-    return AppBar(
-      backgroundColor: Colors.transparent,
-      flexibleSpace: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppColors.powderRed,
-              AppColors.pink.withValues(alpha: 0.95),
-              AppColors.purple.withValues(alpha: 0.9),
-            ],
-          ),
-        ),
-      ),
-      leading: const ModernBackButton(),
-      title: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: AppColors.white.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(Icons.favorite, color: AppColors.white, size: 20),
-          ),
-          const SizedBox(width: 12),
-          Text(
-            isTr ? 'Favori Elementler' : 'Favorite Elements',
-            style: const TextStyle(
-              color: AppColors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
-      elevation: 0,
     );
   }
 
@@ -270,278 +230,5 @@ class _FavoritesViewState extends State<FavoritesView>
         ),
       ),
     );
-  }
-
-  Widget _buildFavoriteCard(BuildContext context, element, int index) {
-    Color elementColor;
-    Color shadowColor;
-
-    try {
-      if (element.colors is String) {
-        elementColor = (element.colors as String).toColor();
-      } else if (element.colors != null) {
-        elementColor = element.colors!.toColor();
-      } else {
-        elementColor = AppColors.darkBlue;
-      }
-
-      if (element.shColor is String) {
-        shadowColor = (element.shColor as String).toColor();
-      } else if (element.shColor != null) {
-        shadowColor = element.shColor!.toColor();
-      } else {
-        shadowColor = AppColors.background;
-      }
-    } catch (e) {
-      elementColor = AppColors.darkBlue;
-      shadowColor = AppColors.background;
-    }
-
-    final isTr = context.read<LocalizationProvider>().isTr;
-    final isPressed = _pressedCardIndex == index;
-
-    return AnimatedScale(
-      scale: isPressed ? 0.95 : 1.0,
-      duration: const Duration(milliseconds: 150),
-      curve: Curves.easeInOut,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(24),
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              elementColor.withValues(alpha: 0.9),
-              elementColor.withValues(alpha: 0.7),
-              elementColor.withValues(alpha: 0.5),
-            ],
-            stops: const [0.0, 0.6, 1.0],
-          ),
-          border: Border.all(
-            color: Colors.white.withValues(alpha: 0.2),
-            width: 1,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: shadowColor.withValues(alpha: 0.3),
-              blurRadius: 20,
-              offset: const Offset(0, 10),
-            ),
-            BoxShadow(
-              color: shadowColor.withValues(alpha: 0.2),
-              blurRadius: 40,
-              offset: const Offset(0, 20),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(24),
-          child: Stack(
-            children: [
-              // Background pattern
-              Positioned.fill(
-                child: CustomPaint(
-                  painter: _patternService.getPatternPainter(
-                    type: PatternType.molecular,
-                    color: Colors.white,
-                    opacity: 0.05,
-                  ),
-                ),
-              ),
-              // Decorative elements
-              Positioned(
-                top: 20,
-                right: 20,
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      width: 1,
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                bottom: 20,
-                left: 20,
-                child: Container(
-                  width: 30,
-                  height: 30,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.08),
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              ),
-              // Content
-              Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(24),
-                  onTapDown: (_) {
-                    setState(() {
-                      _pressedCardIndex = index;
-                    });
-                  },
-                  onTapUp: (_) {
-                    setState(() {
-                      _pressedCardIndex = null;
-                    });
-                    HapticFeedback.lightImpact();
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            ElementDetailView(element: element),
-                      ),
-                    );
-                  },
-                  onTapCancel: () {
-                    setState(() {
-                      _pressedCardIndex = null;
-                    });
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Row(
-                      children: [
-                        // Element number
-                        Container(
-                          width: 60,
-                          height: 60,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.3),
-                              width: 1,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.1),
-                                blurRadius: 8,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: Center(
-                            child: Text(
-                              element.number?.toString() ?? '',
-                              style: const TextStyle(
-                                color: AppColors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 20,
-                                shadows: [
-                                  Shadow(
-                                    color: Colors.black26,
-                                    offset: Offset(1, 1),
-                                    blurRadius: 2,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 20),
-
-                        // Element info
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                element.symbol ?? '',
-                                style: const TextStyle(
-                                  color: AppColors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 32,
-                                  shadows: [
-                                    Shadow(
-                                      color: Colors.black26,
-                                      offset: Offset(1, 1),
-                                      blurRadius: 2,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                isTr
-                                    ? element.trName ?? ''
-                                    : element.enName ?? '',
-                                style: TextStyle(
-                                  color: AppColors.white.withValues(alpha: 0.9),
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 16,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                _formatWeight(element.weight),
-                                style: TextStyle(
-                                  color: AppColors.white.withValues(alpha: 0.7),
-                                  fontWeight: FontWeight.w500,
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        // Remove from favorites button
-                        Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.3),
-                              width: 1,
-                            ),
-                          ),
-                          child: IconButton(
-                            icon: const Icon(
-                              Icons.favorite,
-                              color: AppColors.white,
-                              size: 24,
-                            ),
-                            onPressed: () {
-                              HapticFeedback.lightImpact();
-                              context
-                                  .read<FavoriteElementsProvider>()
-                                  .toggleFavorite(element);
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// Formats the weight string to show 4 decimal places
-  String _formatWeight(String? weight) {
-    if (weight == null || weight.isEmpty) return '';
-
-    // Try to parse as double and format to 4 decimal places
-    final doubleValue = double.tryParse(weight.replaceAll(',', '.'));
-    if (doubleValue != null) {
-      return doubleValue.toStringAsFixed(4);
-    }
-
-    // If parsing fails, return original value
-    return weight;
   }
 }

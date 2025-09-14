@@ -10,6 +10,7 @@ import 'package:elements_app/core/services/pattern/pattern_service.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:elements_app/product/constants/assets_constants.dart';
+import 'package:elements_app/product/widget/ads/banner_ads_widget.dart';
 
 class QuizStatisticsView extends StatefulWidget {
   const QuizStatisticsView({super.key});
@@ -94,6 +95,33 @@ class _QuizStatisticsViewState extends State<QuizStatisticsView>
                           SliverToBoxAdapter(
                             child: _buildOverallStats(provider),
                           ),
+
+                          // Banner Ad
+                          SliverPadding(
+                            padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                            sliver: SliverToBoxAdapter(
+                              child: Container(
+                                margin: const EdgeInsets.symmetric(vertical: 8),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(12),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: AppColors.darkBlue.withValues(
+                                        alpha: 0.1,
+                                      ),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: const BannerAdsWidget(),
+                                ),
+                              ),
+                            ),
+                          ),
+
                           // Quiz Türlerine Göre İstatistikler
                           SliverPadding(
                             padding: const EdgeInsets.all(20),

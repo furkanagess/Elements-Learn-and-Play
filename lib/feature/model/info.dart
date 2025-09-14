@@ -21,6 +21,9 @@ final class Info with EquatableMixin {
   final String? trDesc5;
   final String? colors;
   final String? shColor;
+  final double? electronegativity;
+  final int? atomicRadius;
+  final String? electronConfiguration;
 
   Info({
     this.enTitle,
@@ -38,6 +41,9 @@ final class Info with EquatableMixin {
     this.trDesc5,
     this.colors,
     this.shColor,
+    this.electronegativity,
+    this.atomicRadius,
+    this.electronConfiguration,
   });
 
   factory Info.fromJson(Map<String, dynamic> json) => _$InfoFromJson(json);
@@ -46,22 +52,25 @@ final class Info with EquatableMixin {
 
   @override
   List<Object?> get props => [
-        enTitle,
-        enDesc1,
-        enDesc2,
-        enDesc3,
-        enDesc4,
-        enDesc5,
-        svg,
-        trTitle,
-        trDesc1,
-        trDesc2,
-        trDesc3,
-        trDesc4,
-        trDesc5,
-        colors,
-        shColor
-      ];
+    enTitle,
+    enDesc1,
+    enDesc2,
+    enDesc3,
+    enDesc4,
+    enDesc5,
+    svg,
+    trTitle,
+    trDesc1,
+    trDesc2,
+    trDesc3,
+    trDesc4,
+    trDesc5,
+    colors,
+    shColor,
+    electronegativity,
+    atomicRadius,
+    electronConfiguration,
+  ];
 
   Info copyWith({
     final String? enTitle,
@@ -79,6 +88,9 @@ final class Info with EquatableMixin {
     final String? trDesc5,
     final String? colors,
     final String? shColor,
+    final double? electronegativity,
+    final int? atomicRadius,
+    final String? electronConfiguration,
   }) {
     return Info(
       enTitle: enTitle ?? this.enTitle,
@@ -96,6 +108,10 @@ final class Info with EquatableMixin {
       trDesc5: trDesc5 ?? this.trDesc5,
       colors: colors ?? this.colors,
       shColor: shColor ?? this.shColor,
+      electronegativity: electronegativity ?? this.electronegativity,
+      atomicRadius: atomicRadius ?? this.atomicRadius,
+      electronConfiguration:
+          electronConfiguration ?? this.electronConfiguration,
     );
   }
 }

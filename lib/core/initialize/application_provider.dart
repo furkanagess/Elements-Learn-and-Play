@@ -38,9 +38,7 @@ class ApplicationProvider {
     ChangeNotifierProvider<LocalizationProvider>(
       create: (context) => LocalizationProvider(),
     ),
-    ChangeNotifierProvider<AdmobProvider>(
-      create: (context) => AdmobProvider(),
-    ),
+    ChangeNotifierProvider<AdmobProvider>(create: (context) => AdmobProvider()),
     ChangeNotifierProvider<BannerAdsProvider>(
       create: (context) => BannerAdsProvider(),
     ),
@@ -48,15 +46,10 @@ class ApplicationProvider {
       create: (context) => FavoriteElementsProvider(),
     ),
     ChangeNotifierProvider<PeriodicTableProvider>(
-      create: (context) => PeriodicTableProvider(
-        PeriodicTableService(ApiService()),
-      ),
+      create: (context) =>
+          PeriodicTableProvider(PeriodicTableService(ApiService())),
     ),
-    ChangeNotifierProvider<QuizProvider>(
-      create: (context) => QuizProvider(),
-    ),
-    ChangeNotifierProvider<InfoProvider>(
-      create: (context) => InfoProvider(),
-    ),
+    ChangeNotifierProvider<QuizProvider>(create: (context) => QuizProvider()),
+    ChangeNotifierProvider<InfoProvider>(create: (context) => InfoProvider()),
   ];
 }

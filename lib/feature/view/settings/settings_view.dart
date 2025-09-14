@@ -93,8 +93,8 @@ class _SettingsViewState extends State<SettingsView>
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [
-                          AppColors.yellow,
-                          AppColors.yellow.withValues(alpha: 0.8),
+                          AppColors.darkBlue,
+                          AppColors.steelBlue.withValues(alpha: 0.9),
                         ],
                       ),
                     ),
@@ -114,29 +114,8 @@ class _SettingsViewState extends State<SettingsView>
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [
-                          AppColors.glowGreen,
-                          AppColors.glowGreen.withValues(alpha: 0.8),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    _buildActionCard(
-                      context,
-                      index: 3,
-                      icon: AssetConstants.instance.svgStarTwo,
-                      title: context.read<LocalizationProvider>().isTr
-                          ? 'iOS AdMob Test'
-                          : 'iOS AdMob Test',
-                      subtitle: context.read<LocalizationProvider>().isTr
-                          ? 'iOS reklam entegrasyonunu test edin'
-                          : 'Test iOS ad integration',
-                      onTap: () => _showIOSAdMobTest(context),
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          AppColors.purple,
-                          AppColors.pink.withValues(alpha: 0.8),
+                          AppColors.steelBlue,
+                          AppColors.darkBlue.withValues(alpha: 0.9),
                         ],
                       ),
                     ),
@@ -213,9 +192,9 @@ class _SettingsViewState extends State<SettingsView>
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              AppColors.purple.withValues(alpha: 0.9),
-              AppColors.pink.withValues(alpha: 0.7),
-              AppColors.turquoise.withValues(alpha: 0.5),
+              AppColors.darkBlue.withValues(alpha: 0.95),
+              AppColors.steelBlue.withValues(alpha: 0.8),
+              AppColors.darkBlue.withValues(alpha: 0.7),
             ],
             stops: const [0.0, 0.6, 1.0],
           ),
@@ -225,12 +204,12 @@ class _SettingsViewState extends State<SettingsView>
           ),
           boxShadow: [
             BoxShadow(
-              color: AppColors.purple.withValues(alpha: 0.3),
+              color: AppColors.darkBlue.withValues(alpha: 0.4),
               blurRadius: 20,
               offset: const Offset(0, 10),
             ),
             BoxShadow(
-              color: AppColors.pink.withValues(alpha: 0.2),
+              color: AppColors.steelBlue.withValues(alpha: 0.3),
               blurRadius: 40,
               offset: const Offset(0, 20),
             ),

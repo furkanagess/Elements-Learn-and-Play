@@ -34,6 +34,8 @@ final class AssetConstants {
   String get svgUsFlag => toSVG("us-flag");
   String get svgQuestion => toSVG("question-mark");
   String get svgEqual => toSVG("equal");
+  String get svgRadius => toSVG("radius");
+  String get svgThunder => toSVG("thunder");
   // Lottie
   String toLottie(String src) => "assets/lottie/$src.json";
 

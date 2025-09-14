@@ -25,6 +25,8 @@ final class PeriodicElement with EquatableMixin {
   final String? trSource;
   final String? colors;
   final String? shColor;
+  final int? atomicRadius;
+  final double? electronegativity;
 
   PeriodicElement({
     this.number,
@@ -46,6 +48,8 @@ final class PeriodicElement with EquatableMixin {
     this.trSource,
     this.colors,
     this.shColor,
+    this.atomicRadius,
+    this.electronegativity,
   });
 
   factory PeriodicElement.fromJson(Map<String, dynamic> json) =>
@@ -55,26 +59,28 @@ final class PeriodicElement with EquatableMixin {
 
   @override
   List<Object?> get props => [
-        number,
-        enName,
-        symbol,
-        weight,
-        enCategory,
-        block,
-        period,
-        electronConfiguration,
-        group,
-        enDescription,
-        enUsage,
-        enSource,
-        trName,
-        trCategory,
-        trDescription,
-        trUsage,
-        trSource,
-        colors,
-        shColor
-      ];
+    number,
+    enName,
+    symbol,
+    weight,
+    enCategory,
+    block,
+    period,
+    electronConfiguration,
+    group,
+    enDescription,
+    enUsage,
+    enSource,
+    trName,
+    trCategory,
+    trDescription,
+    trUsage,
+    trSource,
+    colors,
+    shColor,
+    atomicRadius,
+    electronegativity,
+  ];
 
   PeriodicElement copyWith({
     final int? number,
@@ -96,6 +102,8 @@ final class PeriodicElement with EquatableMixin {
     final String? trSource,
     final String? colors,
     final String? shColor,
+    final int? atomicRadius,
+    final double? electronegativity,
   }) {
     return PeriodicElement(
       number: number ?? this.number,
@@ -118,6 +126,8 @@ final class PeriodicElement with EquatableMixin {
       trSource: trSource ?? this.trSource,
       colors: colors ?? this.colors,
       shColor: shColor ?? this.shColor,
+      atomicRadius: atomicRadius ?? this.atomicRadius,
+      electronegativity: electronegativity ?? this.electronegativity,
     );
   }
 }

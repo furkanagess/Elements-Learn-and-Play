@@ -27,6 +27,8 @@ PeriodicElement _$PeriodicElementFromJson(Map<String, dynamic> json) =>
       trSource: json['trSource'] as String?,
       colors: json['colors'] as String?,
       shColor: json['shColor'] as String?,
+      atomicRadius: (json['atomicRadius'] as num?)?.toInt(),
+      electronegativity: (json['electronegativity'] as num?)?.toDouble(),
     );
 
 Map<String, dynamic> _$PeriodicElementToJson(PeriodicElement instance) =>
@@ -50,4 +52,6 @@ Map<String, dynamic> _$PeriodicElementToJson(PeriodicElement instance) =>
       'trSource': instance.trSource,
       'colors': instance.colors,
       'shColor': instance.shColor,
+      'atomicRadius': instance.atomicRadius,
+      'electronegativity': instance.electronegativity,
     };

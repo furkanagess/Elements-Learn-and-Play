@@ -826,7 +826,7 @@ class _QuizResultDialogState extends State<QuizResultDialog>
                                 isWin
                                     ? AssetConstants.instance.lottieCorrect
                                     : AssetConstants.instance.lottieWrong,
-                                repeat: false,
+                                repeat: isWin ? true : false,
                                 fit: BoxFit.contain,
                               ),
                             ),
@@ -836,7 +836,9 @@ class _QuizResultDialogState extends State<QuizResultDialog>
                           // Title
                           Text(
                             isWin
-                                ? (isTr ? 'Tebrikler!' : 'Congratulations!')
+                                ? (isTr
+                                      ? '🎉 Quiz Tamamlandı!'
+                                      : '🎉 Quiz Completed!')
                                 : (isTr ? 'Tekrar Deneyin!' : 'Try Again!'),
                             style: const TextStyle(
                               color: AppColors.white,
@@ -852,6 +854,28 @@ class _QuizResultDialogState extends State<QuizResultDialog>
                             ),
                             textAlign: TextAlign.center,
                           ),
+                          const SizedBox(height: 8),
+
+                          // Subtitle for completion
+                          if (isWin)
+                            Text(
+                              isTr
+                                  ? '10 soruyu başarıyla tamamladınız!'
+                                  : 'You have successfully completed all 10 questions!',
+                              style: TextStyle(
+                                color: AppColors.white.withValues(alpha: 0.9),
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                                shadows: [
+                                  Shadow(
+                                    color: Colors.black26,
+                                    offset: Offset(1, 1),
+                                    blurRadius: 2,
+                                  ),
+                                ],
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
                           const SizedBox(height: 12),
 
                           // Score
@@ -869,9 +893,13 @@ class _QuizResultDialogState extends State<QuizResultDialog>
                               ),
                             ),
                             child: Text(
-                              isTr
-                                  ? 'Skorunuz: %$score'
-                                  : 'Your Score: %$score',
+                              isWin
+                                  ? (isTr
+                                        ? '🏆 Mükemmel Skor: %$score'
+                                        : '🏆 Perfect Score: %$score')
+                                  : (isTr
+                                        ? 'Skorunuz: %$score'
+                                        : 'Your Score: %$score'),
                               style: TextStyle(
                                 color: isWin
                                     ? AppColors.glowGreen
@@ -1033,7 +1061,13 @@ class _QuizResultDialogState extends State<QuizResultDialog>
                                           vertical: 14,
                                         ),
                                         child: Text(
-                                          isTr ? 'Tekrar Oyna' : 'Play Again',
+                                          isWin
+                                              ? (isTr
+                                                    ? '🎮 Yeni Quiz'
+                                                    : '🎮 New Quiz')
+                                              : (isTr
+                                                    ? 'Tekrar Oyna'
+                                                    : 'Play Again'),
                                           style: const TextStyle(
                                             color: AppColors.white,
                                             fontSize: 16,
