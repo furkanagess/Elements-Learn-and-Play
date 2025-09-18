@@ -40,21 +40,14 @@ class _ElementOfDayWidgetState extends State<ElementOfDayWidget>
       vsync: this,
     );
 
-    _pulseAnimation = Tween<double>(
-      begin: 1.0,
-      end: 1.05,
-    ).animate(CurvedAnimation(
-      parent: _pulseController,
-      curve: Curves.easeInOut,
-    ));
+    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.05).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
 
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.3),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _slideController,
-      curve: Curves.easeOutCubic,
-    ));
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(
+          CurvedAnimation(parent: _slideController, curve: Curves.easeOutCubic),
+        );
 
     _pulseController.repeat(reverse: true);
     _slideController.forward();
@@ -81,7 +74,7 @@ class _ElementOfDayWidgetState extends State<ElementOfDayWidget>
         'Eylül',
         'Ekim',
         'Kasım',
-        'Aralık'
+        'Aralık',
       ];
       const days = [
         'Pazartesi',
@@ -90,7 +83,7 @@ class _ElementOfDayWidgetState extends State<ElementOfDayWidget>
         'Perşembe',
         'Cuma',
         'Cumartesi',
-        'Pazar'
+        'Pazar',
       ];
       return '${days[date.weekday - 1]}, ${date.day} ${months[date.month - 1]}';
     } else {
@@ -106,7 +99,7 @@ class _ElementOfDayWidgetState extends State<ElementOfDayWidget>
         'September',
         'October',
         'November',
-        'December'
+        'December',
       ];
       const days = [
         'Monday',
@@ -115,7 +108,7 @@ class _ElementOfDayWidgetState extends State<ElementOfDayWidget>
         'Thursday',
         'Friday',
         'Saturday',
-        'Sunday'
+        'Sunday',
       ];
       return '${days[date.weekday - 1]}, ${months[date.month - 1]} ${date.day}';
     }
@@ -188,7 +181,8 @@ class _ElementOfDayWidgetState extends State<ElementOfDayWidget>
     return Consumer2<PeriodicTableProvider, LocalizationProvider>(
       builder: (context, periodicProvider, localizationProvider, child) {
         final element = ElementOfDayService.getElementOfDay(
-            periodicProvider.state.elements);
+          periodicProvider.state.elements,
+        );
         final isTr = localizationProvider.isTr;
         final today = _formatDate(DateTime.now(), isTr);
 
@@ -199,16 +193,19 @@ class _ElementOfDayWidgetState extends State<ElementOfDayWidget>
         final elementColor = _getElementColor(element.enCategory);
 
         // Get localized strings
-        final elementOfDayText =
-            isTr ? TrAppStrings.elementOfDay : EnAppStrings.elementOfDay;
-        final atomicWeightText =
-            isTr ? TrAppStrings.atomicWeight : EnAppStrings.atomicWeight;
+        final elementOfDayText = isTr
+            ? TrAppStrings.elementOfDay
+            : EnAppStrings.elementOfDay;
+        final atomicWeightText = isTr
+            ? TrAppStrings.atomicWeight
+            : EnAppStrings.atomicWeight;
 
         return SlideTransition(
           position: _slideAnimation,
           child: InkWell(
             onTap: () {
-              ElementHomeWidgetService.updateFromContext(context);
+              // Update widget when element is tapped
+              ElementHomeWidgetService.updateWidgetDirectly(element);
               Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -351,8 +348,9 @@ class _ElementOfDayWidgetState extends State<ElementOfDayWidget>
                                     color: elementColor.withValues(alpha: 0.2),
                                     borderRadius: BorderRadius.circular(16),
                                     border: Border.all(
-                                      color:
-                                          elementColor.withValues(alpha: 0.3),
+                                      color: elementColor.withValues(
+                                        alpha: 0.3,
+                                      ),
                                       width: 1,
                                     ),
                                   ),
@@ -392,10 +390,10 @@ class _ElementOfDayWidgetState extends State<ElementOfDayWidget>
                                       Text(
                                         isTr
                                             ? (element.trName ??
-                                                element.enName ??
-                                                'Bilinmeyen Element')
+                                                  element.enName ??
+                                                  'Bilinmeyen Element')
                                             : (element.enName ??
-                                                'Unknown Element'),
+                                                  'Unknown Element'),
                                         style: const TextStyle(
                                           color: Colors.white,
                                           fontSize: 16,
@@ -405,7 +403,9 @@ class _ElementOfDayWidgetState extends State<ElementOfDayWidget>
                                       const SizedBox(height: 6),
                                       Text(
                                         _getLocalizedCategory(
-                                            element.enCategory, isTr),
+                                          element.enCategory,
+                                          isTr,
+                                        ),
                                         style: TextStyle(
                                           color: elementColor,
                                           fontSize: 12,
@@ -416,8 +416,9 @@ class _ElementOfDayWidgetState extends State<ElementOfDayWidget>
                                       Text(
                                         '$atomicWeightText: ${element.weight ?? (isTr ? 'Bilinmeyen' : 'Unknown')}',
                                         style: TextStyle(
-                                          color: Colors.white
-                                              .withValues(alpha: 0.7),
+                                          color: Colors.white.withValues(
+                                            alpha: 0.7,
+                                          ),
                                           fontSize: 12,
                                         ),
                                       ),

@@ -233,101 +233,25 @@ class _QuizStatisticsViewState extends State<QuizStatisticsView>
         totalStreak == 0 &&
         bestScore == 0;
 
-    return Container(
-      margin: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppColors.purple.withValues(alpha: 0.9),
-            AppColors.pink.withValues(alpha: 0.7),
-            AppColors.turquoise.withValues(alpha: 0.5),
-          ],
-          stops: const [0.0, 0.6, 1.0],
-        ),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.2),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.purple.withValues(alpha: 0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-          BoxShadow(
-            color: AppColors.pink.withValues(alpha: 0.2),
-            blurRadius: 40,
-            offset: const Offset(0, 20),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
-        child: Stack(
-          children: [
-            // Background Pattern
-            Positioned.fill(
-              child: CustomPaint(
-                painter: _patternService.getPatternPainter(
-                  type: PatternType.molecular,
-                  color: Colors.white,
-                  opacity: 0.1,
-                ),
-              ),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+      child: hasNoData
+          ? Center(child: _buildEmptyState())
+          : _buildStatsContent(
+              totalGames,
+              averageAccuracy,
+              totalStreak,
+              bestScore,
             ),
-
-            // Decorative Elements
-            Positioned(
-              top: -15,
-              right: -15,
-              child: Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ),
-
-            Positioned(
-              bottom: -10,
-              left: -10,
-              child: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.05),
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ),
-
-            // Main Content
-            hasNoData
-                ? _buildEmptyState()
-                : _buildStatsContent(
-                    totalGames,
-                    averageAccuracy,
-                    totalStreak,
-                    bestScore,
-                  ),
-          ],
-        ),
-      ),
     );
   }
 
   Widget _buildEmptyState() {
+    final isTr = context.read<LocalizationProvider>().isTr;
     return Column(
       mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        // Icon
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -337,108 +261,34 @@ class _QuizStatisticsViewState extends State<QuizStatisticsView>
               color: Colors.white.withValues(alpha: 0.3),
               width: 1,
             ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.1),
-                blurRadius: 8,
-                offset: const Offset(0, 4),
-              ),
-            ],
           ),
-          child: Icon(Icons.quiz_rounded, color: AppColors.white, size: 36),
+          child: const Icon(
+            Icons.extension_rounded,
+            color: AppColors.white,
+            size: 36,
+          ),
         ),
         const SizedBox(height: 20),
-
-        // Title
         Text(
-          context.read<LocalizationProvider>().isTr
-              ? 'Henüz Quiz Oynamadınız'
-              : 'No Quiz Played Yet',
+          isTr ? 'Henüz Quiz Oynamadınız' : 'No Quizzes Played Yet',
           style: const TextStyle(
             color: AppColors.white,
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            shadows: [
-              Shadow(
-                color: Colors.black26,
-                offset: Offset(1, 1),
-                blurRadius: 2,
-              ),
-            ],
           ),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 8),
-
-        // Description
         Text(
-          context.read<LocalizationProvider>().isTr
-              ? 'İstatistiklerinizi görmek için quiz oynayın!'
+          isTr
+              ? 'İstatistikleri görmek için quiz oynayın!'
               : 'Play quizzes to see your statistics!',
           style: TextStyle(
-            color: AppColors.white.withValues(alpha: 0.8),
+            color: Colors.white.withValues(alpha: 0.8),
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
           textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 20),
-
-        // Play Quiz Button
-        Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                AppColors.glowGreen.withValues(alpha: 0.8),
-                AppColors.turquoise.withValues(alpha: 0.6),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.glowGreen.withValues(alpha: 0.3),
-                blurRadius: 12,
-                offset: const Offset(0, 6),
-              ),
-            ],
-          ),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              borderRadius: BorderRadius.circular(12),
-              onTap: () {
-                HapticFeedback.lightImpact();
-                Navigator.pop(context);
-              },
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 10,
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.play_arrow_rounded,
-                      color: AppColors.white,
-                      size: 18,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      context.read<LocalizationProvider>().isTr
-                          ? 'Quiz Oyna'
-                          : 'Play Quiz',
-                      style: const TextStyle(
-                        color: AppColors.white,
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
         ),
       ],
     );

@@ -1,13 +1,11 @@
 import 'package:elements_app/feature/provider/localization_provider.dart';
 import 'package:elements_app/feature/view/help/help_view.dart';
-import 'package:elements_app/feature/view/ads/ios_admob_test_view.dart';
 import 'package:elements_app/product/constants/app_colors.dart';
 import 'package:elements_app/product/constants/assets_constants.dart';
 import 'package:elements_app/product/constants/stringConstants/en_app_strings.dart';
 import 'package:elements_app/product/constants/stringConstants/tr_app_strings.dart';
 import 'package:elements_app/product/widget/button/back_button.dart';
 import 'package:elements_app/product/widget/scaffold/app_scaffold.dart';
-import 'package:elements_app/core/services/pattern/pattern_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -25,7 +23,7 @@ class _SettingsViewState extends State<SettingsView>
     with TickerProviderStateMixin {
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
-  final PatternService _patternService = PatternService();
+  // Removed pattern backgrounds; service no longer used
   int? _pressedCardIndex;
 
   @override
@@ -55,16 +53,6 @@ class _SettingsViewState extends State<SettingsView>
         appBar: _buildModernAppBar(),
         body: Stack(
           children: [
-            // Background Pattern
-            Positioned.fill(
-              child: CustomPaint(
-                painter: _patternService.getPatternPainter(
-                  type: PatternType.atomic,
-                  color: Colors.white,
-                  opacity: 0.03,
-                ),
-              ),
-            ),
             // Content
             SafeArea(
               child: FadeTransition(
@@ -219,16 +207,6 @@ class _SettingsViewState extends State<SettingsView>
           borderRadius: BorderRadius.circular(24),
           child: Stack(
             children: [
-              // Background pattern
-              Positioned.fill(
-                child: CustomPaint(
-                  painter: _patternService.getPatternPainter(
-                    type: PatternType.molecular,
-                    color: Colors.white,
-                    opacity: 0.05,
-                  ),
-                ),
-              ),
               // Decorative elements
               Positioned(
                 top: 20,
@@ -410,16 +388,6 @@ class _SettingsViewState extends State<SettingsView>
           borderRadius: BorderRadius.circular(24),
           child: Stack(
             children: [
-              // Background pattern
-              Positioned.fill(
-                child: CustomPaint(
-                  painter: _patternService.getPatternPainter(
-                    type: PatternType.molecular,
-                    color: Colors.white,
-                    opacity: 0.05,
-                  ),
-                ),
-              ),
               // Decorative elements
               Positioned(
                 top: 20,
@@ -577,10 +545,5 @@ class _SettingsViewState extends State<SettingsView>
     );
   }
 
-  void _showIOSAdMobTest(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const IOSAdMobTestView()),
-    );
-  }
+  // Removed unused iOS AdMob test navigation
 }

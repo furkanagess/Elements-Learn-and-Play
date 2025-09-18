@@ -8,6 +8,7 @@ import 'package:elements_app/product/constants/stringConstants/tr_app_strings.da
 import 'package:elements_app/feature/view/elementsList/elements_loading_view.dart';
 import 'package:elements_app/product/widget/scaffold/app_scaffold.dart';
 import 'package:elements_app/product/widget/appBar/app_bars.dart';
+import 'package:elements_app/product/widget/ads/banner_ads_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -87,66 +88,79 @@ class _PeriodicTableViewState extends State<PeriodicTableView> {
           );
         }
 
-        return Container(
-          margin: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.05),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.1),
-              width: 1,
-            ),
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(20),
-            child: ScrollConfiguration(
-              behavior: ScrollConfiguration.of(
-                context,
-              ).copyWith(scrollbars: true),
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: SingleChildScrollView(
-                  child: SizedBox(
-                    width: 1080,
-                    height: 660,
-                    child: InteractiveViewer(
-                      transformationController: _transformationController,
-                      minScale: 0.5,
-                      maxScale: 3.0,
-                      onInteractionUpdate: (details) {
-                        provider.updateScale(
-                          _transformationController.value.getMaxScaleOnAxis(),
-                        );
-                      },
-                      child: Stack(
-                        children: [
-                          // Background grid
-                          _buildGrid(),
+        return SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Container(
+                margin: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.05),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.1),
+                    width: 1,
+                  ),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: ScrollConfiguration(
+                    behavior: ScrollConfiguration.of(
+                      context,
+                    ).copyWith(scrollbars: true),
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: SingleChildScrollView(
+                        child: SizedBox(
+                          width: 1080,
+                          height: 660,
+                          child: InteractiveViewer(
+                            transformationController: _transformationController,
+                            minScale: 0.5,
+                            maxScale: 3.0,
+                            onInteractionUpdate: (details) {
+                              provider.updateScale(
+                                _transformationController.value
+                                    .getMaxScaleOnAxis(),
+                              );
+                            },
+                            child: Stack(
+                              children: [
+                                // Background grid
+                                _buildGrid(),
 
-                          // Elements
-                          ...provider.filteredElements.map((element) {
-                            final position = provider.getElementPosition(
-                              element,
-                            );
-                            return Positioned(
-                              left: position.dx,
-                              top: position.dy,
-                              child: _buildElementTile(context, element),
-                            );
-                          }),
+                                // Elements
+                                ...provider.filteredElements.map((element) {
+                                  final position = provider.getElementPosition(
+                                    element,
+                                  );
+                                  return Positioned(
+                                    left: position.dx,
+                                    top: position.dy,
+                                    child: _buildElementTile(context, element),
+                                  );
+                                }),
 
-                          // Visualizations
-                          if (provider.state.showElectronicConfig)
-                            _buildElectronicConfig(provider),
-                          if (provider.state.showAtomicModel)
-                            _buildAtomicModel(provider),
-                        ],
+                                // Visualizations
+                                if (provider.state.showElectronicConfig)
+                                  _buildElectronicConfig(provider),
+                                if (provider.state.showAtomicModel)
+                                  _buildAtomicModel(provider),
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   ),
                 ),
               ),
-            ),
+              const Padding(
+                padding: EdgeInsets.fromLTRB(20, 0, 20, 20),
+                child: BannerAdsWidget(showLoadingIndicator: true),
+              ),
+            ],
           ),
         );
       },

@@ -8,6 +8,7 @@ import 'package:elements_app/product/constants/stringConstants/en_app_strings.da
 import 'package:elements_app/product/constants/stringConstants/tr_app_strings.dart';
 import 'package:elements_app/product/widget/button/back_button.dart';
 import 'package:elements_app/product/widget/scaffold/app_scaffold.dart';
+import 'package:elements_app/product/widget/ads/banner_ads_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -64,189 +65,230 @@ class _MetalGroupViewState extends State<MetalGroupView>
               builder: (context, child) {
                 return FadeTransition(
                   opacity: _fadeAnimation,
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: GridView.count(
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 16,
-                      crossAxisSpacing: 16,
-                      childAspectRatio: 0.85,
-                      children: [
-                        _buildGroupCard(
-                          context,
-                          index: 0,
-                          title: context.read<LocalizationProvider>().isTr
-                              ? TrAppStrings.transitionMetal
-                              : EnAppStrings.transitionMetal,
-                          subtitle: context.read<LocalizationProvider>().isTr
-                              ? 'd-blok metaller'
-                              : 'd-block metals',
-                          leadingIcon: Icons.precision_manufacturing,
-                          color: AppColors.purple,
-                          shadowColor: AppColors.shPurple,
-                          onTap: () {
-                            HapticFeedback.lightImpact();
-                            context.read<AdmobProvider>().onRouteChanged();
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => ElementsListView(
-                                  apiType: ApiTypes.transitionMetal,
-                                  title:
-                                      context.read<LocalizationProvider>().isTr
-                                      ? TrAppStrings.transitionMetal
-                                      : EnAppStrings.transitionMetal,
-                                ),
+                  child: SingleChildScrollView(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const BannerAdsWidget(showLoadingIndicator: true),
+                          const SizedBox(height: 12),
+                          GridView.count(
+                            crossAxisCount: 2,
+                            mainAxisSpacing: 16,
+                            crossAxisSpacing: 16,
+                            childAspectRatio: 0.85,
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            children: [
+                              _buildGroupCard(
+                                context,
+                                index: 0,
+                                title: context.read<LocalizationProvider>().isTr
+                                    ? TrAppStrings.transitionMetal
+                                    : EnAppStrings.transitionMetal,
+                                subtitle:
+                                    context.read<LocalizationProvider>().isTr
+                                    ? 'd-blok metaller'
+                                    : 'd-block metals',
+                                leadingIcon: Icons.precision_manufacturing,
+                                color: AppColors.purple,
+                                shadowColor: AppColors.shPurple,
+                                onTap: () {
+                                  HapticFeedback.lightImpact();
+                                  context
+                                      .read<AdmobProvider>()
+                                      .onRouteChanged();
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => ElementsListView(
+                                        apiType: ApiTypes.transitionMetal,
+                                        title:
+                                            context
+                                                .read<LocalizationProvider>()
+                                                .isTr
+                                            ? TrAppStrings.transitionMetal
+                                            : EnAppStrings.transitionMetal,
+                                      ),
+                                    ),
+                                  );
+                                },
                               ),
-                            );
-                          },
-                        ),
-                        _buildGroupCard(
-                          context,
-                          index: 1,
-                          title: context.read<LocalizationProvider>().isTr
-                              ? TrAppStrings.postTransition
-                              : EnAppStrings.postTransition,
-                          subtitle: context.read<LocalizationProvider>().isTr
-                              ? 'geçiş sonrası metaller'
-                              : 'post-transition metals',
-                          leadingIcon: Icons.settings,
-                          color: AppColors.steelBlue,
-                          shadowColor: AppColors.shSteelBlue,
-                          onTap: () {
-                            HapticFeedback.lightImpact();
-                            context.read<AdmobProvider>().onRouteChanged();
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => ElementsListView(
-                                  apiType: ApiTypes.postTransition,
-                                  title:
-                                      context.read<LocalizationProvider>().isTr
-                                      ? TrAppStrings.postTransition
-                                      : EnAppStrings.postTransition,
-                                ),
+                              _buildGroupCard(
+                                context,
+                                index: 1,
+                                title: context.read<LocalizationProvider>().isTr
+                                    ? TrAppStrings.postTransition
+                                    : EnAppStrings.postTransition,
+                                subtitle:
+                                    context.read<LocalizationProvider>().isTr
+                                    ? 'geçiş sonrası metaller'
+                                    : 'post-transition metals',
+                                leadingIcon: Icons.settings,
+                                color: AppColors.steelBlue,
+                                shadowColor: AppColors.shSteelBlue,
+                                onTap: () {
+                                  HapticFeedback.lightImpact();
+                                  context
+                                      .read<AdmobProvider>()
+                                      .onRouteChanged();
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => ElementsListView(
+                                        apiType: ApiTypes.postTransition,
+                                        title:
+                                            context
+                                                .read<LocalizationProvider>()
+                                                .isTr
+                                            ? TrAppStrings.postTransition
+                                            : EnAppStrings.postTransition,
+                                      ),
+                                    ),
+                                  );
+                                },
                               ),
-                            );
-                          },
-                        ),
-                        _buildGroupCard(
-                          context,
-                          index: 2,
-                          title: context.read<LocalizationProvider>().isTr
-                              ? TrAppStrings.alkaline
-                              : EnAppStrings.alkaline,
-                          subtitle: context.read<LocalizationProvider>().isTr
-                              ? '1A grubu metaller'
-                              : 'group 1 metals',
-                          leadingIcon: Icons.flash_on,
-                          color: AppColors.turquoise,
-                          shadowColor: AppColors.shTurquoise,
-                          onTap: () {
-                            HapticFeedback.lightImpact();
-                            context.read<AdmobProvider>().onRouteChanged();
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => ElementsListView(
-                                  apiType: ApiTypes.alkaliMetal,
-                                  title:
-                                      context.read<LocalizationProvider>().isTr
-                                      ? TrAppStrings.alkaline
-                                      : EnAppStrings.alkaline,
-                                ),
+                              _buildGroupCard(
+                                context,
+                                index: 2,
+                                title: context.read<LocalizationProvider>().isTr
+                                    ? TrAppStrings.alkaline
+                                    : EnAppStrings.alkaline,
+                                subtitle:
+                                    context.read<LocalizationProvider>().isTr
+                                    ? '1A grubu metaller'
+                                    : 'group 1 metals',
+                                leadingIcon: Icons.flash_on,
+                                color: AppColors.turquoise,
+                                shadowColor: AppColors.shTurquoise,
+                                onTap: () {
+                                  HapticFeedback.lightImpact();
+                                  context
+                                      .read<AdmobProvider>()
+                                      .onRouteChanged();
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => ElementsListView(
+                                        apiType: ApiTypes.alkaliMetal,
+                                        title:
+                                            context
+                                                .read<LocalizationProvider>()
+                                                .isTr
+                                            ? TrAppStrings.alkaline
+                                            : EnAppStrings.alkaline,
+                                      ),
+                                    ),
+                                  );
+                                },
                               ),
-                            );
-                          },
-                        ),
-                        _buildGroupCard(
-                          context,
-                          index: 3,
-                          title: context.read<LocalizationProvider>().isTr
-                              ? TrAppStrings.earthAlkaline
-                              : EnAppStrings.earthAlkaline,
-                          subtitle: context.read<LocalizationProvider>().isTr
-                              ? '2A grubu metaller'
-                              : 'group 2 metals',
-                          leadingIcon: Icons.construction,
-                          color: AppColors.yellow,
-                          shadowColor: AppColors.shYellow,
-                          onTap: () {
-                            HapticFeedback.lightImpact();
-                            context.read<AdmobProvider>().onRouteChanged();
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => ElementsListView(
-                                  apiType: ApiTypes.alkalineEarthMetal,
-                                  title:
-                                      context.read<LocalizationProvider>().isTr
-                                      ? TrAppStrings.earthAlkaline
-                                      : EnAppStrings.earthAlkaline,
-                                ),
+                              _buildGroupCard(
+                                context,
+                                index: 3,
+                                title: context.read<LocalizationProvider>().isTr
+                                    ? TrAppStrings.earthAlkaline
+                                    : EnAppStrings.earthAlkaline,
+                                subtitle:
+                                    context.read<LocalizationProvider>().isTr
+                                    ? '2A grubu metaller'
+                                    : 'group 2 metals',
+                                leadingIcon: Icons.construction,
+                                color: AppColors.yellow,
+                                shadowColor: AppColors.shYellow,
+                                onTap: () {
+                                  HapticFeedback.lightImpact();
+                                  context
+                                      .read<AdmobProvider>()
+                                      .onRouteChanged();
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => ElementsListView(
+                                        apiType: ApiTypes.alkalineEarthMetal,
+                                        title:
+                                            context
+                                                .read<LocalizationProvider>()
+                                                .isTr
+                                            ? TrAppStrings.earthAlkaline
+                                            : EnAppStrings.earthAlkaline,
+                                      ),
+                                    ),
+                                  );
+                                },
                               ),
-                            );
-                          },
-                        ),
-                        _buildGroupCard(
-                          context,
-                          index: 4,
-                          title: context.read<LocalizationProvider>().isTr
-                              ? TrAppStrings.lanthanides
-                              : EnAppStrings.lanthanides,
-                          subtitle: context.read<LocalizationProvider>().isTr
-                              ? 'f-blok: lantanitler'
-                              : 'f-block: lanthanides',
-                          leadingIcon: Icons.blur_circular,
-                          color: AppColors.darkTurquoise,
-                          shadowColor: AppColors.shDarkTurquoise,
-                          onTap: () {
-                            HapticFeedback.lightImpact();
-                            context.read<AdmobProvider>().onRouteChanged();
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => ElementsListView(
-                                  apiType: ApiTypes.lanthanides,
-                                  title:
-                                      context.read<LocalizationProvider>().isTr
-                                      ? TrAppStrings.lanthanides
-                                      : EnAppStrings.lanthanides,
-                                ),
+                              _buildGroupCard(
+                                context,
+                                index: 4,
+                                title: context.read<LocalizationProvider>().isTr
+                                    ? TrAppStrings.lanthanides
+                                    : EnAppStrings.lanthanides,
+                                subtitle:
+                                    context.read<LocalizationProvider>().isTr
+                                    ? 'f-blok: lantanitler'
+                                    : 'f-block: lanthanides',
+                                leadingIcon: Icons.blur_circular,
+                                color: AppColors.darkTurquoise,
+                                shadowColor: AppColors.shDarkTurquoise,
+                                onTap: () {
+                                  HapticFeedback.lightImpact();
+                                  context
+                                      .read<AdmobProvider>()
+                                      .onRouteChanged();
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => ElementsListView(
+                                        apiType: ApiTypes.lanthanides,
+                                        title:
+                                            context
+                                                .read<LocalizationProvider>()
+                                                .isTr
+                                            ? TrAppStrings.lanthanides
+                                            : EnAppStrings.lanthanides,
+                                      ),
+                                    ),
+                                  );
+                                },
                               ),
-                            );
-                          },
-                        ),
-                        _buildGroupCard(
-                          context,
-                          index: 5,
-                          title: context.read<LocalizationProvider>().isTr
-                              ? TrAppStrings.actinides
-                              : EnAppStrings.actinides,
-                          subtitle: context.read<LocalizationProvider>().isTr
-                              ? 'f-blok: aktinitler'
-                              : 'f-block: actinides',
-                          leadingIcon: Icons.science,
-                          color: AppColors.pink,
-                          shadowColor: AppColors.shPink,
-                          onTap: () {
-                            HapticFeedback.lightImpact();
-                            context.read<AdmobProvider>().onRouteChanged();
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => ElementsListView(
-                                  apiType: ApiTypes.actinides,
-                                  title:
-                                      context.read<LocalizationProvider>().isTr
-                                      ? TrAppStrings.actinides
-                                      : EnAppStrings.actinides,
-                                ),
+                              _buildGroupCard(
+                                context,
+                                index: 5,
+                                title: context.read<LocalizationProvider>().isTr
+                                    ? TrAppStrings.actinides
+                                    : EnAppStrings.actinides,
+                                subtitle:
+                                    context.read<LocalizationProvider>().isTr
+                                    ? 'f-blok: aktinitler'
+                                    : 'f-block: actinides',
+                                leadingIcon: Icons.science,
+                                color: AppColors.pink,
+                                shadowColor: AppColors.shPink,
+                                onTap: () {
+                                  HapticFeedback.lightImpact();
+                                  context
+                                      .read<AdmobProvider>()
+                                      .onRouteChanged();
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => ElementsListView(
+                                        apiType: ApiTypes.actinides,
+                                        title:
+                                            context
+                                                .read<LocalizationProvider>()
+                                                .isTr
+                                            ? TrAppStrings.actinides
+                                            : EnAppStrings.actinides,
+                                      ),
+                                    ),
+                                  );
+                                },
                               ),
-                            );
-                          },
-                        ),
-                      ],
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 );

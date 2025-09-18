@@ -52,6 +52,11 @@ class QuizService {
     }
   }
 
+  /// Public: fetch elements (exposed for caching/refresh use cases)
+  Future<List<PeriodicElement>> fetchElements(String apiUrl) async {
+    return _fetchElements(apiUrl);
+  }
+
   /// Generates quiz questions from periodic elements
   List<QuizQuestion> _generateQuestionsFromElements({
     required List<PeriodicElement> elements,
@@ -90,6 +95,23 @@ class QuizService {
     }
 
     return questions;
+  }
+
+  /// Generate a single question from a provided element pool (no network)
+  QuizQuestion generateSingleQuestionFromElements({
+    required List<PeriodicElement> elements,
+    required QuizType type,
+    required String questionId,
+  }) {
+    final valid = elements.where(_isValidElement).toList();
+    final random = Random();
+    final element = valid[random.nextInt(valid.length)];
+    return _createQuestionFromElement(
+      element: element,
+      allElements: valid,
+      type: type,
+      questionId: questionId,
+    );
   }
 
   /// Creates a quiz question from a periodic element

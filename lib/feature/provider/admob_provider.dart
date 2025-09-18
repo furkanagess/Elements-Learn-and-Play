@@ -14,6 +14,12 @@ class AdmobProvider with ChangeNotifier {
   // Route tracking for interstitial ads
   int _routeCounter = 0;
   static const int _routesBeforeAd = 15; // Show ad every 15 routes
+  // Only increment once per real page navigation
+  String? _lastRouteName;
+  DateTime? _lastIncrementAt;
+  final Duration _incrementCooldown = const Duration(milliseconds: 800);
+  // Friendly pacing between ads
+  final Duration _minIntervalBetweenAds = const Duration(seconds: 60);
 
   // Debug and analytics
   int _totalAdsShown = 0;
@@ -181,15 +187,38 @@ class AdmobProvider with ChangeNotifier {
   }
 
   /// Tracks all route changes (push, pop, replace) and shows interstitial ad every 15 routes
-  void onRouteChanged() {
-    _routeCounter++;
+  void onRouteChanged({String? routeName, bool isPageRoute = true}) {
+    // Only track page routes (ignore dialogs/sheets if flagged)
+    if (!isPageRoute) return;
+
+    final now = DateTime.now();
+
+    // De-duplicate rapid multiple notifications for the same transition
+    final withinCooldown =
+        _lastIncrementAt != null && now.difference(_lastIncrementAt!) < _incrementCooldown;
+    final isSameRoute = routeName != null && routeName == _lastRouteName;
+
+    if (withinCooldown || isSameRoute) {
+      debugPrint('⏱️ Skipping duplicate route increment (cooldown or same route)');
+      return;
+    }
+
+    _routeCounter = (_routeCounter + 1).clamp(0, _routesBeforeAd);
     _totalRoutesTracked++;
+    _lastIncrementAt = now;
+    if (routeName != null) _lastRouteName = routeName;
 
     debugPrint('🛣️ Route changed. Counter: $_routeCounter/$_routesBeforeAd');
     debugPrint('📊 Total routes tracked: $_totalRoutesTracked');
 
-    // Show interstitial ad every 15 routes
+    // Show interstitial ad every 15 page navigations, respecting pacing
     if (_routeCounter >= _routesBeforeAd) {
+      final canShowByTime = _lastAdShownTime == null ||
+          now.difference(_lastAdShownTime!) >= _minIntervalBetweenAds;
+      if (!canShowByTime) {
+        debugPrint('⏳ Ad pacing active. Will wait before showing.');
+        return; // keep counter at threshold; will show when time allows
+      }
       debugPrint('🎯 Route threshold reached! Showing interstitial ad...');
       showInterstitialAd();
 

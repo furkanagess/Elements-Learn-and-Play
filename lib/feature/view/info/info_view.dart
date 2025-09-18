@@ -14,6 +14,7 @@ import 'package:elements_app/feature/view/elementsList/elements_loading_view.dar
 import 'package:elements_app/product/extensions/color_extension.dart';
 import 'package:elements_app/product/widget/scaffold/app_scaffold.dart';
 import 'package:elements_app/core/services/pattern/pattern_service.dart';
+import 'package:elements_app/product/widget/ads/banner_ads_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
@@ -401,9 +402,13 @@ class _InfoViewState extends State<InfoView> with TickerProviderStateMixin {
           final infos = snapshot.data;
           return ListView.builder(
             padding: const EdgeInsets.symmetric(horizontal: 20),
-            itemCount: infos!.length,
+            itemCount: (infos?.length ?? 0) + 1,
             itemBuilder: (context, index) {
-              final info = infos[index];
+              if (index == 0) {
+                return const BannerAdsWidget(showLoadingIndicator: true);
+              }
+
+              final info = infos![index - 1];
               return AnimatedBuilder(
                 animation: _fadeAnimation,
                 builder: (context, child) {
@@ -411,7 +416,7 @@ class _InfoViewState extends State<InfoView> with TickerProviderStateMixin {
                     opacity: _fadeAnimation,
                     child: Transform.translate(
                       offset: Offset(0, 20 * (1 - _fadeAnimation.value)),
-                      child: _buildModernInfoCard(info, index),
+                      child: _buildModernInfoCard(info, index - 1),
                     ),
                   );
                 },

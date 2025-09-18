@@ -7,9 +7,9 @@ import 'package:elements_app/feature/provider/admob_provider.dart';
 import 'package:elements_app/product/constants/app_colors.dart';
 import 'package:elements_app/product/constants/assets_constants.dart';
 import 'package:elements_app/product/widget/scaffold/app_scaffold.dart';
-import 'package:elements_app/core/services/pattern/pattern_service.dart';
 import 'package:elements_app/feature/view/info/subInfo/infoDetail/info_detail_view.dart';
 import 'package:elements_app/product/extensions/color_extension.dart';
+import 'package:elements_app/product/widget/ads/banner_ads_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -33,8 +33,7 @@ class _ElementTypeViewState extends State<ElementTypeView>
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
 
-  // Pattern service for background patterns
-  final PatternService _patternService = PatternService();
+  // Removed pattern backgrounds; service no longer used
   int? _pressedCardIndex;
 
   // Data service and state
@@ -93,17 +92,6 @@ class _ElementTypeViewState extends State<ElementTypeView>
         appBar: _buildModernAppBar(),
         body: Stack(
           children: [
-            // Background Pattern
-            Positioned.fill(
-              child: CustomPaint(
-                painter: _patternService.getPatternPainter(
-                  type: PatternType.atomic,
-                  color: Colors.white,
-                  opacity: 0.03,
-                ),
-              ),
-            ),
-
             // Main Content
             SafeArea(
               child: AnimatedBuilder(
@@ -169,9 +157,13 @@ class _ElementTypeViewState extends State<ElementTypeView>
           final infos = snapshot.data;
           return ListView.builder(
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-            itemCount: infos!.length,
+            itemCount: (infos?.length ?? 0) + 1,
             itemBuilder: (context, index) {
-              final info = infos[index];
+              if (index == 0) {
+                return const BannerAdsWidget(showLoadingIndicator: true);
+              }
+
+              final info = infos![index - 1];
               return AnimatedBuilder(
                 animation: _fadeAnimation,
                 builder: (context, child) {
@@ -179,7 +171,7 @@ class _ElementTypeViewState extends State<ElementTypeView>
                     opacity: _fadeAnimation,
                     child: Transform.translate(
                       offset: Offset(0, 20 * (1 - _fadeAnimation.value)),
-                      child: _buildModernInfoCard(info, index),
+                      child: _buildModernInfoCard(info, index - 1),
                     ),
                   );
                 },
@@ -273,16 +265,7 @@ class _ElementTypeViewState extends State<ElementTypeView>
                 borderRadius: BorderRadius.circular(20),
                 child: Stack(
                   children: [
-                    // Background Pattern
-                    Positioned.fill(
-                      child: CustomPaint(
-                        painter: _patternService.getRandomPatternPainter(
-                          seed: index,
-                          color: Colors.white,
-                          opacity: 0.1,
-                        ),
-                      ),
-                    ),
+                    // Background pattern removed
 
                     // Decorative Elements
                     Positioned(

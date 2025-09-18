@@ -314,3 +314,119 @@ class QuizStatistics extends Equatable {
     longestStreak,
   ];
 }
+
+/// Achievement/Badge related models
+
+/// Categories for badges to keep things organized
+enum QuizBadgeCategory { games, accuracy, streak, mastery, speed }
+
+/// Model representing a single badge/milestone
+class QuizBadge extends Equatable {
+  final String id; // unique per quiz type
+  final QuizType type; // which quiz type this badge belongs to
+  final QuizBadgeCategory category;
+  final String titleEn;
+  final String titleTr;
+  final String descriptionEn;
+  final String descriptionTr;
+  final IconData icon;
+  final bool earned;
+  final DateTime? earnedAt;
+
+  const QuizBadge({
+    required this.id,
+    required this.type,
+    required this.category,
+    required this.titleEn,
+    required this.titleTr,
+    required this.descriptionEn,
+    required this.descriptionTr,
+    required this.icon,
+    this.earned = false,
+    this.earnedAt,
+  });
+
+  QuizBadge copyWith({
+    String? id,
+    QuizType? type,
+    QuizBadgeCategory? category,
+    String? titleEn,
+    String? titleTr,
+    String? descriptionEn,
+    String? descriptionTr,
+    IconData? icon,
+    bool? earned,
+    DateTime? earnedAt,
+  }) {
+    return QuizBadge(
+      id: id ?? this.id,
+      type: type ?? this.type,
+      category: category ?? this.category,
+      titleEn: titleEn ?? this.titleEn,
+      titleTr: titleTr ?? this.titleTr,
+      descriptionEn: descriptionEn ?? this.descriptionEn,
+      descriptionTr: descriptionTr ?? this.descriptionTr,
+      icon: icon ?? this.icon,
+      earned: earned ?? this.earned,
+      earnedAt: earnedAt ?? this.earnedAt,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'type': type.name,
+        'category': category.name,
+        'titleEn': titleEn,
+        'titleTr': titleTr,
+        'descriptionEn': descriptionEn,
+        'descriptionTr': descriptionTr,
+        'icon': icon.codePoint,
+        'iconFontFamily': icon.fontFamily,
+        'iconFontPackage': icon.fontPackage,
+        'earned': earned,
+        'earnedAt': earnedAt?.millisecondsSinceEpoch,
+      };
+
+  factory QuizBadge.fromJson(Map<String, dynamic> json) {
+    final iconData = IconData(
+      json['icon'] ?? Icons.star.codePoint,
+      fontFamily: json['iconFontFamily'] ?? 'MaterialIcons',
+      fontPackage: json['iconFontPackage'],
+      matchTextDirection: false,
+    );
+    return QuizBadge(
+      id: json['id'],
+      type: QuizType.values.firstWhere(
+        (t) => t.name == json['type'],
+        orElse: () => QuizType.symbol,
+      ),
+      category: QuizBadgeCategory.values.firstWhere(
+        (c) => c.name == json['category'],
+        orElse: () => QuizBadgeCategory.games,
+      ),
+      titleEn: json['titleEn'] ?? 'Badge',
+      titleTr: json['titleTr'] ?? 'Rozet',
+      descriptionEn: json['descriptionEn'] ?? '',
+      descriptionTr: json['descriptionTr'] ?? '',
+      icon: iconData,
+      earned: json['earned'] ?? false,
+      earnedAt: json['earnedAt'] != null
+          ? DateTime.fromMillisecondsSinceEpoch(json['earnedAt'])
+          : null,
+    );
+  }
+
+  @override
+  List<Object?> get props => [
+        id,
+        type,
+        category,
+        titleEn,
+        titleTr,
+        descriptionEn,
+        descriptionTr,
+        icon,
+        earned,
+        earnedAt,
+      ];
+}

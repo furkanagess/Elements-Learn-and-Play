@@ -4,11 +4,9 @@ import 'package:elements_app/feature/model/info.dart';
 import 'package:elements_app/feature/provider/localization_provider.dart';
 import 'package:elements_app/product/constants/app_colors.dart';
 import 'package:elements_app/product/constants/stringConstants/en_app_strings.dart';
-import 'package:elements_app/product/constants/stringConstants/tr_app_strings.dart';
 import 'package:elements_app/product/widget/button/back_button.dart';
 import 'package:elements_app/product/widget/scaffold/app_scaffold.dart';
 import 'package:elements_app/product/widget/text/element_info_long_text.dart';
-import 'package:elements_app/core/services/pattern/pattern_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
@@ -26,7 +24,6 @@ class _InfoDetailViewState extends State<InfoDetailView>
     with TickerProviderStateMixin {
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
-  final PatternService _patternService = PatternService();
 
   @override
   void initState() {
@@ -55,17 +52,6 @@ class _InfoDetailViewState extends State<InfoDetailView>
         appBar: _buildModernAppBar(),
         body: Stack(
           children: [
-            // Background Pattern
-            Positioned.fill(
-              child: CustomPaint(
-                painter: _patternService.getPatternPainter(
-                  type: PatternType.molecular,
-                  color: Colors.white,
-                  opacity: 0.03,
-                ),
-              ),
-            ),
-
             // Main Content
             SafeArea(
               child: AnimatedBuilder(
@@ -183,16 +169,7 @@ class _InfoDetailViewState extends State<InfoDetailView>
                 borderRadius: BorderRadius.circular(24),
                 child: Stack(
                   children: [
-                    // Background pattern
-                    Positioned.fill(
-                      child: CustomPaint(
-                        painter: _patternService.getPatternPainter(
-                          type: PatternType.atomic,
-                          color: Colors.white,
-                          opacity: 0.05,
-                        ),
-                      ),
-                    ),
+                    // Background pattern removed
                     // Decorative elements
                     Positioned(
                       top: 10,
@@ -306,16 +283,7 @@ class _InfoDetailViewState extends State<InfoDetailView>
               borderRadius: BorderRadius.circular(24),
               child: Stack(
                 children: [
-                  // Background pattern
-                  Positioned.fill(
-                    child: CustomPaint(
-                      painter: _patternService.getPatternPainter(
-                        type: PatternType.molecular,
-                        color: Colors.white,
-                        opacity: 0.05,
-                      ),
-                    ),
-                  ),
+                  // Background pattern removed
                   // Decorative elements
                   Positioned(
                     top: 20,
@@ -459,16 +427,7 @@ class _InfoDetailViewState extends State<InfoDetailView>
         borderRadius: BorderRadius.circular(20),
         child: Stack(
           children: [
-            // Background pattern
-            Positioned.fill(
-              child: CustomPaint(
-                painter: _patternService.getPatternPainter(
-                  type: PatternType.atomic,
-                  color: Colors.white,
-                  opacity: 0.05,
-                ),
-              ),
-            ),
+            // Background pattern removed
             // Decorative elements
             Positioned(
               top: 15,

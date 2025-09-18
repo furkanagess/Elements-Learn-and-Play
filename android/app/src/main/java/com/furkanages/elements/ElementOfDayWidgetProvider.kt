@@ -55,6 +55,7 @@ class ElementOfDayWidgetProvider : AppWidgetProvider() {
         val prefs = HomeWidgetPlugin.getData(context)
         val symbol = prefs.getString("symbol", "?")
         val enName = prefs.getString("enName", "Element")
+        val trName = prefs.getString("trName", enName)
         val number = prefs.getString("number", "-")
         val category = prefs.getString("category", null)
 
@@ -62,24 +63,29 @@ class ElementOfDayWidgetProvider : AppWidgetProvider() {
         val badgeBg = darken(baseColor, 0.7f)
 
         val views = RemoteViews(context.packageName, R.layout.element_of_day_widget).apply {
+            // Set element information
             setTextViewText(R.id.txtSymbol, symbol)
-            setTextViewText(R.id.txtName, enName)
+            setTextViewText(R.id.txtName, trName ?: enName)
             setTextViewText(R.id.txtNumber, "#$number")
             setTextViewText(R.id.txtCategory, category ?: "")
 
             // Dynamic backgrounds matching app's UI
             setInt(R.id.card, "setBackgroundColor", baseColor)
-            setInt(R.id.txtNumber, "setBackgroundColor", badgeBg)
-            setTextColor(R.id.txtNumber, Color.WHITE)
+            setInt(R.id.txtCategory, "setBackgroundColor", badgeBg)
             setTextColor(R.id.txtSymbol, Color.WHITE)
+            setTextColor(R.id.txtName, Color.WHITE)
+            setTextColor(R.id.txtNumber, Color.parseColor("#7DDFF8"))
+            setTextColor(R.id.txtCategory, Color.parseColor("#BFE3FF"))
 
+            // Set click intents to open the app
             val launchIntent = context.packageManager.getLaunchIntentForPackage(context.packageName)
             val pendingIntent = PendingIntent.getActivity(
                 context, 0, launchIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
-            setOnClickPendingIntent(R.id.imgChem, pendingIntent)
             setOnClickPendingIntent(R.id.imgOpenApp, pendingIntent)
             setOnClickPendingIntent(R.id.card, pendingIntent)
+            setOnClickPendingIntent(R.id.txtSymbol, pendingIntent)
+            setOnClickPendingIntent(R.id.txtName, pendingIntent)
         }
 
         appWidgetManager.updateAppWidget(appWidgetId, views)

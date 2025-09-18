@@ -1,5 +1,7 @@
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:elements_app/core/services/notifications/fcm_token_service.dart';
 import '../../product/widget/ads/interstitial_ad_widget.dart';
+import '../../product/ads/rewarded_helper.dart';
 
 /// The `AppInitializer` class is used to manage the initialization process
 /// of your Flutter application. It orchestrates and executes crucial tasks that
@@ -30,6 +32,12 @@ class AppInitializer {
 
         // Initialize Interstitial Ad Manager
         await InterstitialAdManager.instance.initialize();
+
+        // Preload rewarded interstitial to reduce first-show latency
+        await RewardedHelper.initialize();
+
+        // Log FCM token once during app startup (Android/iOS)
+        await FcmTokenService.instance.logFcmTokenIfAvailable();
 
         // Marks the completion of the initialization process.
         _isInitialized = true;

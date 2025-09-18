@@ -9,6 +9,10 @@ import UserNotifications
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
     GeneratedPluginRegistrant.register(with: self)
+    // Ensure iOS foreground notification presentation via delegate
+    UNUserNotificationCenter.current().delegate = self
+    // Register for APNs to receive device token on real devices
+    UIApplication.shared.registerForRemoteNotifications()
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 }

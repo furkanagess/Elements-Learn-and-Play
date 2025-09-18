@@ -15,6 +15,7 @@ import 'package:elements_app/feature/view/elementsList/elements_loading_view.dar
 import 'package:elements_app/feature/view/info/subInfo/elementType/element_type_view.dart';
 import 'package:elements_app/feature/view/info/subInfo/infoDetail/info_detail_view.dart';
 import 'package:elements_app/product/extensions/color_extension.dart';
+import 'package:elements_app/product/widget/ads/banner_ads_widget.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
@@ -509,10 +510,16 @@ class _ModernInfoViewState extends State<ModernInfoView>
 
         return ListView.builder(
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-          itemCount: provider.infoList.length + 1, // +1 for element types card
+          itemCount:
+              provider.infoList.length + 2, // +1 banner, +1 element types card
           itemBuilder: (context, index) {
-            // First item is element types card
+            // First item is banner ads
             if (index == 0) {
+              return const BannerAdsWidget(showLoadingIndicator: true);
+            }
+
+            // Second item is element types card
+            if (index == 1) {
               return AnimatedBuilder(
                 animation: _fadeAnimation,
                 builder: (context, child) {
@@ -528,7 +535,7 @@ class _ModernInfoViewState extends State<ModernInfoView>
             }
 
             // Other items are info cards
-            final info = provider.infoList[index - 1];
+            final info = provider.infoList[index - 2];
             return AnimatedBuilder(
               animation: _fadeAnimation,
               builder: (context, child) {
@@ -536,7 +543,7 @@ class _ModernInfoViewState extends State<ModernInfoView>
                   opacity: _fadeAnimation,
                   child: Transform.translate(
                     offset: Offset(0, 20 * (1 - _fadeAnimation.value)),
-                    child: _buildModernInfoCard(info, index - 1),
+                    child: _buildModernInfoCard(info, index - 2),
                   ),
                 );
               },

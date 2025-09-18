@@ -12,6 +12,8 @@ import 'package:device_preview/device_preview.dart';
 import 'package:home_widget/home_widget.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'core/services/notifications/push_notification_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,10 +21,17 @@ Future<void> main() async {
   // Initialize Firebase
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  await AppInitializer().initialize();
+  // Register background handler before initializeApp (top-level function)
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
-  // Register HomeWidget background callback (no-op placeholder)
-  //await HomeWidget.registerInteractivityCallback(_backgroundCallback);
+  await AppInitializer().initialize();
+  await PushNotificationService.instance.initialize();
+
+  // Configure iOS App Group for HomeWidget and optional background callback
+  try {
+    await HomeWidget.setAppGroupId('group.com.furkanages.elements');
+    // await HomeWidget.registerInteractivityCallback(_backgroundCallback);
+  } catch (_) {}
 
   runApp(
     DevicePreview(
@@ -37,7 +46,15 @@ Future<void> main() async {
 
 // @pragma('vm:entry-point')
 // Future<void> _backgroundCallback(Uri? uri) async {
-//   // Reserved for future background updates (e.g., periodic refresh)
+//   // Update widget when app is opened from widget
+//   try {
+//     await HomeWidget.updateWidget(
+//       name: ElementHomeWidgetService.androidWidgetName,
+//       iOSName: ElementHomeWidgetService.iOSWidgetName,
+//     );
+//   } catch (e) {
+//     // Handle error silently in background
+//   }
 // }
 
 class MyApp extends StatelessWidget {

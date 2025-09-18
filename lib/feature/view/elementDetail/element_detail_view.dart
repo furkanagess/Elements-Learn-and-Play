@@ -1,4 +1,3 @@
-import 'package:elements_app/core/painter/element_particles_painter.dart';
 import 'package:elements_app/feature/model/periodic_element.dart';
 import 'package:elements_app/feature/provider/favorite_elements_provider.dart';
 import 'package:elements_app/feature/provider/localization_provider.dart';
@@ -8,6 +7,7 @@ import 'package:elements_app/product/extensions/context_extensions.dart';
 import 'package:elements_app/product/widget/button/back_button.dart';
 import 'package:elements_app/product/widget/scaffold/app_scaffold.dart';
 import 'package:elements_app/product/constants/assets_constants.dart';
+import 'package:elements_app/core/services/pattern/pattern_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -69,12 +69,13 @@ class ElementDetailView extends StatefulWidget {
 class _ElementDetailViewState extends State<ElementDetailView>
     with TickerProviderStateMixin {
   late AnimationController _mainAnimationController;
-  late AnimationController _cardAnimationController;
+  // Removed unused _cardAnimationController to satisfy lints
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
   late Animation<double> _scaleAnimation;
 
   int _currentTabIndex = 0;
+  final PatternService _patternService = PatternService();
 
   @override
   void initState() {
@@ -83,10 +84,7 @@ class _ElementDetailViewState extends State<ElementDetailView>
       duration: const Duration(milliseconds: 1200),
       vsync: this,
     );
-    _cardAnimationController = AnimationController(
-      duration: const Duration(milliseconds: 600),
-      vsync: this,
-    );
+    // card animation controller removed
 
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
@@ -236,13 +234,11 @@ class _ElementDetailViewState extends State<ElementDetailView>
         borderRadius: BorderRadius.circular(24),
         gradient: LinearGradient(
           colors: [
-            elementColor.withValues(alpha: 0.4),
-            elementColor.withValues(alpha: 0.3),
             elementColor.withValues(alpha: 0.2),
+            elementColor.withValues(alpha: 0.1),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          stops: const [0.0, 0.5, 1.0],
         ),
         border: Border.all(
           color: Colors.white.withValues(alpha: 0.2),
@@ -250,14 +246,9 @@ class _ElementDetailViewState extends State<ElementDetailView>
         ),
         boxShadow: [
           BoxShadow(
-            color: elementColor.withValues(alpha: 0.4),
+            color: elementColor.withValues(alpha: 0.3),
             blurRadius: 30,
             offset: const Offset(0, 15),
-          ),
-          BoxShadow(
-            color: elementColor.withValues(alpha: 0.2),
-            blurRadius: 50,
-            offset: const Offset(0, 25),
           ),
         ],
       ),
@@ -265,25 +256,27 @@ class _ElementDetailViewState extends State<ElementDetailView>
         borderRadius: BorderRadius.circular(24),
         child: Stack(
           children: [
-            // Background Pattern
+            // Background Pattern (match Element of the Day)
             Positioned.fill(
               child: CustomPaint(
-                painter: _ElementPatternPainter(
-                  color: Colors.white.withValues(alpha: 0.15),
+                painter: _patternService.getPatternPainter(
+                  type: PatternType.atomic,
+                  color: Colors.white,
+                  opacity: 0.05,
                 ),
               ),
             ),
 
-            // Decorative Elements
+            // Decorative Elements (match Element of the Day)
             Positioned(
               right: -30,
               top: -30,
               child: Container(
-                width: 120,
-                height: 120,
+                width: 100,
+                height: 100,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.white.withValues(alpha: 0.1),
+                  color: elementColor.withValues(alpha: 0.1),
                 ),
               ),
             ),
@@ -295,7 +288,7 @@ class _ElementDetailViewState extends State<ElementDetailView>
                 height: 80,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.white.withValues(alpha: 0.08),
+                  color: elementColor.withValues(alpha: 0.1),
                 ),
               ),
             ),
@@ -1071,53 +1064,4 @@ class _ElementDetailViewState extends State<ElementDetailView>
   }
 }
 
-class _ElementPatternPainter extends CustomPainter {
-  final Color color;
-
-  _ElementPatternPainter({required this.color});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.fill;
-
-    // Draw atomic structure pattern with larger circles
-    for (int i = 0; i < 4; i++) {
-      for (int j = 0; j < 4; j++) {
-        final x = (size.width / 5) * (i + 1);
-        final y = (size.height / 5) * (j + 1);
-
-        canvas.drawCircle(Offset(x, y), 3, paint);
-      }
-    }
-
-    // Draw connecting lines with thicker strokes
-    paint.strokeWidth = 1.0;
-    paint.style = PaintingStyle.stroke;
-
-    for (int i = 0; i < 3; i++) {
-      for (int j = 0; j < 4; j++) {
-        final x1 = (size.width / 5) * (i + 1);
-        final x2 = (size.width / 5) * (i + 2);
-        final y = (size.height / 5) * (j + 1);
-
-        canvas.drawLine(Offset(x1, y), Offset(x2, y), paint);
-      }
-    }
-
-    // Draw vertical connecting lines
-    for (int i = 0; i < 4; i++) {
-      for (int j = 0; j < 3; j++) {
-        final x = (size.width / 5) * (i + 1);
-        final y1 = (size.height / 5) * (j + 1);
-        final y2 = (size.height / 5) * (j + 2);
-
-        canvas.drawLine(Offset(x, y1), Offset(x, y2), paint);
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
+// Removed old pattern painter; unified with PatternService

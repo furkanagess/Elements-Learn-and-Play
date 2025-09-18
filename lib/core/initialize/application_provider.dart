@@ -4,6 +4,8 @@ import 'package:elements_app/feature/provider/favorite_elements_provider.dart';
 import 'package:elements_app/feature/provider/localization_provider.dart';
 import 'package:elements_app/feature/provider/periodicTable/periodic_table_provider.dart';
 import 'package:elements_app/feature/provider/quiz_provider.dart';
+import 'package:elements_app/feature/provider/puzzle_provider.dart';
+import 'package:elements_app/feature/provider/trivia_provider.dart';
 import 'package:elements_app/feature/provider/info_provider.dart';
 import 'package:elements_app/feature/service/api_service.dart';
 import 'package:elements_app/feature/service/periodicTable/periodic_table_service.dart';
@@ -50,6 +52,12 @@ class ApplicationProvider {
           PeriodicTableProvider(PeriodicTableService(ApiService())),
     ),
     ChangeNotifierProvider<QuizProvider>(create: (context) => QuizProvider()),
+    ChangeNotifierProvider<PuzzleProvider>(
+      create: (context) => PuzzleProvider(),
+    ),
+    ChangeNotifierProvider<TriviaProvider>(
+      create: (context) => TriviaProvider(),
+    ),
     ChangeNotifierProvider<InfoProvider>(create: (context) => InfoProvider()),
   ];
 }
