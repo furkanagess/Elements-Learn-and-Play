@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:elements_app/feature/provider/puzzle_provider.dart';
+import 'package:elements_app/feature/model/puzzle/puzzle_models.dart';
 import 'package:elements_app/product/widget/scaffold/app_scaffold.dart';
 import 'package:elements_app/feature/provider/localization_provider.dart';
 import 'package:elements_app/product/constants/app_colors.dart';
@@ -11,6 +12,7 @@ import 'package:elements_app/product/ads/rewarded_helper.dart';
 import 'package:elements_app/product/widget/ads/interstitial_ad_widget.dart';
 import 'package:elements_app/core/services/pattern/pattern_service.dart';
 import 'package:elements_app/feature/view/tests/tests_home_view.dart';
+import 'package:elements_app/feature/view/trivia/trivia_achievements_view.dart';
 import 'package:elements_app/product/widget/common/modern_game_result_dialog.dart';
 
 class WordPuzzleView extends StatefulWidget {
@@ -249,6 +251,24 @@ class _WordPuzzleViewState extends State<WordPuzzleView>
     );
   }
 
+  Future<void> _maybeShowAchievementsCongrats(
+    PuzzleProvider provider,
+    PuzzleType type,
+  ) async {
+    final newlyEarned = provider.consumeLastEarnedBadges();
+    if (newlyEarned.isEmpty) return;
+
+    await showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (ctx) => _PuzzleAchievementCongratsDialog(
+        badges: newlyEarned,
+        type: type,
+        onHome: () => _navigateToHome(context, provider),
+      ),
+    );
+  }
+
   void _showResultDialog({
     required bool isTr,
     required bool success,
@@ -290,6 +310,10 @@ class _WordPuzzleViewState extends State<WordPuzzleView>
           },
           onPlayAgain: () async {
             Navigator.of(context).pop();
+            await _maybeShowAchievementsCongrats(
+              context.read<PuzzleProvider>(),
+              PuzzleType.word,
+            );
             // Show ad after dialog is closed
             await Future.delayed(const Duration(milliseconds: 500));
             await InterstitialAdManager.instance.showAdOnAction();
@@ -299,6 +323,10 @@ class _WordPuzzleViewState extends State<WordPuzzleView>
           },
           onHome: () async {
             Navigator.of(context).pop();
+            await _maybeShowAchievementsCongrats(
+              context.read<PuzzleProvider>(),
+              PuzzleType.word,
+            );
             // Show ad after dialog is closed
             await Future.delayed(const Duration(milliseconds: 500));
             await InterstitialAdManager.instance.showAdOnAction();
@@ -1362,5 +1390,239 @@ class _PuzzleContent extends StatelessWidget {
         );
       },
     );
+  }
+}
+
+class _PuzzleAchievementCongratsDialog extends StatelessWidget {
+  final List<PuzzleBadge> badges;
+  final PuzzleType type;
+  final VoidCallback? onHome;
+
+  const _PuzzleAchievementCongratsDialog({
+    required this.badges,
+    required this.type,
+    this.onHome,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isTr = context.watch<LocalizationProvider>().isTr;
+    final colors = _getTypeColors(type);
+
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              colors.primary.withValues(alpha: 0.95),
+              Colors.white.withValues(alpha: 0.1),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.2),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: colors.primary.withValues(alpha: 0.35),
+              blurRadius: 24,
+              offset: const Offset(0, 12),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.15),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.3),
+                      width: 1,
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.emoji_events,
+                    color: AppColors.white,
+                    size: 30,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    isTr
+                        ? 'Tebrikler! Yeni başarımlar kazandın'
+                        : 'Congrats! You earned new achievements',
+                    style: const TextStyle(
+                      color: AppColors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            ...badges.take(3).map((b) => _buildBadgeRow(b, isTr)).toList(),
+            if (badges.length > 3) ...[
+              const SizedBox(height: 8),
+              Text(
+                isTr
+                    ? '+${badges.length - 3} diğer başarı'
+                    : '+${badges.length - 3} more',
+                style: TextStyle(color: Colors.white.withValues(alpha: 0.9)),
+              ),
+            ],
+            const SizedBox(height: 20),
+            // First row: Awesome and View Achievements
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white.withValues(alpha: 0.2),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: Text(
+                      isTr ? 'Harika!' : 'Awesome!',
+                      style: const TextStyle(
+                        color: AppColors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const TriviaAchievementsView(),
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: colors.primary,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: Text(
+                      isTr ? 'Başarıları Gör' : 'View Achievements',
+                      style: const TextStyle(
+                        color: AppColors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            // Second row: Home button (if onHome callback is provided)
+            if (onHome != null) ...[
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    onHome!();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white.withValues(alpha: 0.1),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: Text(
+                    isTr ? 'Ana Sayfa' : 'Home',
+                    style: const TextStyle(
+                      color: AppColors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBadgeRow(PuzzleBadge badge, bool isTr) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.15),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.star, color: AppColors.white, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isTr ? badge.titleTr : badge.titleEn,
+                  style: const TextStyle(
+                    color: AppColors.white,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                ),
+                Text(
+                  isTr ? badge.descriptionTr : badge.descriptionEn,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.8),
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  ({Color primary, Color secondary}) _getTypeColors(PuzzleType type) {
+    switch (type) {
+      case PuzzleType.word:
+        return (primary: AppColors.glowGreen, secondary: AppColors.steelBlue);
+      case PuzzleType.matching:
+        return (primary: AppColors.steelBlue, secondary: AppColors.glowGreen);
+      case PuzzleType.crossword:
+      case PuzzleType.placement:
+        return (primary: AppColors.glowGreen, secondary: AppColors.steelBlue);
+    }
   }
 }

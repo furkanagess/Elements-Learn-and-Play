@@ -11,6 +11,7 @@ import 'package:elements_app/feature/view/puzzles/puzzles_home_view.dart';
 import 'package:elements_app/feature/view/puzzles/trivia_center_view.dart';
 import 'package:elements_app/feature/view/home/home_view.dart';
 import 'package:elements_app/product/widget/ads/banner_ads_widget.dart';
+import 'package:elements_app/feature/provider/quiz_provider.dart';
 
 class TestsHomeView extends StatelessWidget {
   TestsHomeView({super.key});
@@ -35,6 +36,15 @@ class TestsHomeView extends StatelessWidget {
             theme: AppBarVariant.quiz,
             style: AppBarStyle.gradient,
             title: isTr ? 'Oyunlar' : 'Games',
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.white),
+              onPressed: () {
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (_) => const HomeView()),
+                  (route) => false,
+                );
+              },
+            ),
           ).toAppBar(),
           body: Stack(
             children: [
@@ -121,6 +131,64 @@ class TestsHomeView extends StatelessWidget {
                           ),
                         ],
                       ),
+                    ),
+                    const SizedBox(height: 16),
+                    Consumer<QuizProvider>(
+                      builder: (context, quizProvider, _) {
+                        return Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.06),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.15),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      isTr ? 'Soru Havuzu' : 'Question Pool',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      quizProvider.useFirst20Elements
+                                          ? (isTr
+                                                ? 'İlk 20 Element'
+                                                : 'First 20 Elements')
+                                          : (isTr
+                                                ? 'Tüm Elementler'
+                                                : 'All Elements'),
+                                      style: TextStyle(
+                                        color: Colors.white.withValues(
+                                          alpha: 0.85,
+                                        ),
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Switch.adaptive(
+                                value: quizProvider.useFirst20Elements,
+                                onChanged: (v) =>
+                                    quizProvider.setUseFirst20Elements(v),
+                                activeColor: AppColors.glowGreen,
+                              ),
+                            ],
+                          ),
+                        );
+                      },
                     ),
                     const SizedBox(height: 16),
 

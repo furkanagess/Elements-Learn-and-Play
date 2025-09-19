@@ -9,12 +9,88 @@ import 'package:elements_app/feature/service/api_service.dart';
 
 enum PuzzleRoundStatus { playing, success, failure }
 
+enum PuzzleBadgeCategory { games, wins, speed, streak }
+
+class PuzzleBadge {
+  final String id;
+  final String titleTr;
+  final String titleEn;
+  final String descriptionTr;
+  final String descriptionEn;
+  final PuzzleBadgeCategory category;
+  final bool earned;
+  final DateTime? earnedAt;
+
+  const PuzzleBadge({
+    required this.id,
+    required this.titleTr,
+    required this.titleEn,
+    required this.descriptionTr,
+    required this.descriptionEn,
+    required this.category,
+    this.earned = false,
+    this.earnedAt,
+  });
+
+  PuzzleBadge copyWith({
+    String? id,
+    String? titleTr,
+    String? titleEn,
+    String? descriptionTr,
+    String? descriptionEn,
+    PuzzleBadgeCategory? category,
+    bool? earned,
+    DateTime? earnedAt,
+  }) {
+    return PuzzleBadge(
+      id: id ?? this.id,
+      titleTr: titleTr ?? this.titleTr,
+      titleEn: titleEn ?? this.titleEn,
+      descriptionTr: descriptionTr ?? this.descriptionTr,
+      descriptionEn: descriptionEn ?? this.descriptionEn,
+      category: category ?? this.category,
+      earned: earned ?? this.earned,
+      earnedAt: earnedAt ?? this.earnedAt,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'titleTr': titleTr,
+    'titleEn': titleEn,
+    'descriptionTr': descriptionTr,
+    'descriptionEn': descriptionEn,
+    'category': category.name,
+    'earned': earned,
+    'earnedAt': earnedAt?.millisecondsSinceEpoch,
+  };
+
+  factory PuzzleBadge.fromJson(Map<String, dynamic> json) => PuzzleBadge(
+    id: json['id'] ?? '',
+    titleTr: json['titleTr'] ?? '',
+    titleEn: json['titleEn'] ?? '',
+    descriptionTr: json['descriptionTr'] ?? '',
+    descriptionEn: json['descriptionEn'] ?? '',
+    category: PuzzleBadgeCategory.values.firstWhere(
+      (c) => c.name == json['category'],
+      orElse: () => PuzzleBadgeCategory.games,
+    ),
+    earned: json['earned'] ?? false,
+    earnedAt: json['earnedAt'] != null
+        ? DateTime.fromMillisecondsSinceEpoch(json['earnedAt'])
+        : null,
+  );
+}
+
 class PuzzleProvider extends ChangeNotifier {
   final String _progressKey = 'puzzle_progress_v1';
+  final String _achievementsKey = 'puzzle_achievements_v1';
   late SharedPreferences _prefs;
 
   final PeriodicTableService _tableService = PeriodicTableService(ApiService());
   final Map<PuzzleType, PuzzleProgress> _progress = {};
+  Map<PuzzleType, List<PuzzleBadge>> _achievements = {};
+  List<PuzzleBadge> _lastEarnedBadges = [];
 
   // Matching puzzle state
   MatchingRound? _currentMatchingRound;
@@ -26,7 +102,7 @@ class PuzzleProvider extends ChangeNotifier {
   int _matchingCorrect = 0;
   int _matchingWrong = 0;
   final int matchingTotalRounds = 10;
-  final int matchingMaxWrong = 3;
+  final int matchingMaxWrong = 5;
   PuzzleRoundStatus _matchingRoundStatus = PuzzleRoundStatus.playing;
   bool _pendingNextMatching = false;
   // Word puzzle state
@@ -41,7 +117,7 @@ class PuzzleProvider extends ChangeNotifier {
   int _wordCorrect = 0;
   int _wordWrong = 0;
   final int wordTotalRounds = 10;
-  final int wordMaxWrong = 3;
+  final int wordMaxWrong = 5;
   int _roundHintsUsed = 0; // per-round used hints
   PuzzleRoundStatus _wordRoundStatus = PuzzleRoundStatus.playing;
   bool _pendingNextWord = false;
@@ -100,6 +176,7 @@ class PuzzleProvider extends ChangeNotifier {
   Future<void> _init() async {
     _prefs = await SharedPreferences.getInstance();
     _loadProgress();
+    _loadAchievements();
   }
 
   void _loadProgress() {
@@ -124,6 +201,43 @@ class PuzzleProvider extends ChangeNotifier {
       (key, value) => MapEntry(key.name, value.toJson()),
     );
     await _prefs.setString(_progressKey, jsonEncode(map));
+  }
+
+  void _loadAchievements() {
+    final String? jsonStr = _prefs.getString(_achievementsKey);
+    if (jsonStr == null) return;
+    try {
+      final Map<String, dynamic> decoded = jsonDecode(jsonStr);
+      decoded.forEach((key, value) {
+        final type = PuzzleType.values.firstWhere(
+          (e) => e.name == key,
+          orElse: () => PuzzleType.word,
+        );
+        final list = (value as List)
+            .map((e) => PuzzleBadge.fromJson(e as Map<String, dynamic>))
+            .toList();
+        _achievements[type] = list;
+      });
+    } catch (e) {
+      debugPrint('❌ Error loading puzzle achievements: $e');
+      _achievements = {};
+    }
+  }
+
+  Future<void> _saveAchievements() async {
+    try {
+      // Ensure defaults present
+      for (final t in PuzzleType.values) {
+        _achievements[t] = _achievements[t] ?? _defaultBadgesForType(t);
+      }
+      final data = _achievements.map(
+        (key, value) =>
+            MapEntry(key.name, value.map((b) => b.toJson()).toList()),
+      );
+      await _prefs.setString(_achievementsKey, jsonEncode(data));
+    } catch (e) {
+      debugPrint('❌ Error saving puzzle achievements: $e');
+    }
   }
 
   Future<void> startWordSession({required bool turkish}) async {
@@ -280,6 +394,7 @@ class PuzzleProvider extends ChangeNotifier {
     );
     _progress[PuzzleType.word] = updated;
     _saveProgress();
+    _evaluateAndAwardBadges(PuzzleType.word);
     _wordRoundStatus = success
         ? PuzzleRoundStatus.success
         : PuzzleRoundStatus.failure;
@@ -463,6 +578,7 @@ class PuzzleProvider extends ChangeNotifier {
           : progress.bestTime,
     );
     _saveProgress();
+    _evaluateAndAwardBadges(PuzzleType.matching);
 
     if (_matchingSessionActive) {
       if (success) {
@@ -534,6 +650,144 @@ class PuzzleProvider extends ChangeNotifier {
     _pendingNextWord = true;
     loadNextWord();
     notifyListeners();
+  }
+
+  /// Returns badges for a type, ensuring defaults exist
+  List<PuzzleBadge> getAchievementsForType(PuzzleType type) {
+    _achievements[type] = _achievements[type] ?? _defaultBadgesForType(type);
+    return _achievements[type]!;
+  }
+
+  /// Total earned badges across all puzzle types
+  int getTotalEarnedBadges() {
+    for (final t in PuzzleType.values) {
+      _achievements[t] = _achievements[t] ?? _defaultBadgesForType(t);
+    }
+    return _achievements.values
+        .expand((list) => list)
+        .where((b) => b.earned)
+        .length;
+  }
+
+  /// Total badges available
+  int getTotalBadgesCount() {
+    for (final t in PuzzleType.values) {
+      _achievements[t] = _achievements[t] ?? _defaultBadgesForType(t);
+    }
+    return _achievements.values.expand((e) => e).length;
+  }
+
+  /// Returns and clears badges earned during the last evaluation
+  List<PuzzleBadge> consumeLastEarnedBadges() {
+    final res = List<PuzzleBadge>.from(_lastEarnedBadges);
+    _lastEarnedBadges.clear();
+    return res;
+  }
+
+  /// Evaluate and mark badges as earned based on current statistics
+  void _evaluateAndAwardBadges(PuzzleType type) {
+    final progress = getProgress(type);
+    final badges = getAchievementsForType(type);
+    final previousById = {for (final b in badges) b.id: b};
+
+    bool changed = false;
+    PuzzleBadge setEarned(PuzzleBadge b) => b.copyWith(
+      earned: true,
+      earnedAt: b.earned ? b.earnedAt : DateTime.now(),
+    );
+
+    final wins = progress.totalWins;
+    final plays = progress.totalPlays;
+    final bestTimeSec = progress.bestTime.inSeconds;
+
+    final updated = badges.map((b) {
+      if (b.earned) return b;
+
+      if (b.category == PuzzleBadgeCategory.games) {
+        final threshold = int.tryParse(b.id.split('_').last) ?? 0;
+        if (plays >= threshold) {
+          changed = true;
+          return setEarned(b);
+        }
+      }
+      if (b.category == PuzzleBadgeCategory.wins) {
+        final threshold = int.tryParse(b.id.split('_').last) ?? 0;
+        if (wins >= threshold) {
+          changed = true;
+          return setEarned(b);
+        }
+      }
+      if (b.category == PuzzleBadgeCategory.speed) {
+        final threshold = int.tryParse(b.id.split('_').last) ?? 0;
+        if (bestTimeSec > 0 && bestTimeSec <= threshold) {
+          changed = true;
+          return setEarned(b);
+        }
+      }
+      return b;
+    }).toList();
+
+    if (changed) {
+      _achievements[type] = updated;
+      // Compute newly earned
+      _lastEarnedBadges = [
+        for (final b in updated)
+          if (b.earned && (previousById[b.id]?.earned == false)) b,
+      ];
+      _saveAchievements();
+      notifyListeners();
+    } else {
+      _lastEarnedBadges = [];
+    }
+  }
+
+  /// Default badge set for a puzzle type
+  List<PuzzleBadge> _defaultBadgesForType(PuzzleType type) {
+    final badges = <PuzzleBadge>[];
+
+    // Games played badges
+    for (final t in [5, 10, 25, 50]) {
+      badges.add(
+        PuzzleBadge(
+          id: 'games_$t',
+          titleTr: '$t Oyun',
+          titleEn: '$t Games',
+          descriptionTr: '$t bulmaca oyna',
+          descriptionEn: 'Play $t puzzles',
+          category: PuzzleBadgeCategory.games,
+        ),
+      );
+    }
+
+    // Wins badges
+    for (final t in [1, 5, 10, 25]) {
+      badges.add(
+        PuzzleBadge(
+          id: 'wins_$t',
+          titleTr: t == 1 ? 'İlk Zafer' : '$t Zafer',
+          titleEn: t == 1 ? 'First Win' : '$t Wins',
+          descriptionTr: t == 1 ? 'İlk bulmacayı çöz' : '$t bulmaca çöz',
+          descriptionEn: t == 1 ? 'Solve first puzzle' : 'Solve $t puzzles',
+          category: PuzzleBadgeCategory.wins,
+        ),
+      );
+    }
+
+    // Speed badges (in seconds)
+    for (final t in [60, 30, 15]) {
+      badges.add(
+        PuzzleBadge(
+          id: 'speed_$t',
+          titleTr: t == 60 ? 'Hızlı' : (t == 30 ? 'Çok Hızlı' : 'Şimşek'),
+          titleEn: t == 60 ? 'Fast' : (t == 30 ? 'Very Fast' : 'Lightning'),
+          descriptionTr: '${t}s altında çöz',
+          descriptionEn: 'Solve under ${t}s',
+          category: PuzzleBadgeCategory.speed,
+        ),
+      );
+    }
+
+    return badges;
   }
 
   /// Clears all puzzle progress data

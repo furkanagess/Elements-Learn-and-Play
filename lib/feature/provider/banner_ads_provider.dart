@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:lottie/lottie.dart';
 import 'package:elements_app/product/constants/assets_constants.dart';
+import 'package:provider/provider.dart';
+import 'package:elements_app/feature/provider/purchase_provider.dart';
 
 /// The `BannerAdsProvider` class is responsible for managing banner ads using the
 /// AdMob service. It provides methods for creating and displaying banner ads
@@ -54,7 +56,15 @@ class BannerAdsProvider with ChangeNotifier {
   }
 
   /// Returns the banner ad widget if loaded, otherwise returns null.
-  Widget? getBannerAdWidget() {
+  Widget? getBannerAdWidget([BuildContext? context]) {
+    // Check if user is premium (if context is provided)
+    if (context != null) {
+      final purchaseProvider = context.read<PurchaseProvider>();
+      if (purchaseProvider.isPremium) {
+        return null; // Don't show banner ads for premium users
+      }
+    }
+
     if (_isBannerAdLoaded && bannerAd != null) {
       return Container(
         alignment: Alignment.center,

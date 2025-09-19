@@ -63,9 +63,10 @@ class _ModernQuizHomeState extends State<ModernQuizHome>
   }
 
   // Navigation methods for quiz cards
-  void _onQuizCardTap(QuizType type) {
+  void _onQuizCardTap(QuizType type, {bool first20Only = false}) {
     HapticFeedback.lightImpact();
-    _startQuiz(type);
+    final globalFirst20 = context.read<QuizProvider>().useFirst20Elements;
+    _startQuiz(type, first20Only: first20Only || globalFirst20);
   }
 
   @override
@@ -472,6 +473,7 @@ class _ModernQuizHomeState extends State<ModernQuizHome>
       color: Colors.transparent,
       child: InkWell(
         onTap: () => _onQuizCardTap(type),
+        onLongPress: () => _onQuizCardTap(type, first20Only: true),
         borderRadius: BorderRadius.circular(20),
         child: Container(
           margin: const EdgeInsets.only(bottom: 16),
@@ -679,7 +681,7 @@ class _ModernQuizHomeState extends State<ModernQuizHome>
     );
   }
 
-  void _startQuiz(QuizType type) {
+  void _startQuiz(QuizType type, {bool first20Only = false}) {
     context.read<AdmobProvider>().onRouteChanged();
 
     // Show loading screen
@@ -698,7 +700,8 @@ class _ModernQuizHomeState extends State<ModernQuizHome>
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => UnifiedQuizView(quizType: type),
+            builder: (context) =>
+                UnifiedQuizView(quizType: type, first20Only: first20Only),
           ),
         );
       }

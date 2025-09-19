@@ -15,9 +15,15 @@ class QuizService {
     required QuizType type,
     required String apiUrl,
     int questionCount = _defaultQuestionCount,
+    bool first20Only = false,
   }) async {
     try {
-      final elements = await _fetchElements(apiUrl);
+      var elements = await _fetchElements(apiUrl);
+      if (first20Only) {
+        elements = elements
+            .where((e) => (e.number ?? 9999) <= 20)
+            .toList(growable: false);
+      }
       if (elements.isEmpty) {
         throw Exception('No elements found');
       }

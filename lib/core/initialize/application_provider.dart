@@ -7,6 +7,7 @@ import 'package:elements_app/feature/provider/quiz_provider.dart';
 import 'package:elements_app/feature/provider/puzzle_provider.dart';
 import 'package:elements_app/feature/provider/trivia_provider.dart';
 import 'package:elements_app/feature/provider/info_provider.dart';
+import 'package:elements_app/feature/provider/purchase_provider.dart';
 import 'package:elements_app/feature/service/api_service.dart';
 import 'package:elements_app/feature/service/periodicTable/periodic_table_service.dart';
 import 'package:elements_app/feature/service/network_service.dart';
@@ -59,5 +60,8 @@ class ApplicationProvider {
       create: (context) => TriviaProvider(),
     ),
     ChangeNotifierProvider<InfoProvider>(create: (context) => InfoProvider()),
+    ChangeNotifierProvider<PurchaseProvider>(
+      create: (context) => PurchaseProvider(),
+    ),
   ];
 }

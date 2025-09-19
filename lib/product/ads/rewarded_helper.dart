@@ -2,6 +2,8 @@ import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:provider/provider.dart';
+import 'package:elements_app/feature/provider/purchase_provider.dart';
 
 /// Simple helper to show a rewarded ad and invoke [onRewardEarned]
 /// when the user successfully earns the reward.
@@ -66,6 +68,13 @@ class RewardedHelper {
   /// according to your AdMob setup screenshots.
   static Future<bool> showRewardedAd({required BuildContext context}) async {
     try {
+      // Check if user is premium
+      final purchaseProvider = context.read<PurchaseProvider>();
+      if (purchaseProvider.isPremium) {
+        if (kDebugMode) debugPrint('🚫 Premium user - skipping rewarded ad');
+        return true; // Return true to simulate successful reward for premium users
+      }
+
       final completer = ValueNotifier<bool?>(null);
 
       // Use cached ad if available; otherwise load now

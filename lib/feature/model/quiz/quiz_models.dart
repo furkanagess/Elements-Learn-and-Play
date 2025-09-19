@@ -104,7 +104,7 @@ class QuizSession extends Equatable {
     this.currentQuestionIndex = 0,
     this.correctAnswers = 0,
     this.wrongAnswers = 0,
-    this.maxWrongAnswers = 3,
+    this.maxWrongAnswers = 5,
     this.retryCount = 3,
     this.maxRetries = 3,
     this.state = QuizState.initial,
@@ -373,19 +373,19 @@ class QuizBadge extends Equatable {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'type': type.name,
-        'category': category.name,
-        'titleEn': titleEn,
-        'titleTr': titleTr,
-        'descriptionEn': descriptionEn,
-        'descriptionTr': descriptionTr,
-        'icon': icon.codePoint,
-        'iconFontFamily': icon.fontFamily,
-        'iconFontPackage': icon.fontPackage,
-        'earned': earned,
-        'earnedAt': earnedAt?.millisecondsSinceEpoch,
-      };
+    'id': id,
+    'type': type.name,
+    'category': category.name,
+    'titleEn': titleEn,
+    'titleTr': titleTr,
+    'descriptionEn': descriptionEn,
+    'descriptionTr': descriptionTr,
+    'icon': icon.codePoint,
+    'iconFontFamily': icon.fontFamily,
+    'iconFontPackage': icon.fontPackage,
+    'earned': earned,
+    'earnedAt': earnedAt?.millisecondsSinceEpoch,
+  };
 
   factory QuizBadge.fromJson(Map<String, dynamic> json) {
     final iconData = IconData(
@@ -418,15 +418,15 @@ class QuizBadge extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        type,
-        category,
-        titleEn,
-        titleTr,
-        descriptionEn,
-        descriptionTr,
-        icon,
-        earned,
-        earnedAt,
-      ];
+    id,
+    type,
+    category,
+    titleEn,
+    titleTr,
+    descriptionEn,
+    descriptionTr,
+    icon,
+    earned,
+    earnedAt,
+  ];
 }

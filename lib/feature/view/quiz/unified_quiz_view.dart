@@ -19,8 +19,13 @@ import 'package:elements_app/feature/view/quiz/achievements_view.dart';
 /// Unified quiz view that handles all quiz types with modern UI
 class UnifiedQuizView extends StatefulWidget {
   final QuizType quizType;
+  final bool first20Only;
 
-  const UnifiedQuizView({super.key, required this.quizType});
+  const UnifiedQuizView({
+    super.key,
+    required this.quizType,
+    this.first20Only = false,
+  });
 
   @override
   State<UnifiedQuizView> createState() => _UnifiedQuizViewState();
@@ -71,7 +76,10 @@ class _UnifiedQuizViewState extends State<UnifiedQuizView>
   void _startQuiz() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _hasShownResultDialog = false;
-      context.read<QuizProvider>().startQuiz(widget.quizType);
+      context.read<QuizProvider>().startQuiz(
+        widget.quizType,
+        first20Only: widget.first20Only,
+      );
     });
   }
 
@@ -81,7 +89,7 @@ class _UnifiedQuizViewState extends State<UnifiedQuizView>
       final quizProvider = context.read<QuizProvider>();
       quizProvider.resetQuiz();
       // Start a completely new quiz session
-      quizProvider.startQuiz(widget.quizType);
+      quizProvider.startQuiz(widget.quizType, first20Only: widget.first20Only);
     });
   }
 

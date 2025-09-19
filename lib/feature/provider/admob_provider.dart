@@ -1,6 +1,8 @@
 import 'package:elements_app/feature/service/google_ads_service.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:provider/provider.dart';
+import 'package:elements_app/feature/provider/purchase_provider.dart';
 
 /// The `AdmobProvider` class is responsible for managing interstitial ads using the
 /// AdMob service. It provides methods for creating and displaying interstitial ads
@@ -82,7 +84,8 @@ class AdmobProvider with ChangeNotifier {
 
             debugPrint('❌ Interstitial ad failed to load: ${error.message}');
             debugPrint(
-                '📊 Load attempts: $_interstitialLoadAttempts/$maxFailedAttempt');
+              '📊 Load attempts: $_interstitialLoadAttempts/$maxFailedAttempt',
+            );
 
             if (_interstitialLoadAttempts < maxFailedAttempt) {
               // Exponential backoff retry
@@ -152,8 +155,17 @@ class AdmobProvider with ChangeNotifier {
   }
 
   /// Displays the loaded interstitial ad.
-  void showInterstitialAd() {
+  void showInterstitialAd([BuildContext? context]) {
     try {
+      // Check if user is premium (if context is provided)
+      if (context != null) {
+        final purchaseProvider = context.read<PurchaseProvider>();
+        if (purchaseProvider.isPremium) {
+          debugPrint('🚫 Premium user - skipping interstitial ad');
+          return;
+        }
+      }
+
       if (_interstitialAd != null) {
         debugPrint('🎯 Showing interstitial ad...');
 
@@ -161,12 +173,15 @@ class AdmobProvider with ChangeNotifier {
         _interstitialAd!.setImmersiveMode(true);
 
         // Reklamı göster
-        _interstitialAd!.show().then((_) {
-          debugPrint('✅ Interstitial ad shown in fullscreen mode');
-        }).catchError((error) {
-          debugPrint('❌ Error showing interstitial ad: $error');
-          _createInterstitialAd();
-        });
+        _interstitialAd!
+            .show()
+            .then((_) {
+              debugPrint('✅ Interstitial ad shown in fullscreen mode');
+            })
+            .catchError((error) {
+              debugPrint('❌ Error showing interstitial ad: $error');
+              _createInterstitialAd();
+            });
       } else {
         debugPrint('⚠️ No interstitial ad available to show');
         // Try to create a new ad if none is available
@@ -187,7 +202,11 @@ class AdmobProvider with ChangeNotifier {
   }
 
   /// Tracks all route changes (push, pop, replace) and shows interstitial ad every 15 routes
-  void onRouteChanged({String? routeName, bool isPageRoute = true}) {
+  void onRouteChanged({
+    String? routeName,
+    bool isPageRoute = true,
+    BuildContext? context,
+  }) {
     // Only track page routes (ignore dialogs/sheets if flagged)
     if (!isPageRoute) return;
 
@@ -195,11 +214,14 @@ class AdmobProvider with ChangeNotifier {
 
     // De-duplicate rapid multiple notifications for the same transition
     final withinCooldown =
-        _lastIncrementAt != null && now.difference(_lastIncrementAt!) < _incrementCooldown;
+        _lastIncrementAt != null &&
+        now.difference(_lastIncrementAt!) < _incrementCooldown;
     final isSameRoute = routeName != null && routeName == _lastRouteName;
 
     if (withinCooldown || isSameRoute) {
-      debugPrint('⏱️ Skipping duplicate route increment (cooldown or same route)');
+      debugPrint(
+        '⏱️ Skipping duplicate route increment (cooldown or same route)',
+      );
       return;
     }
 
@@ -213,14 +235,15 @@ class AdmobProvider with ChangeNotifier {
 
     // Show interstitial ad every 15 page navigations, respecting pacing
     if (_routeCounter >= _routesBeforeAd) {
-      final canShowByTime = _lastAdShownTime == null ||
+      final canShowByTime =
+          _lastAdShownTime == null ||
           now.difference(_lastAdShownTime!) >= _minIntervalBetweenAds;
       if (!canShowByTime) {
         debugPrint('⏳ Ad pacing active. Will wait before showing.');
         return; // keep counter at threshold; will show when time allows
       }
       debugPrint('🎯 Route threshold reached! Showing interstitial ad...');
-      showInterstitialAd();
+      showInterstitialAd(context);
 
       // Reset both counters after showing ad
       _routeCounter = 0;

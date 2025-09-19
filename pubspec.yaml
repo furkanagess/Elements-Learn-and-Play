@@ -47,6 +47,9 @@ dependencies:
   # Rating
   flutter_rating_bar: ^4.0.1
   in_app_review: ^2.0.9
+  
+  # RevenueCat
+  purchases_flutter: ^6.29.0
 
   # Device Preview
   device_preview: ^1.1.0

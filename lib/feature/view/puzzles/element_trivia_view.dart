@@ -16,6 +16,7 @@ import 'package:elements_app/feature/service/api_service.dart';
 import 'package:elements_app/product/widget/ads/interstitial_ad_widget.dart';
 import 'package:elements_app/product/ads/rewarded_helper.dart';
 import 'package:elements_app/feature/view/tests/tests_home_view.dart';
+import 'package:elements_app/feature/view/trivia/trivia_achievements_view.dart';
 import 'package:elements_app/product/widget/common/modern_game_result_dialog.dart';
 
 class ElementTriviaView extends StatefulWidget {
@@ -48,7 +49,7 @@ class _ElementTriviaViewState extends State<ElementTriviaView>
   int _questionIndex = 0;
   int _correct = 0;
   int _wrong = 0;
-  static const int _maxWrong = 3;
+  static const int _maxWrong = 5;
   bool _hasShownResult = false;
   bool _hasExtraLife = false;
 
@@ -716,6 +717,7 @@ class _ElementTriviaViewState extends State<ElementTriviaView>
           },
           onPlayAgain: () async {
             Navigator.of(context).pop();
+            await _maybeShowAchievementsCongrats(_resolveCategoryForRun());
             // Show ad after dialog is closed
             await Future.delayed(const Duration(milliseconds: 500));
             await InterstitialAdManager.instance.showAdOnAction();
@@ -723,6 +725,7 @@ class _ElementTriviaViewState extends State<ElementTriviaView>
           },
           onHome: () async {
             Navigator.of(context).pop();
+            await _maybeShowAchievementsCongrats(_resolveCategoryForRun());
             // Show ad after dialog is closed
             await Future.delayed(const Duration(milliseconds: 500));
             await InterstitialAdManager.instance.showAdOnAction();
@@ -755,6 +758,28 @@ class _ElementTriviaViewState extends State<ElementTriviaView>
       _gameStartTime = DateTime.now();
       _generateRandomQuestions();
     });
+  }
+
+  Future<void> _maybeShowAchievementsCongrats(TriviaCategory category) async {
+    final newlyEarned = context
+        .read<TriviaProvider>()
+        .consumeLastEarnedBadges();
+    if (newlyEarned.isEmpty) return;
+
+    await showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (ctx) => _TriviaAchievementCongratsDialog(
+        badges: newlyEarned,
+        category: category,
+        onHome: () {
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => TestsHomeView()),
+            (route) => false,
+          );
+        },
+      ),
+    );
   }
 
   void _continueWithExtraLife() {
@@ -1763,4 +1788,247 @@ class _TriviaQuestion {
     this.fullContent,
     this.contentType,
   });
+}
+
+class _TriviaAchievementCongratsDialog extends StatelessWidget {
+  final List<TriviaBadge> badges;
+  final TriviaCategory category;
+  final VoidCallback? onHome;
+
+  const _TriviaAchievementCongratsDialog({
+    required this.badges,
+    required this.category,
+    this.onHome,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isTr = context.watch<LocalizationProvider>().isTr;
+    final colors = _getCategoryColors(category);
+
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              colors.primary.withValues(alpha: 0.95),
+              Colors.white.withValues(alpha: 0.1),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.2),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: colors.primary.withValues(alpha: 0.35),
+              blurRadius: 24,
+              offset: const Offset(0, 12),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.15),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.3),
+                      width: 1,
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.emoji_events,
+                    color: AppColors.white,
+                    size: 30,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    isTr
+                        ? 'Tebrikler! Yeni başarımlar kazandın'
+                        : 'Congrats! You earned new achievements',
+                    style: const TextStyle(
+                      color: AppColors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            ...badges.take(3).map((b) => _buildBadgeRow(b, isTr)).toList(),
+            if (badges.length > 3) ...[
+              const SizedBox(height: 8),
+              Text(
+                isTr
+                    ? '+${badges.length - 3} diğer başarı'
+                    : '+${badges.length - 3} more',
+                style: TextStyle(color: Colors.white.withValues(alpha: 0.9)),
+              ),
+            ],
+            const SizedBox(height: 20),
+            // First row: Awesome and View Achievements
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white.withValues(alpha: 0.2),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: Text(
+                      isTr ? 'Harika!' : 'Awesome!',
+                      style: const TextStyle(
+                        color: AppColors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const TriviaAchievementsView(),
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: colors.primary,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: Text(
+                      isTr ? 'Başarıları Gör' : 'View Achievements',
+                      style: const TextStyle(
+                        color: AppColors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            // Second row: Home button (if onHome callback is provided)
+            if (onHome != null) ...[
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    onHome!();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white.withValues(alpha: 0.1),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: Text(
+                    isTr ? 'Ana Sayfa' : 'Home',
+                    style: const TextStyle(
+                      color: AppColors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBadgeRow(TriviaBadge badge, bool isTr) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.15),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.star, color: AppColors.white, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isTr ? badge.titleTr : badge.titleEn,
+                  style: const TextStyle(
+                    color: AppColors.white,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                ),
+                Text(
+                  isTr ? badge.descriptionTr : badge.descriptionEn,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.8),
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  ({Color primary, Color secondary}) _getCategoryColors(
+    TriviaCategory category,
+  ) {
+    switch (category) {
+      case TriviaCategory.classification:
+        return (primary: AppColors.glowGreen, secondary: AppColors.steelBlue);
+      case TriviaCategory.weight:
+        return (primary: AppColors.steelBlue, secondary: AppColors.glowGreen);
+      case TriviaCategory.period:
+        return (primary: AppColors.glowGreen, secondary: AppColors.steelBlue);
+      case TriviaCategory.description:
+        return (primary: AppColors.steelBlue, secondary: AppColors.glowGreen);
+      case TriviaCategory.usage:
+        return (primary: AppColors.glowGreen, secondary: AppColors.steelBlue);
+      case TriviaCategory.source:
+        return (primary: AppColors.steelBlue, secondary: AppColors.glowGreen);
+      case TriviaCategory.mixed:
+        return (primary: AppColors.glowGreen, secondary: AppColors.steelBlue);
+    }
+  }
 }

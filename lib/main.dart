@@ -5,6 +5,7 @@ import 'package:elements_app/product/constants/stringConstants/en_app_strings.da
 import 'package:elements_app/core/theme/app_theme.dart';
 import 'package:elements_app/core/observer/route_observer.dart';
 import 'package:elements_app/core/services/widget/element_home_widget_service.dart';
+import 'package:elements_app/core/services/purchases/revenue_cat_service.dart';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -26,6 +27,13 @@ Future<void> main() async {
 
   await AppInitializer().initialize();
   await PushNotificationService.instance.initialize();
+
+  // Initialize RevenueCat
+  try {
+    await RevenueCatService.instance.initialize();
+  } catch (e) {
+    debugPrint('Failed to initialize RevenueCat: $e');
+  }
 
   // Configure iOS App Group for HomeWidget and optional background callback
   try {

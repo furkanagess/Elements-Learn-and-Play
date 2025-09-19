@@ -1,8 +1,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- Android 13+ runtime notification permission -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    
+    <!-- RevenueCat permissions -->
+    <uses-permission android:name="com.android.vending.BILLING" />
     <application
-        android:label="elements_app_new"
+        android:label="Periodic Table"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

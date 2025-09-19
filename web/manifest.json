@@ -1,11 +1,11 @@
 {
-    "name": "elements_app_new",
-    "short_name": "elements_app_new",
+    "name": "Periodic Table",
+    "short_name": "Periodic Table",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "Periodic Table - Learn and explore chemical elements",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

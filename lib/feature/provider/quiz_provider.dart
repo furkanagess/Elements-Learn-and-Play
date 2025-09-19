@@ -14,6 +14,7 @@ class QuizProvider extends ChangeNotifier {
   final QuizService _quizService = QuizService();
   final String _storageKey = 'quiz_statistics';
   final String _achievementsStorageKey = 'quiz_achievements';
+  final String _first20Key = 'quiz_use_first20';
   late SharedPreferences _prefs;
 
   QuizSession? _currentSession;
@@ -22,6 +23,7 @@ class QuizProvider extends ChangeNotifier {
   List<QuizBadge> _lastEarnedBadges = [];
   final Map<QuizType, List<PeriodicElement>> _elementsCache = {};
   bool _refreshUsedInSession = false;
+  bool _useFirst20Elements = false;
 
   QuizProvider() {
     _initPrefs();
@@ -32,6 +34,7 @@ class QuizProvider extends ChangeNotifier {
     _prefs = await SharedPreferences.getInstance();
     _loadStatistics();
     _loadAchievements();
+    _loadFirst20Preference();
   }
 
   /// Load statistics from SharedPreferences cache
@@ -71,6 +74,20 @@ class QuizProvider extends ChangeNotifier {
     } catch (e) {
       debugPrint('❌ Error saving statistics: $e');
     }
+  }
+
+  void _loadFirst20Preference() {
+    try {
+      _useFirst20Elements = _prefs.getBool(_first20Key) ?? false;
+    } catch (_) {
+      _useFirst20Elements = false;
+    }
+  }
+
+  Future<void> _saveFirst20Preference() async {
+    try {
+      await _prefs.setBool(_first20Key, _useFirst20Elements);
+    } catch (_) {}
   }
 
   /// Load achievements from SharedPreferences cache
@@ -118,6 +135,14 @@ class QuizProvider extends ChangeNotifier {
   Map<QuizType, QuizStatistics> get statistics => _statistics;
   Map<QuizType, List<QuizBadge>> get achievements => _achievements;
   List<QuizBadge> get lastEarnedBadges => List.unmodifiable(_lastEarnedBadges);
+  bool get useFirst20Elements => _useFirst20Elements;
+
+  void setUseFirst20Elements(bool value) {
+    if (_useFirst20Elements == value) return;
+    _useFirst20Elements = value;
+    _saveFirst20Preference();
+    notifyListeners();
+  }
 
   /// Returns and clears badges earned during the last evaluation
   List<QuizBadge> consumeLastEarnedBadges() {
@@ -140,7 +165,7 @@ class QuizProvider extends ChangeNotifier {
           currentState == QuizState.answering);
 
   /// Starts a new quiz session
-  Future<void> startQuiz(QuizType type) async {
+  Future<void> startQuiz(QuizType type, {bool first20Only = false}) async {
     try {
       // Ensure we start completely fresh
       _currentSession = null;
@@ -151,6 +176,7 @@ class QuizProvider extends ChangeNotifier {
       final questions = await _quizService.generateQuestions(
         type: type,
         apiUrl: apiUrl,
+        first20Only: first20Only,
       );
 
       _currentSession = _quizService.createQuizSession(
@@ -169,7 +195,11 @@ class QuizProvider extends ChangeNotifier {
   }
 
   /// Starts a new quiz session with specific retry count
-  Future<void> _startQuizWithRetryCount(QuizType type, int retryCount) async {
+  Future<void> _startQuizWithRetryCount(
+    QuizType type,
+    int retryCount, {
+    bool first20Only = false,
+  }) async {
     try {
       // Ensure we start completely fresh
       _currentSession = null;
@@ -180,6 +210,7 @@ class QuizProvider extends ChangeNotifier {
       final questions = await _quizService.generateQuestions(
         type: type,
         apiUrl: apiUrl,
+        first20Only: first20Only,
       );
 
       _currentSession = _quizService.createQuizSession(
