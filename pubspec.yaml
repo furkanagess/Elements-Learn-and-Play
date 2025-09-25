@@ -47,9 +47,10 @@ dependencies:
   # Rating
   flutter_rating_bar: ^4.0.1
   in_app_review: ^2.0.9
+  url_launcher: ^6.2.2
   
   # RevenueCat
-  purchases_flutter: ^6.29.0
+  purchases_flutter: ^9.6.2
 
   # Device Preview
   device_preview: ^1.1.0
@@ -75,10 +76,10 @@ dev_dependencies:
 flutter_launcher_icons:
   android: "launcher_icon"
   ios: true
-  image_path: "assets/img/remove-bg-logo.png"
+  image_path: "assets/icon/last_icon.png"
   min_sdk_android: 21 
   adaptive_icon_background: "#212437"
-  adaptive_icon_foreground: "assets/img/play_store_512.png"
+  adaptive_icon_foreground: "assets/icon/last_icon.png"
 
 flutter_native_splash:
   android: true

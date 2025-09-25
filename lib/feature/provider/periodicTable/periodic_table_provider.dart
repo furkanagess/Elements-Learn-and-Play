@@ -9,7 +9,7 @@ class PeriodicTableProvider extends ChangeNotifier {
   PeriodicTableState _state;
 
   PeriodicTableProvider(this._service)
-      : _state = PeriodicTableState(elements: []);
+    : _state = PeriodicTableState(elements: []);
 
   PeriodicTableState get state => _state;
 
@@ -79,21 +79,20 @@ class PeriodicTableProvider extends ChangeNotifier {
       notifyListeners();
 
       final elements = await _service.getElements();
-      _state = _state.copyWith(
-        elements: elements,
-        isLoading: false,
-      );
+      _state = _state.copyWith(elements: elements, isLoading: false);
     } catch (e) {
-      _state = _state.copyWith(
-        isLoading: false,
-        error: e.toString(),
-      );
+      _state = _state.copyWith(isLoading: false, error: e.toString());
     }
     notifyListeners();
   }
 
   // Element Filtreleme
   List<PeriodicElement> get filteredElements {
+    // Elements listesi boş veya null ise boş liste döndür
+    if (_state.elements.isEmpty) {
+      return [];
+    }
+
     if (_state.selectedGroup != null) {
       return _state.elements
           .where((e) => e.group == _state.selectedGroup)
@@ -116,7 +115,6 @@ class PeriodicTableProvider extends ChangeNotifier {
       // 1. Periyot
       1: const Offset(0, 0), // H
       2: const Offset(17, 0), // He
-
       // 2. Periyot
       3: const Offset(0, 1), // Li
       4: const Offset(1, 1), // Be
@@ -126,7 +124,6 @@ class PeriodicTableProvider extends ChangeNotifier {
       8: const Offset(15, 1), // O
       9: const Offset(16, 1), // F
       10: const Offset(17, 1), // Ne
-
       // 3. Periyot
       11: const Offset(0, 2), // Na
       12: const Offset(1, 2), // Mg
@@ -136,7 +133,6 @@ class PeriodicTableProvider extends ChangeNotifier {
       16: const Offset(15, 2), // S
       17: const Offset(16, 2), // Cl
       18: const Offset(17, 2), // Ar
-
       // 4. Periyot
       19: const Offset(0, 3), // K
       20: const Offset(1, 3), // Ca
@@ -156,7 +152,6 @@ class PeriodicTableProvider extends ChangeNotifier {
       34: const Offset(15, 3), // Se
       35: const Offset(16, 3), // Br
       36: const Offset(17, 3), // Kr
-
       // 5. Periyot
       37: const Offset(0, 4), // Rb
       38: const Offset(1, 4), // Sr
@@ -176,7 +171,6 @@ class PeriodicTableProvider extends ChangeNotifier {
       52: const Offset(15, 4), // Te
       53: const Offset(16, 4), // I
       54: const Offset(17, 4), // Xe
-
       // 6. Periyot
       55: const Offset(0, 5), // Cs
       56: const Offset(1, 5), // Ba
@@ -196,7 +190,6 @@ class PeriodicTableProvider extends ChangeNotifier {
       84: const Offset(15, 5), // Po
       85: const Offset(16, 5), // At
       86: const Offset(17, 5), // Rn
-
       // 7. Periyot
       87: const Offset(0, 6), // Fr
       88: const Offset(1, 6), // Ra
@@ -216,7 +209,6 @@ class PeriodicTableProvider extends ChangeNotifier {
       116: const Offset(15, 6), // Lv
       117: const Offset(16, 6), // Ts
       118: const Offset(17, 6), // Og
-
       // Lantanitler (6. Periyot)
       58: const Offset(3, 8), // Ce
       59: const Offset(4, 8), // Pr
@@ -232,7 +224,6 @@ class PeriodicTableProvider extends ChangeNotifier {
       69: const Offset(14, 8), // Tm
       70: const Offset(15, 8), // Yb
       71: const Offset(16, 8), // Lu
-
       // Aktinitler (7. Periyot)
       90: const Offset(3, 9), // Th
       91: const Offset(4, 9), // Pa
@@ -266,6 +257,6 @@ class PeriodicTableProvider extends ChangeNotifier {
     if (element == _state.selectedElement) {
       return Colors.orange;
     }
-    return element.colors!.toColor() ?? Colors.grey;
+    return element.colors?.toColor() ?? Colors.grey;
   }
 }

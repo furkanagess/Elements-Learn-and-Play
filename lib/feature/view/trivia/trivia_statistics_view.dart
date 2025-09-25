@@ -6,6 +6,7 @@ import 'package:elements_app/product/constants/app_colors.dart';
 import 'package:elements_app/feature/provider/localization_provider.dart';
 import 'package:elements_app/core/services/pattern/pattern_service.dart';
 import 'package:elements_app/feature/provider/trivia_provider.dart';
+import 'package:elements_app/product/widget/premium/premium_overlay.dart';
 
 class TriviaStatisticsView extends StatefulWidget {
   const TriviaStatisticsView({super.key});
@@ -87,83 +88,107 @@ class _TriviaStatisticsViewState extends State<TriviaStatisticsView>
                           totalWrong: provider.totalWrongAnswers,
                         ),
                         const SizedBox(height: 16),
-                        _perCategoryHeader(isTr),
-                        const SizedBox(height: 12),
-                        _categoryRow(
-                          context,
-                          isTr: isTr,
-                          labelTr: 'Sınıflandırma',
-                          labelEn: 'Classification',
-                          stats: provider.getCategoryStats(
-                            TriviaCategory.classification,
-                          ),
-                          color: Colors.teal,
-                        ),
-                        const SizedBox(height: 10),
-                        _categoryRow(
-                          context,
-                          isTr: isTr,
-                          labelTr: 'Atom Ağırlığı',
-                          labelEn: 'Atomic Weight',
-                          stats: provider.getCategoryStats(
-                            TriviaCategory.weight,
-                          ),
-                          color: Colors.amber,
-                        ),
-                        const SizedBox(height: 10),
-                        _categoryRow(
-                          context,
-                          isTr: isTr,
-                          labelTr: 'Periyot',
-                          labelEn: 'Period',
-                          stats: provider.getCategoryStats(
-                            TriviaCategory.period,
-                          ),
-                          color: Colors.pinkAccent,
-                        ),
-                        const SizedBox(height: 10),
-                        _categoryRow(
-                          context,
-                          isTr: isTr,
-                          labelTr: 'Açıklama',
-                          labelEn: 'Description',
-                          stats: provider.getCategoryStats(
-                            TriviaCategory.description,
-                          ),
-                          color: Colors.cyan,
-                        ),
-                        const SizedBox(height: 10),
-                        _categoryRow(
-                          context,
-                          isTr: isTr,
-                          labelTr: 'Kullanım',
-                          labelEn: 'Uses',
-                          stats: provider.getCategoryStats(
-                            TriviaCategory.usage,
-                          ),
-                          color: Colors.lightGreen,
-                        ),
-                        const SizedBox(height: 10),
-                        _categoryRow(
-                          context,
-                          isTr: isTr,
-                          labelTr: 'Kaynak',
-                          labelEn: 'Source',
-                          stats: provider.getCategoryStats(
-                            TriviaCategory.source,
-                          ),
-                          color: Colors.deepOrangeAccent,
-                        ),
-                        const SizedBox(height: 10),
-                        _categoryRow(
-                          context,
-                          isTr: isTr,
-                          labelTr: 'Karışık',
-                          labelEn: 'Mixed',
-                          stats: provider.getCategoryStats(
-                            TriviaCategory.mixed,
-                          ),
-                          color: Colors.deepPurpleAccent,
+                        Column(
+                          children: [
+                            _perCategoryHeader(isTr),
+                            const SizedBox(height: 12),
+
+                            // Premium Categories (%30 - 2/7)
+                            PremiumOverlay(
+                              title: isTr
+                                  ? 'Sınıflandırma İstatistikleri'
+                                  : 'Classification Statistics',
+                              description: isTr
+                                  ? 'Premium ile sınıflandırma kategorisinin detaylı performansını görün'
+                                  : 'View detailed performance for classification category with Premium',
+                              child: _categoryRow(
+                                context,
+                                isTr: isTr,
+                                labelTr: 'Sınıflandırma',
+                                labelEn: 'Classification',
+                                stats: provider.getCategoryStats(
+                                  TriviaCategory.classification,
+                                ),
+                                color: Colors.teal,
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            PremiumOverlay(
+                              title: isTr
+                                  ? 'Atom Ağırlığı İstatistikleri'
+                                  : 'Atomic Weight Statistics',
+                              description: isTr
+                                  ? 'Premium ile atom ağırlığı kategorisinin detaylı performansını görün'
+                                  : 'View detailed performance for atomic weight category with Premium',
+                              child: _categoryRow(
+                                context,
+                                isTr: isTr,
+                                labelTr: 'Atom Ağırlığı',
+                                labelEn: 'Atomic Weight',
+                                stats: provider.getCategoryStats(
+                                  TriviaCategory.weight,
+                                ),
+                                color: Colors.amber,
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+
+                            // Free Categories (%70 - 5/7)
+                            _categoryRow(
+                              context,
+                              isTr: isTr,
+                              labelTr: 'Periyot',
+                              labelEn: 'Period',
+                              stats: provider.getCategoryStats(
+                                TriviaCategory.period,
+                              ),
+                              color: Colors.pinkAccent,
+                            ),
+                            const SizedBox(height: 10),
+                            _categoryRow(
+                              context,
+                              isTr: isTr,
+                              labelTr: 'Açıklama',
+                              labelEn: 'Description',
+                              stats: provider.getCategoryStats(
+                                TriviaCategory.description,
+                              ),
+                              color: Colors.cyan,
+                            ),
+                            const SizedBox(height: 10),
+                            _categoryRow(
+                              context,
+                              isTr: isTr,
+                              labelTr: 'Kullanım',
+                              labelEn: 'Uses',
+                              stats: provider.getCategoryStats(
+                                TriviaCategory.usage,
+                              ),
+                              color: Colors.lightGreen,
+                            ),
+                            const SizedBox(height: 10),
+                            _categoryRow(
+                              context,
+                              isTr: isTr,
+                              labelTr: 'Kaynak',
+                              labelEn: 'Source',
+                              stats: provider.getCategoryStats(
+                                TriviaCategory.source,
+                              ),
+                              color: Colors.deepOrangeAccent,
+                            ),
+                            const SizedBox(height: 10),
+                            _categoryRow(
+                              context,
+                              isTr: isTr,
+                              labelTr: 'Karışık',
+                              labelEn: 'Mixed',
+                              stats: provider.getCategoryStats(
+                                TriviaCategory.mixed,
+                              ),
+                              color: Colors.deepPurpleAccent,
+                            ),
+                          ],
                         ),
                         const SizedBox(height: 100),
                       ],

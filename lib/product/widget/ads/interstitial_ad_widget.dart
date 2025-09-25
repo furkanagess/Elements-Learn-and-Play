@@ -1,5 +1,8 @@
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:elements_app/feature/service/google_ads_service.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:elements_app/feature/provider/purchase_provider.dart';
 import 'banner_ad_widget.dart';
 
 class InterstitialAdWidget {
@@ -30,7 +33,16 @@ class InterstitialAdWidget {
   }
 
   /// Show the loaded interstitial ad
-  static Future<void> showInterstitialAd() async {
+  static Future<void> showInterstitialAd([BuildContext? context]) async {
+    // Check if user is premium (if context is provided)
+    if (context != null) {
+      final purchaseProvider = context.read<PurchaseProvider>();
+      if (purchaseProvider.isPremium) {
+        print('🚫 Premium user - skipping interstitial ad');
+        return;
+      }
+    }
+
     if (_isAdLoaded && _interstitialAd != null) {
       _interstitialAd!.fullScreenContentCallback = FullScreenContentCallback(
         onAdShowedFullScreenContent: (ad) {
@@ -93,9 +105,9 @@ class InterstitialAdManager {
   }
 
   /// Show interstitial ad at appropriate times (e.g., between levels, after completing actions)
-  Future<void> showAdOnAction() async {
+  Future<void> showAdOnAction([BuildContext? context]) async {
     if (InterstitialAdWidget.isAdLoaded) {
-      await InterstitialAdWidget.showInterstitialAd();
+      await InterstitialAdWidget.showInterstitialAd(context);
     } else {
       // If no ad is loaded, try to load one for next time
       await InterstitialAdWidget.loadInterstitialAd();
@@ -103,9 +115,9 @@ class InterstitialAdManager {
   }
 
   /// Show ad when user navigates between major sections
-  Future<void> showAdOnNavigation() async {
+  Future<void> showAdOnNavigation([BuildContext? context]) async {
     if (InterstitialAdWidget.isAdLoaded) {
-      await InterstitialAdWidget.showInterstitialAd();
+      await InterstitialAdWidget.showInterstitialAd(context);
     }
   }
 }

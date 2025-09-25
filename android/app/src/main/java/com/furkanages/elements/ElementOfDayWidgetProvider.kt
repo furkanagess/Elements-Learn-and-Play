@@ -51,41 +51,105 @@ class ElementOfDayWidgetProvider : AppWidgetProvider() {
         return Color.rgb(r, g, b)
     }
 
+    private fun cardBgResForCategory(category: String?): Int {
+        val c = category?.lowercase()?.trim()
+        return when (c) {
+            "alkali metal" -> R.drawable.bg_card_alkali_metal
+            "alkaline earth metal" -> R.drawable.bg_card_alkaline_earth_metal
+            "transition metal" -> R.drawable.bg_card_transition_metal
+            "post-transition metal" -> R.drawable.bg_card_post_transition_metal
+            "metalloid" -> R.drawable.bg_card_metalloid
+            "reactive nonmetal" -> R.drawable.bg_card_reactive_nonmetal
+            "noble gas" -> R.drawable.bg_card_noble_gas
+            "halogen" -> R.drawable.bg_card_halogen
+            "lanthanide" -> R.drawable.bg_card_lanthanide
+            "actinide" -> R.drawable.bg_card_actinide
+            else -> R.drawable.bg_card_default
+        }
+    }
+
+    private fun badgeBgResForCategory(category: String?): Int {
+        val c = category?.lowercase()?.trim()
+        return when (c) {
+            "alkali metal" -> R.drawable.bg_badge_alkali_metal
+            "alkaline earth metal" -> R.drawable.bg_badge_alkaline_earth_metal
+            "transition metal" -> R.drawable.bg_badge_transition_metal
+            "post-transition metal" -> R.drawable.bg_badge_post_transition_metal
+            "metalloid" -> R.drawable.bg_badge_metalloid
+            "reactive nonmetal" -> R.drawable.bg_badge_reactive_nonmetal
+            "noble gas" -> R.drawable.bg_badge_noble_gas
+            "halogen" -> R.drawable.bg_badge_halogen
+            "lanthanide" -> R.drawable.bg_badge_lanthanide
+            "actinide" -> R.drawable.bg_badge_actinide
+            else -> R.drawable.bg_badge_default
+        }
+    }
+
+    private fun localizedCategory(categoryRaw: String?, locale: java.util.Locale): String? {
+        val c = categoryRaw?.lowercase()?.trim() ?: return null
+        if (locale.language != "tr") return categoryRaw
+        return when (c) {
+            "alkali metal" -> "Alkali Metal"
+            "alkaline earth metal" -> "Toprak Alkali Metal"
+            "transition metal" -> "Geçiş Metalleri"
+            "post-transition metal" -> "Zayıf Metaller"
+            "metalloid" -> "Yarı Metal"
+            "reactive nonmetal" -> "Reaktif Ametal"
+            "noble gas" -> "Soygaz"
+            "halogen" -> "Halojen"
+            "lanthanide" -> "Lantanit"
+            "actinide" -> "Aktinit"
+            else -> categoryRaw
+        }
+    }
+
     private fun updateAppWidget(context: Context, appWidgetManager: AppWidgetManager, appWidgetId: Int) {
         val prefs = HomeWidgetPlugin.getData(context)
         val symbol = prefs.getString("symbol", "?")
         val enName = prefs.getString("enName", "Element")
         val trName = prefs.getString("trName", enName)
         val number = prefs.getString("number", "-")
-        val category = prefs.getString("category", null)
+        val categoryRaw = prefs.getString("category", null)
+        val atomicWeight = prefs.getString("atomicWeight", null)
 
-        val baseColor = colorForCategory(category)
-        val badgeBg = darken(baseColor, 0.7f)
+        val locale = context.resources.configuration.locales[0]
+        val date = java.text.DateFormat.getDateInstance(java.text.DateFormat.MEDIUM, locale)
+            .format(java.util.Date())
+        val category = localizedCategory(categoryRaw, locale)
 
         val views = RemoteViews(context.packageName, R.layout.element_of_day_widget).apply {
             // Set element information
+            setTextViewText(R.id.txtTitle, context.getString(R.string.widget_title_element_of_day))
             setTextViewText(R.id.txtSymbol, symbol)
             setTextViewText(R.id.txtName, trName ?: enName)
-            setTextViewText(R.id.txtNumber, "#$number")
+            setTextViewText(R.id.txtNumber, number)
             setTextViewText(R.id.txtCategory, category ?: "")
 
-            // Dynamic backgrounds matching app's UI
-            setInt(R.id.card, "setBackgroundColor", baseColor)
-            setInt(R.id.txtCategory, "setBackgroundColor", badgeBg)
-            setTextColor(R.id.txtSymbol, Color.WHITE)
-            setTextColor(R.id.txtName, Color.WHITE)
-            setTextColor(R.id.txtNumber, Color.parseColor("#7DDFF8"))
-            setTextColor(R.id.txtCategory, Color.parseColor("#BFE3FF"))
+            // Background and colors
+            setInt(R.id.card, "setBackgroundResource", R.drawable.bg_widget_atom)
+            val accent = Color.parseColor("#50f8da")
+            setTextViewText(R.id.txtDate, date)
+            setTextColor(R.id.txtTitle, accent)
+            setTextColor(R.id.txtSymbol, accent)
+            setTextColor(R.id.txtName, accent)
+            setTextColor(R.id.txtNumber, accent)
+            setTextColor(R.id.txtCategory, accent)
+            setTextColor(R.id.txtDate, accent)
+            setTextColor(R.id.txtAtomicWeight, accent)
+
+            val aw = if (atomicWeight.isNullOrBlank()) "" else context.getString(R.string.widget_atomic_weight, atomicWeight)
+            setTextViewText(R.id.txtAtomicWeight, aw)
 
             // Set click intents to open the app
             val launchIntent = context.packageManager.getLaunchIntentForPackage(context.packageName)
             val pendingIntent = PendingIntent.getActivity(
                 context, 0, launchIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
-            setOnClickPendingIntent(R.id.imgOpenApp, pendingIntent)
             setOnClickPendingIntent(R.id.card, pendingIntent)
+            setOnClickPendingIntent(R.id.txtTitle, pendingIntent)
             setOnClickPendingIntent(R.id.txtSymbol, pendingIntent)
             setOnClickPendingIntent(R.id.txtName, pendingIntent)
+            setOnClickPendingIntent(R.id.btnOpen, pendingIntent)
         }
 
         appWidgetManager.updateAppWidget(appWidgetId, views)

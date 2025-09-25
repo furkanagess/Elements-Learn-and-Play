@@ -7,6 +7,7 @@ import 'package:elements_app/feature/provider/puzzle_provider.dart';
 import 'package:elements_app/feature/model/puzzle/puzzle_models.dart';
 import 'package:elements_app/core/services/pattern/pattern_service.dart';
 import 'package:flutter/services.dart';
+import 'package:elements_app/product/widget/premium/premium_overlay.dart';
 
 class PuzzlesStatisticsView extends StatefulWidget {
   const PuzzlesStatisticsView({super.key});
@@ -96,18 +97,36 @@ class _PuzzlesStatisticsViewState extends State<PuzzlesStatisticsView>
                           bestTime: bestTime,
                         ),
                         const SizedBox(height: 16),
-                        _perTypeCard(
-                          context,
-                          title: isTr ? 'Kelime Bulmacası' : 'Word Puzzle',
-                          progress: word,
-                          color: AppColors.glowGreen,
-                        ),
-                        const SizedBox(height: 12),
-                        _perTypeCard(
-                          context,
-                          title: isTr ? 'Eşleştirme Oyunu' : 'Matching Game',
-                          progress: matching,
-                          color: AppColors.yellow,
+                        Column(
+                          children: [
+                            // Premium: Word Puzzle (%30 - 1/2)
+                            PremiumOverlay(
+                              title: isTr
+                                  ? 'Kelime Bulmacası İstatistikleri'
+                                  : 'Word Puzzle Statistics',
+                              description: isTr
+                                  ? 'Premium ile kelime bulmacasının detaylı performansını görün'
+                                  : 'View detailed performance for word puzzle with Premium',
+                              child: _perTypeCard(
+                                context,
+                                title: isTr
+                                    ? 'Kelime Bulmacası'
+                                    : 'Word Puzzle',
+                                progress: word,
+                                color: AppColors.glowGreen,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            // Free: Matching Game (%70 - 1/2)
+                            _perTypeCard(
+                              context,
+                              title: isTr
+                                  ? 'Eşleştirme Oyunu'
+                                  : 'Matching Game',
+                              progress: matching,
+                              color: AppColors.yellow,
+                            ),
+                          ],
                         ),
                         const SizedBox(height: 100),
                       ],

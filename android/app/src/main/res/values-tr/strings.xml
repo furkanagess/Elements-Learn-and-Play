@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_title_element_of_day">Günün Elementi</string>
+    <string name="widget_atomic_weight">Atomik Ağırlık: %1$s</string>
+</resources>

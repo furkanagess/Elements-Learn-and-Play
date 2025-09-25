@@ -1,10 +1,12 @@
 import 'package:elements_app/feature/provider/favorite_elements_provider.dart';
 import 'package:elements_app/feature/provider/localization_provider.dart';
+import 'package:elements_app/feature/provider/purchase_provider.dart';
 import 'package:elements_app/product/constants/app_colors.dart';
 import 'package:elements_app/product/widget/scaffold/app_scaffold.dart';
 import 'package:elements_app/product/widget/card/element_card.dart';
 import 'package:elements_app/product/widget/appBar/app_bars.dart';
 import 'package:elements_app/core/services/pattern/pattern_service.dart';
+import 'package:elements_app/feature/view/settings/settings_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -69,32 +71,208 @@ class _FavoritesViewState extends State<FavoritesView>
             SafeArea(
               child: FadeTransition(
                 opacity: _fadeAnimation,
-                child: Consumer<FavoriteElementsProvider>(
-                  builder: (context, provider, child) {
-                    if (provider.favoriteElements.isEmpty) {
-                      return _buildEmptyState(context);
-                    }
+                child: Consumer2<FavoriteElementsProvider, PurchaseProvider>(
+                  builder:
+                      (context, favoriteProvider, purchaseProvider, child) {
+                        if (favoriteProvider.favoriteElements.isEmpty) {
+                          return _buildEmptyState(context);
+                        }
 
-                    return ListView.builder(
-                      physics: const BouncingScrollPhysics(),
-                      padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-                      itemCount: provider.favoriteElements.length,
-                      itemBuilder: (context, index) {
-                        final element = provider.favoriteElements[index];
-                        return ElementCard(
-                          element: element,
-                          mode: ElementCardMode.favorites,
-                          index: index,
-                          showFavoriteButton: true,
+                        return Column(
+                          children: [
+                            // Premium status and limit info
+                            _buildFavoritesHeader(
+                              context,
+                              favoriteProvider,
+                              purchaseProvider,
+                            ),
+
+                            // Favorites list
+                            Expanded(
+                              child: ListView.builder(
+                                physics: const BouncingScrollPhysics(),
+                                padding: const EdgeInsets.fromLTRB(
+                                  20,
+                                  12,
+                                  20,
+                                  0,
+                                ),
+                                itemCount:
+                                    favoriteProvider.favoriteElements.length,
+                                itemBuilder: (context, index) {
+                                  final element =
+                                      favoriteProvider.favoriteElements[index];
+                                  return ElementCard(
+                                    element: element,
+                                    mode: ElementCardMode.favorites,
+                                    index: index,
+                                    showFavoriteButton: true,
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
                         );
                       },
-                    );
-                  },
                 ),
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildFavoritesHeader(
+    BuildContext context,
+    FavoriteElementsProvider favoriteProvider,
+    PurchaseProvider purchaseProvider,
+  ) {
+    final isTr = context.read<LocalizationProvider>().isTr;
+    final isPremium = purchaseProvider.isPremium;
+    final favoriteCount = favoriteProvider.favoriteElements.length;
+    final remainingSlots = favoriteProvider.getRemainingSlots(
+      isPremium: isPremium,
+    );
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isPremium
+              ? [
+                  AppColors.yellow.withValues(alpha: 0.2),
+                  AppColors.purple.withValues(alpha: 0.15),
+                ]
+              : [
+                  AppColors.steelBlue.withValues(alpha: 0.2),
+                  AppColors.darkBlue.withValues(alpha: 0.15),
+                ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.2),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: (isPremium ? AppColors.yellow : AppColors.steelBlue)
+                .withValues(alpha: 0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.2),
+                width: 1,
+              ),
+            ),
+            child: Icon(
+              isPremium ? Icons.star_rounded : Icons.favorite_rounded,
+              color: AppColors.white,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isPremium
+                      ? (isTr ? 'Premium Favoriler' : 'Premium Favorites')
+                      : (isTr ? 'Favori Elementler' : 'Favorite Elements'),
+                  style: const TextStyle(
+                    color: AppColors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  isPremium
+                      ? (isTr
+                            ? 'Sınırsız favori ekleyebilirsiniz'
+                            : 'Add unlimited favorites')
+                      : (isTr
+                            ? '$favoriteCount/10 favori (${remainingSlots} kalan)'
+                            : '$favoriteCount/10 favorites ($remainingSlots remaining)'),
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.8),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (!isPremium &&
+              favoriteCount >= 8) // Show upgrade button when close to limit
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const SettingsView(),
+                    ),
+                  );
+                },
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        AppColors.yellow.withValues(alpha: 0.3),
+                        AppColors.purple.withValues(alpha: 0.2),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.star_rounded,
+                        color: AppColors.white,
+                        size: 14,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        isTr ? 'Premium' : 'Premium',
+                        style: const TextStyle(
+                          color: AppColors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

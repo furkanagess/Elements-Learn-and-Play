@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:provider/provider.dart';
+import 'package:elements_app/feature/provider/purchase_provider.dart';
 
 class BannerAdWidget extends StatefulWidget {
   final String adUnitId;
@@ -56,6 +58,12 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
 
   @override
   Widget build(BuildContext context) {
+    // Check if user is premium
+    final purchaseProvider = context.watch<PurchaseProvider>();
+    if (purchaseProvider.isPremium) {
+      return const SizedBox.shrink(); // Don't show ads for premium users
+    }
+
     if (!_isAdLoaded || _bannerAd == null) {
       return const SizedBox.shrink();
     }

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../services/animation/animation_controller_wrapper.dart';
 
 /// Legacy animation mixin - DEPRECATED
 /// Use AnimationControllerMixin instead for better performance and memory management

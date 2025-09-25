@@ -24,15 +24,17 @@ class FavoriteElementsProvider extends ChangeNotifier {
     final String? favoritesJson = _prefs.getString(_storageKey);
     if (favoritesJson != null) {
       final List<dynamic> decoded = jsonDecode(favoritesJson);
-      _favoriteElements =
-          decoded.map((item) => PeriodicElement.fromJson(item)).toList();
+      _favoriteElements = decoded
+          .map((item) => PeriodicElement.fromJson(item))
+          .toList();
       notifyListeners();
     }
   }
 
   Future<void> _saveFavorites() async {
-    final String encoded =
-        jsonEncode(_favoriteElements.map((e) => e.toJson()).toList());
+    final String encoded = jsonEncode(
+      _favoriteElements.map((e) => e.toJson()).toList(),
+    );
     await _prefs.setString(_storageKey, encoded);
   }
 
@@ -40,13 +42,30 @@ class FavoriteElementsProvider extends ChangeNotifier {
     return _favoriteElements.any((e) => e.number == element.number);
   }
 
-  void toggleFavorite(PeriodicElement element) {
+  void toggleFavorite(PeriodicElement element, {bool isPremium = false}) {
     if (isFavorite(element)) {
       _favoriteElements.removeWhere((e) => e.number == element.number);
     } else {
+      // Check if user can add more favorites
+      if (!isPremium && _favoriteElements.length >= 10) {
+        // Cannot add more favorites for non-premium users
+        return;
+      }
       _favoriteElements.add(element);
     }
     _saveFavorites();
     notifyListeners();
+  }
+
+  /// Check if user can add more favorites
+  bool canAddFavorite({bool isPremium = false}) {
+    if (isPremium) return true;
+    return _favoriteElements.length < 10;
+  }
+
+  /// Get remaining favorite slots for non-premium users
+  int getRemainingSlots({bool isPremium = false}) {
+    if (isPremium) return -1; // Unlimited
+    return (10 - _favoriteElements.length).clamp(0, 10);
   }
 }

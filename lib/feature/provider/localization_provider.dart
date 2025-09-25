@@ -5,8 +5,8 @@ import 'package:flutter/foundation.dart';
 /// language preferences and notifies listeners when the language setting changes.
 class LocalizationProvider with ChangeNotifier {
   /// A boolean flag indicating the current language preference.
-  /// `true` represents Turkish (Tr), and `false` represents another language.
-  bool isTr = true;
+  /// `true` represents Turkish (Tr), and `false` represents English.
+  bool isTr = false;
 
   /// Toggles the language preference between Turkish and another language.
   void toggleBool() {

@@ -58,188 +58,207 @@ class TestsHomeView extends StatelessWidget {
                 ),
               ),
               SafeArea(
-                child: ListView(
+                child: Padding(
                   padding: const EdgeInsets.all(16),
-                  children: [
-                    // Intro banner
-                    Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            AppColors.darkBlue.withValues(alpha: 0.85),
-                            AppColors.darkBlue.withValues(alpha: 0.65),
+                  child: Column(
+                    children: [
+                      // Intro banner
+                      Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              AppColors.darkBlue.withValues(alpha: 0.85),
+                              AppColors.darkBlue.withValues(alpha: 0.65),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.18),
+                            width: 1,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.steelBlue.withValues(
+                                alpha: 0.18,
+                              ),
+                              blurRadius: 18,
+                              offset: const Offset(0, 8),
+                            ),
                           ],
                         ),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.18),
-                          width: 1,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.steelBlue.withValues(alpha: 0.18),
-                            blurRadius: 18,
-                            offset: const Offset(0, 8),
-                          ),
-                        ],
-                      ),
-                      padding: const EdgeInsets.all(18),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 48,
-                            height: 48,
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.18),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: Colors.white.withValues(alpha: 0.25),
+                        padding: const EdgeInsets.all(18),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 48,
+                              height: 48,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.18),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.25),
+                                ),
+                              ),
+                              child: const Icon(
+                                Icons.videogame_asset_rounded,
+                                color: Colors.white,
                               ),
                             ),
-                            child: const Icon(
-                              Icons.videogame_asset_rounded,
-                              color: Colors.white,
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    isTr ? 'Oyunlar' : 'Games',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 18,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    isTr
+                                        ? 'Öğrenirken eğlen, kategorini seç ve başla.'
+                                        : 'Have fun while learning. Pick a category and start.',
+                                    style: TextStyle(
+                                      color: Colors.white.withValues(
+                                        alpha: 0.85,
+                                      ),
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Consumer<QuizProvider>(
+                        builder: (context, quizProvider, _) {
+                          return Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.06),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.15),
+                              ),
+                            ),
+                            child: Row(
                               children: [
-                                Text(
-                                  isTr ? 'Oyunlar' : 'Games',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 18,
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        isTr ? 'Soru Havuzu' : 'Question Pool',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        quizProvider.useFirst20Elements
+                                            ? (isTr
+                                                  ? 'İlk 20 Element'
+                                                  : 'First 20 Elements')
+                                            : (isTr
+                                                  ? 'Tüm Elementler'
+                                                  : 'All Elements'),
+                                        style: TextStyle(
+                                          color: Colors.white.withValues(
+                                            alpha: 0.85,
+                                          ),
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  isTr
-                                      ? 'Öğrenirken eğlen, kategorini seç ve başla.'
-                                      : 'Have fun while learning. Pick a category and start.',
-                                  style: TextStyle(
-                                    color: Colors.white.withValues(alpha: 0.85),
-                                    fontSize: 12,
-                                  ),
+                                Switch.adaptive(
+                                  value: quizProvider.useFirst20Elements,
+                                  onChanged: (v) =>
+                                      quizProvider.setUseFirst20Elements(v),
+                                  activeColor: AppColors.glowGreen,
                                 ),
                               ],
                             ),
-                          ),
-                        ],
+                          );
+                        },
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    Consumer<QuizProvider>(
-                      builder: (context, quizProvider, _) {
-                        return Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.06),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.15),
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      isTr ? 'Soru Havuzu' : 'Question Pool',
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      quizProvider.useFirst20Elements
-                                          ? (isTr
-                                                ? 'İlk 20 Element'
-                                                : 'First 20 Elements')
-                                          : (isTr
-                                                ? 'Tüm Elementler'
-                                                : 'All Elements'),
-                                      style: TextStyle(
-                                        color: Colors.white.withValues(
-                                          alpha: 0.85,
-                                        ),
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Switch.adaptive(
-                                value: quizProvider.useFirst20Elements,
-                                onChanged: (v) =>
-                                    quizProvider.setUseFirst20Elements(v),
-                                activeColor: AppColors.glowGreen,
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 16),
+                      const SizedBox(height: 16),
 
-                    const BannerAdsWidget(showLoadingIndicator: true),
-                    const SizedBox(height: 16),
-                    _buildCard(
-                      context,
-                      title: isTr ? 'Quizler' : 'Quizzes',
-                      subtitle: isTr ? 'Bilgi Testleri' : 'Knowledge Quizzes',
-                      iconSvg: AssetConstants.instance.svgGameThree,
-                      color: AppColors.pink,
-                      shadow: AppColors.shPink,
-                      onTap: () => Navigator.push(
+                      const BannerAdsWidget(showLoadingIndicator: true),
+                      const SizedBox(height: 16),
+                      _buildCard(
                         context,
-                        MaterialPageRoute(
-                          builder: (_) => const ModernQuizHome(),
+                        title: isTr ? 'Quizler' : 'Quizzes',
+                        subtitle: isTr ? 'Bilgi Testleri' : 'Knowledge Quizzes',
+                        iconSvg: AssetConstants.instance.svgGameThree,
+                        color: AppColors.pink,
+                        shadow: AppColors.shPink,
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const ModernQuizHome(),
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    _buildCard(
-                      context,
-                      title: isTr ? 'Bulmacalar' : 'Puzzles',
-                      subtitle: isTr
-                          ? 'Kelime, eşleştirme ve daha fazlası'
-                          : 'Word, matching and more',
-                      iconSvg: AssetConstants.instance.svgGameThree,
-                      color: AppColors.steelBlue,
-                      shadow: AppColors.shSteelBlue,
-                      onTap: () => Navigator.push(
+                      const SizedBox(height: 16),
+                      _buildCard(
                         context,
-                        MaterialPageRoute(builder: (_) => PuzzlesHomeView()),
+                        title: isTr ? 'Bulmacalar' : 'Puzzles',
+                        subtitle: isTr
+                            ? 'Kelime, eşleştirme ve daha fazlası'
+                            : 'Word, matching and more',
+                        iconSvg: AssetConstants.instance.svgGameThree,
+                        color: AppColors.steelBlue,
+                        shadow: AppColors.shSteelBlue,
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => PuzzlesHomeView(
+                              first20Only: context
+                                  .read<QuizProvider>()
+                                  .useFirst20Elements,
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    _buildCard(
-                      context,
-                      title: isTr ? 'Element Trivia' : 'Element Trivia',
-                      subtitle: isTr
-                          ? 'Kategori seç ve trivia çöz'
-                          : 'Pick a category and play',
-                      iconSvg: AssetConstants.instance.svgGameThree,
-                      color: AppColors.turquoise,
-                      shadow: AppColors.shTurquoise,
-                      onTap: () => Navigator.push(
+                      const SizedBox(height: 16),
+                      _buildCard(
                         context,
-                        MaterialPageRoute(builder: (_) => TriviaCenterView()),
+                        title: isTr ? 'Element Trivia' : 'Element Trivia',
+                        subtitle: isTr
+                            ? 'Kategori seç ve trivia çöz'
+                            : 'Pick a category and play',
+                        iconSvg: AssetConstants.instance.svgGameThree,
+                        color: AppColors.turquoise,
+                        shadow: AppColors.shTurquoise,
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => TriviaCenterView(
+                              first20Only: context
+                                  .read<QuizProvider>()
+                                  .useFirst20Elements,
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 60),
-                  ],
+                      const SizedBox(height: 60),
+                    ],
+                  ),
                 ),
               ),
             ],

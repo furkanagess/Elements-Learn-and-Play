@@ -15,7 +15,9 @@ import 'package:elements_app/feature/model/puzzle/puzzle_models.dart';
 import 'package:elements_app/product/widget/ads/banner_ads_widget.dart';
 
 class PuzzlesHomeView extends StatelessWidget {
-  PuzzlesHomeView({super.key});
+  final bool first20Only;
+
+  PuzzlesHomeView({super.key, this.first20Only = false});
   final PatternService _pattern = PatternService();
 
   @override
@@ -110,7 +112,8 @@ class PuzzlesHomeView extends StatelessWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => const WordPuzzleView(),
+                            builder: (_) =>
+                                WordPuzzleView(first20Only: first20Only),
                           ),
                         );
                       }
@@ -129,7 +132,8 @@ class PuzzlesHomeView extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => const MatchingPuzzleView(),
+                          builder: (_) =>
+                              MatchingPuzzleView(first20Only: first20Only),
                         ),
                       );
                     },

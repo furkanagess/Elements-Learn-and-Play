@@ -1,6 +1,8 @@
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:elements_app/core/services/purchases/revenue_cat_service.dart';
 
 /// Provider for managing purchase state and premium features
@@ -12,6 +14,8 @@ class PurchaseProvider extends ChangeNotifier {
   List<StoreProduct> _products = [];
   Offerings? _offerings;
   String? _error;
+  late SharedPreferences _prefs;
+  static const String _premiumKey = 'is_premium_user';
 
   // Getters
   bool get isLoading => _isLoading;
@@ -26,8 +30,16 @@ class PurchaseProvider extends ChangeNotifier {
     _clearError();
 
     try {
-      // Initialize RevenueCat
-      await _revenueCatService.initialize();
+      // Initialize SharedPreferences
+      _prefs = await SharedPreferences.getInstance();
+
+      // Load saved premium status
+      _isPremium = _prefs.getBool(_premiumKey) ?? false;
+
+      // RevenueCat is already initialized in main.dart, just ensure it's ready
+      if (!_revenueCatService.isInitialized) {
+        await _revenueCatService.initialize();
+      }
 
       // Load products and offerings
       await _loadProducts();
@@ -44,50 +56,72 @@ class PurchaseProvider extends ChangeNotifier {
     }
   }
 
-  /// Load available products
+  /// Load available products (Platform optimized)
   Future<void> _loadProducts() async {
     try {
-      // First try to get products from the specific "remove_elements_ads" offering
+      // Get platform-specific product ID
+      final platformProductId = _revenueCatService.premiumProductId;
+      final platform = Platform.isIOS ? 'iOS' : 'Android';
+
+      debugPrint(
+        '🔍 Loading products for $platform (Product ID: $platformProductId)',
+      );
+
+      // First try to get products from the platform-specific offering
       final removeAdsOffering = await _revenueCatService.getRemoveAdsOffering();
       if (removeAdsOffering != null) {
         _products = removeAdsOffering.availablePackages
             .map((package) => package.storeProduct)
             .toList();
-        debugPrint('✅ Loaded products from remove_elements_ads offering');
+        debugPrint(
+          '✅ Loaded ${_products.length} products from $platform offering',
+        );
       } else {
         // Fallback: try to get products from current offering
         _products = await _revenueCatService.getProducts();
 
-        // If no products from offerings, try direct product fetch
+        // If no products from offerings, try direct product fetch with platform-specific ID
         if (_products.isEmpty) {
           debugPrint(
-            '⚠️ No products from offerings, trying direct product fetch...',
+            '⚠️ No products from offerings, trying direct product fetch for $platform...',
           );
           _products = await _revenueCatService.getProductsByIds([
-            'remove_elements_ads',
+            platformProductId,
           ]);
         }
+      }
+
+      debugPrint('📦 Total products loaded: ${_products.length}');
+      for (final product in _products) {
+        debugPrint('  - ${product.identifier}: ${product.priceString}');
       }
     } catch (e) {
       _setError('Failed to load products: $e');
     }
   }
 
-  /// Load available offerings
+  /// Load available offerings (Platform optimized)
   Future<void> _loadOfferings() async {
     try {
+      final platform = Platform.isIOS ? 'iOS' : 'Android';
+      final platformOfferingId = _revenueCatService.offeringIdentifier;
+
+      debugPrint(
+        '🔍 Loading offerings for $platform (Offering ID: $platformOfferingId)',
+      );
+
       _offerings = await _revenueCatService.getOfferings();
 
-      // Check if we have the specific "remove_elements_ads" offering
+      // Check if we have the platform-specific offering
       if (_offerings != null) {
-        final removeAdsOffering = _offerings!.all['remove_elements_ads'];
+        final removeAdsOffering = _offerings!.all[platformOfferingId];
         if (removeAdsOffering != null) {
           debugPrint(
-            '✅ Found remove_elements_ads offering with ${removeAdsOffering.availablePackages.length} packages',
+            '✅ Found $platform offering ($platformOfferingId) with ${removeAdsOffering.availablePackages.length} packages',
           );
         } else {
           debugPrint(
-            '⚠️ remove_elements_ads offering not found in available offerings',
+            '⚠️ $platform offering ($platformOfferingId) not found in available offerings',
           );
           debugPrint('Available offerings: ${_offerings!.all.keys.toList()}');
         }
@@ -96,12 +130,13 @@ class PurchaseProvider extends ChangeNotifier {
       // If offerings are empty, that's okay - we can still work with direct products
       if (_offerings == null || _offerings!.current == null) {
         debugPrint(
-          'ℹ️ No current offering configured. Using direct product purchases.',
+          'ℹ️ No current offering configured for $platform. Using direct product purchases.',
         );
       }
     } catch (e) {
       // Don't treat empty offerings as an error - it's a configuration choice
-      debugPrint('ℹ️ Offerings not available: $e');
+      final platform = Platform.isIOS ? 'iOS' : 'Android';
+      debugPrint('ℹ️ $platform offerings not available: $e');
       _offerings = null;
     }
   }
@@ -114,8 +149,12 @@ class PurchaseProvider extends ChangeNotifier {
     try {
       final result = await _revenueCatService.purchaseProduct(product);
 
-      if (result.entitlements.all['remove_elements_ads']?.isActive == true) {
-        _isPremium = true;
+      if (result
+              .entitlements
+              .all[_revenueCatService.premiumProductId]
+              ?.isActive ==
+          true) {
+        await _setPremiumStatus(true);
         notifyListeners();
         return true;
       }
@@ -137,8 +176,12 @@ class PurchaseProvider extends ChangeNotifier {
     try {
       final result = await _revenueCatService.purchasePackage(package);
 
-      if (result.entitlements.all['remove_elements_ads']?.isActive == true) {
-        _isPremium = true;
+      if (result
+              .entitlements
+              .all[_revenueCatService.premiumProductId]
+              ?.isActive ==
+          true) {
+        await _setPremiumStatus(true);
         notifyListeners();
         return true;
       }
@@ -160,8 +203,12 @@ class PurchaseProvider extends ChangeNotifier {
     try {
       final result = await _revenueCatService.purchaseRemoveAds();
 
-      if (result.entitlements.all['remove_elements_ads']?.isActive == true) {
-        _isPremium = true;
+      if (result
+              .entitlements
+              .all[_revenueCatService.premiumProductId]
+              ?.isActive ==
+          true) {
+        await _setPremiumStatus(true);
         notifyListeners();
         debugPrint('✅ Remove ads purchase successful!');
         return true;
@@ -185,8 +232,12 @@ class PurchaseProvider extends ChangeNotifier {
     try {
       final result = await _revenueCatService.purchaseRemoveAds();
 
-      if (result.entitlements.all['remove_elements_ads']?.isActive == true) {
-        _isPremium = true;
+      if (result
+              .entitlements
+              .all[_revenueCatService.premiumProductId]
+              ?.isActive ==
+          true) {
+        await _setPremiumStatus(true);
         notifyListeners();
         debugPrint('✅ Direct remove ads purchase successful!');
         return true;
@@ -210,47 +261,101 @@ class PurchaseProvider extends ChangeNotifier {
     try {
       final result = await _revenueCatService.purchaseRemoveAds();
 
-      if (result.entitlements.all['remove_elements_ads']?.isActive == true) {
-        _isPremium = true;
-        notifyListeners();
-        debugPrint('✅ Direct remove ads purchase successful!');
+      // Check if purchase was successful by looking at the result
+      if (result.entitlements.all.isNotEmpty) {
+        // Purchase completed successfully, check premium status
+        final isPremiumActive =
+            result
+                .entitlements
+                .all[_revenueCatService.premiumProductId]
+                ?.isActive ==
+            true;
+
+        if (isPremiumActive) {
+          await _setPremiumStatus(true);
+          notifyListeners();
+          debugPrint('✅ Direct remove ads purchase successful!');
+          return {
+            'success': true,
+            'message': 'Tebrikler! Artık bu hizmetlerden yararlanabilirsiniz',
+            'congratulations': 'Reklamlar başarıyla kaldırıldı!',
+            'benefits': [
+              'Reklamsız deneyim',
+              'Quizlerde fazladan can',
+              'Premium özellikler',
+            ],
+            'icon': '🎉',
+          };
+        } else {
+          // Purchase completed but entitlement not active yet - wait a bit and check again
+          debugPrint('⚠️ Purchase completed, checking premium status...');
+          await Future.delayed(const Duration(seconds: 2));
+
+          // Check premium status again
+          final updatedStatus = await _revenueCatService.checkPremiumStatus();
+          if (updatedStatus) {
+            await _setPremiumStatus(true);
+            notifyListeners();
+            debugPrint('✅ Premium status activated after delay!');
+            return {
+              'success': true,
+              'message': 'Tebrikler! Artık bu hizmetlerden yararlanabilirsiniz',
+              'congratulations': 'Reklamlar başarıyla kaldırıldı!',
+              'benefits': [
+                'Reklamsız deneyim',
+                'Quizlerde fazladan can',
+                'Premium özellikler',
+              ],
+              'icon': '🎉',
+            };
+          } else {
+            // Still not active, but purchase was successful
+            debugPrint(
+              '⚠️ Purchase successful but premium status not yet active',
+            );
+            return {
+              'success': true,
+              'message': 'Tebrikler! Artık bu hizmetlerden yararlanabilirsiniz',
+              'congratulations': 'Reklamlar başarıyla kaldırıldı!',
+              'benefits': [
+                'Reklamsız deneyim',
+                'Quizlerde fazladan can',
+                'Premium özellikler',
+              ],
+              'icon': '🎉',
+            };
+          }
+        }
+      } else {
+        // Purchase failed
+        debugPrint('❌ Purchase failed - no result returned');
         return {
-          'success': true,
-          'message': 'Tebrikler! Artık bu hizmetlerden yararlanabilirsiniz',
-          'congratulations': 'Reklamlar başarıyla kaldırıldı!',
-          'benefits': [
-            'Reklamsız deneyim',
-            'Quizlerde fazladan can',
-            'Premium özellikler',
-          ],
-          'icon': '🎉',
+          'success': false,
+          'message': 'Satın alma işlemi başarısız oldu',
+          'reason': 'Satın alma işlemi tamamlanamadı',
+          'solution': 'Lütfen tekrar deneyin',
+          'icon': '❌',
         };
       }
-
-      debugPrint('⚠️ Direct purchase completed but premium status not active');
-      return {
-        'success': false,
-        'message': 'Purchase completed but premium status not active',
-        'error': 'Premium status not activated',
-        'errorType': 'ENTITLEMENT_ERROR',
-      };
     } catch (e) {
       final errorDetails = _parsePurchaseError(e);
       _setError('Direct remove ads purchase failed: $e');
       return {
         'success': false,
         'message': errorDetails['message'],
-        'error': errorDetails['error'],
-        'errorType': errorDetails['errorType'],
+        'reason': errorDetails['reason'],
+        'solution': errorDetails['solution'],
+        'icon': errorDetails['icon'],
       };
     } finally {
       _setLoading(false);
     }
   }
 
-  /// Parse purchase error to get detailed information
+  /// Parse purchase error to get detailed information (Platform optimized)
   Map<String, String> _parsePurchaseError(dynamic error) {
     final errorString = error.toString().toLowerCase();
+    final storeName = Platform.isIOS ? 'App Store' : 'Google Play';
 
     // Network errors
     if (errorString.contains('network') ||
@@ -308,15 +413,15 @@ class PurchaseProvider extends ChangeNotifier {
       };
     }
 
-    // Store errors
+    // Store errors (Platform specific)
     if (errorString.contains('store') ||
         errorString.contains('app store') ||
         errorString.contains('itunes') ||
-        errorString.contains('play store')) {
+        errorString.contains('play store') ||
+        errorString.contains('google play')) {
       return {
-        'message': 'Mağaza servisi geçici olarak kullanılamıyor',
-        'reason':
-            'App Store veya Google Play servislerinde geçici bir sorun var',
+        'message': '$storeName servisi geçici olarak kullanılamıyor',
+        'reason': '$storeName servislerinde geçici bir sorun var',
         'solution': 'Birkaç dakika sonra tekrar deneyin',
         'icon': '🏪',
       };
@@ -414,12 +519,14 @@ class PurchaseProvider extends ChangeNotifier {
           'icon': '🎉',
         };
       } else {
+        final accountType = Platform.isIOS ? 'Apple ID' : 'Google hesabı';
+
         return {
           'success': false,
           'message': 'Geri yüklenecek satın alım bulunamadı',
           'reason': 'Bu cihazda daha önce yapılmış bir satın alım bulunamadı',
           'solution':
-              'Farklı bir Apple ID ile giriş yapmayı deneyin veya satın alım yapın',
+              'Farklı bir $accountType ile giriş yapmayı deneyin veya satın alım yapın',
           'icon': '🔍',
         };
       }
@@ -480,26 +587,40 @@ class PurchaseProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Get remove ads product price
+  /// Set premium status and save to SharedPreferences
+  Future<void> _setPremiumStatus(bool isPremium) async {
+    _isPremium = isPremium;
+    await _prefs.setBool(_premiumKey, isPremium);
+    notifyListeners();
+    debugPrint('✅ Premium status updated: $isPremium');
+  }
+
+  /// Get remove ads product price (platform-specific)
   String get removeAdsPrice {
     if (_products.isEmpty) return '₺29,99';
 
-    // Look for remove ads product
+    // Get platform-specific product ID
+    final platformProductId = _revenueCatService.premiumProductId;
+
+    // Look for platform-specific remove ads product
     final removeAdsProduct = _products.firstWhere(
-      (product) => product.identifier == 'remove_elements_ads',
+      (product) => product.identifier == platformProductId,
       orElse: () => _products.first,
     );
 
     return removeAdsProduct.priceString;
   }
 
-  /// Get remove ads product with detailed info
+  /// Get remove ads product with detailed info (platform-specific)
   StoreProduct? get removeAdsProduct {
     if (_products.isEmpty) return null;
 
     try {
+      // Get platform-specific product ID
+      final platformProductId = _revenueCatService.premiumProductId;
+
       return _products.firstWhere(
-        (product) => product.identifier == 'remove_elements_ads',
+        (product) => product.identifier == platformProductId,
       );
     } catch (e) {
       // If specific product not found, return first available product
@@ -531,26 +652,32 @@ class PurchaseProvider extends ChangeNotifier {
     return product.currencyCode;
   }
 
-  /// Get remove ads product title
+  /// Get remove ads product title (Platform optimized)
   String get removeAdsTitle {
     if (_products.isEmpty) return 'Remove Ads';
 
-    // Look for remove ads product
+    // Get platform-specific product ID
+    final platformProductId = _revenueCatService.premiumProductId;
+
+    // Look for platform-specific remove ads product
     final removeAdsProduct = _products.firstWhere(
-      (product) => product.identifier == 'remove_elements_ads',
+      (product) => product.identifier == platformProductId,
       orElse: () => _products.first,
     );
 
     return removeAdsProduct.title;
   }
 
-  /// Get remove ads product description
+  /// Get remove ads product description (Platform optimized)
   String get removeAdsDescription {
     if (_products.isEmpty) return 'One-time payment for ad-free experience';
 
-    // Look for remove ads product
+    // Get platform-specific product ID
+    final platformProductId = _revenueCatService.premiumProductId;
+
+    // Look for platform-specific remove ads product
     final removeAdsProduct = _products.firstWhere(
-      (product) => product.identifier == 'remove_elements_ads',
+      (product) => product.identifier == platformProductId,
       orElse: () => _products.first,
     );
 

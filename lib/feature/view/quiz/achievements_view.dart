@@ -10,6 +10,7 @@ import 'package:elements_app/product/widget/appBar/app_bars.dart';
 import 'package:elements_app/product/constants/app_colors.dart';
 import 'package:elements_app/core/services/pattern/pattern_service.dart';
 import 'package:elements_app/feature/view/quiz/modern_quiz_home.dart';
+import 'package:elements_app/product/widget/premium/premium_overlay.dart';
 
 class AchievementsView extends StatefulWidget {
   const AchievementsView({super.key});
@@ -592,12 +593,22 @@ class _AchievementsViewState extends State<AchievementsView>
                       shrinkWrap: true,
                       itemCount: badges.length,
                       separatorBuilder: (_, __) => const SizedBox(width: 12),
-                      itemBuilder: (context, badgeIndex) =>
-                          _buildModernBadgeTile(
-                            badges[badgeIndex],
-                            isTr,
-                            badgeIndex,
-                          ),
+                      itemBuilder: (context, badgeIndex) {
+                        final badge = badges[badgeIndex];
+                        final isPremiumBadge = _isPremiumBadge(badge, type);
+
+                        if (isPremiumBadge) {
+                          return PremiumOverlay(
+                            child: _buildModernBadgeTile(
+                              badge,
+                              isTr,
+                              badgeIndex,
+                            ),
+                          );
+                        } else {
+                          return _buildModernBadgeTile(badge, isTr, badgeIndex);
+                        }
+                      },
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -1286,6 +1297,26 @@ class _AchievementsViewState extends State<AchievementsView>
     return (value, label);
   }
 
+  bool _isPremiumBadge(QuizBadge badge, QuizType type) {
+    // Her quiz türü için %30'u premium (24 başarımın 8'i)
+    final premiumBadgeIndices = _getPremiumBadgeIndices(type);
+    final badgeIndex =
+        badge.id.hashCode % 24; // 24 başarım olduğunu varsayıyoruz
+    return premiumBadgeIndices.contains(badgeIndex);
+  }
+
+  List<int> _getPremiumBadgeIndices(QuizType type) {
+    // Her quiz türü için farklı premium badge indeksleri
+    switch (type) {
+      case QuizType.symbol:
+        return [0, 3, 6, 9, 12, 15, 18, 21]; // 8/24 = %33.3
+      case QuizType.group:
+        return [1, 4, 7, 10, 13, 16, 19, 22]; // 8/24 = %33.3
+      case QuizType.number:
+        return [2, 5, 8, 11, 14, 17, 20, 23]; // 8/24 = %33.3
+    }
+  }
+
   ({Color primary, Color shadow}) _getQuizTypeColors(QuizType type) {
     switch (type) {
       case QuizType.symbol:
@@ -1619,7 +1650,16 @@ class _QuizAchievementsPageState extends State<QuizAchievementsPage>
           ),
           itemCount: badges.length,
           itemBuilder: (context, index) {
-            return _buildGridBadgeTile(badges[index], isTr, index);
+            final badge = badges[index];
+            final isPremiumBadge = _isPremiumBadge(badge, widget.quizType);
+
+            if (isPremiumBadge) {
+              return PremiumOverlay(
+                child: _buildGridBadgeTile(badge, isTr, index),
+              );
+            } else {
+              return _buildGridBadgeTile(badge, isTr, index);
+            }
           },
         ),
       ],
@@ -2233,6 +2273,26 @@ class _QuizAchievementsPageState extends State<QuizAchievementsPage>
       value = 1;
     }
     return (value, label);
+  }
+
+  bool _isPremiumBadge(QuizBadge badge, QuizType type) {
+    // Her quiz türü için %30'u premium (24 başarımın 8'i)
+    final premiumBadgeIndices = _getPremiumBadgeIndices(type);
+    final badgeIndex =
+        badge.id.hashCode % 24; // 24 başarım olduğunu varsayıyoruz
+    return premiumBadgeIndices.contains(badgeIndex);
+  }
+
+  List<int> _getPremiumBadgeIndices(QuizType type) {
+    // Her quiz türü için farklı premium badge indeksleri
+    switch (type) {
+      case QuizType.symbol:
+        return [0, 3, 6, 9, 12, 15, 18, 21]; // 8/24 = %33.3
+      case QuizType.group:
+        return [1, 4, 7, 10, 13, 16, 19, 22]; // 8/24 = %33.3
+      case QuizType.number:
+        return [2, 5, 8, 11, 14, 17, 20, 23]; // 8/24 = %33.3
+    }
   }
 
   ({Color primary, Color shadow}) _getQuizTypeColors(QuizType type) {

@@ -79,6 +79,7 @@ class _UnifiedQuizViewState extends State<UnifiedQuizView>
       context.read<QuizProvider>().startQuiz(
         widget.quizType,
         first20Only: widget.first20Only,
+        context: context,
       );
     });
   }
@@ -89,7 +90,11 @@ class _UnifiedQuizViewState extends State<UnifiedQuizView>
       final quizProvider = context.read<QuizProvider>();
       quizProvider.resetQuiz();
       // Start a completely new quiz session
-      quizProvider.startQuiz(widget.quizType, first20Only: widget.first20Only);
+      quizProvider.startQuiz(
+        widget.quizType,
+        first20Only: widget.first20Only,
+        context: context,
+      );
     });
   }
 
@@ -342,81 +347,24 @@ class _UnifiedQuizViewState extends State<UnifiedQuizView>
               position: _slideAnimation,
               child: Column(
                 children: [
-                  // Quiz Header - Daha uzun alan
+                  // Modern Quiz Header - Similar to Puzzle Header
                   Container(
-                    height: MediaQuery.of(context).size.height * 0.2,
-                    child: QuizHeader(
+                    height: MediaQuery.of(context).size.height * 0.16,
+                    child: _ModernQuizHeader(
                       session: session,
                       onClose: () => _handleQuizExit(context, quizProvider),
                     ),
                   ),
 
-                  // Question and Options - Kalan alanı kullan
+                  // Main quiz content - Similar to puzzle content
                   Expanded(
-                    child: Column(
-                      children: [
-                        // Question Card - Ekranın 1/3'ü
-                        if (session.currentQuestion != null)
-                          Container(
-                            height: MediaQuery.of(context).size.height * 0.25,
-                            child: QuestionCard(
-                              question: session.currentQuestion!,
-                              state: session.state,
-                            ),
-                          ),
-
-                        // Answer Options - Kalan alan
-                        if (session.currentQuestion != null)
-                          Expanded(
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                              ),
-                              child: AnswerOptionsGrid(
-                                question: session.currentQuestion!,
-                                selectedAnswer: session.selectedAnswer,
-                                state: session.state,
-                                onAnswerSelected: (answer) {
-                                  // Add haptic feedback for better UX
-                                  HapticFeedback.lightImpact();
-                                  quizProvider.submitAnswer(answer);
-                                },
-                              ),
-                            ),
-                          ),
-                      ],
+                    child: _ModernQuizContent(
+                      session: session,
+                      quizProvider: quizProvider,
+                      fadeAnimation: _fadeAnimation,
+                      slideAnimation: _slideAnimation,
                     ),
                   ),
-
-                  // Refresh Button (once per session) - Sabit yükseklik
-                  if (quizProvider.canRefreshQuestion)
-                    Container(
-                      height: 80,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 12,
-                      ),
-                      child: FloatingActionButton.extended(
-                        onPressed: () {
-                          HapticFeedback.lightImpact();
-                          context.read<QuizProvider>().refreshCurrentQuestion();
-                        },
-                        backgroundColor: AppColors.yellow,
-                        icon: const Icon(
-                          Icons.refresh,
-                          color: AppColors.background,
-                        ),
-                        label: Text(
-                          context.watch<LocalizationProvider>().isTr
-                              ? 'Yenile'
-                              : 'Refresh',
-                          style: const TextStyle(
-                            color: AppColors.background,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
                 ],
               ),
             ),
@@ -548,7 +496,7 @@ class _UnifiedQuizViewState extends State<UnifiedQuizView>
   }
 
   void _navigateToHome(BuildContext context, QuizProvider quizProvider) {
-    context.read<AdmobProvider>().onRouteChanged();
+    context.read<AdmobProvider>().onRouteChanged(context: context);
     quizProvider.resetQuiz();
 
     Navigator.of(context).pushAndRemoveUntil(
@@ -794,6 +742,774 @@ class _AchievementCongratsDialog extends StatelessWidget {
         return (primary: AppColors.yellow, shadow: AppColors.shYellow);
       case QuizType.number:
         return (primary: AppColors.powderRed, shadow: AppColors.shPowderRed);
+    }
+  }
+}
+
+/// Modern quiz header similar to Puzzle Header
+class _ModernQuizHeader extends StatelessWidget {
+  final QuizSession session;
+  final VoidCallback? onClose;
+
+  const _ModernQuizHeader({required this.session, this.onClose});
+
+  @override
+  Widget build(BuildContext context) {
+    final isTr = context.watch<LocalizationProvider>().isTr;
+    final colors = _getQuizTypeColors(session.type);
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [colors.primary, colors.primary.withValues(alpha: 0.8)],
+        ),
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(24)),
+        boxShadow: [
+          BoxShadow(
+            color: colors.primary.withValues(alpha: 0.3),
+            offset: const Offset(0, 4),
+            blurRadius: 12,
+            spreadRadius: 0,
+          ),
+        ],
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Top row with close button, title and difficulty
+            Row(
+              children: [
+                if (onClose != null)
+                  Container(
+                    height: 36,
+                    width: 36,
+                    decoration: BoxDecoration(
+                      color: AppColors.white.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: IconButton(
+                      padding: EdgeInsets.zero,
+                      onPressed: onClose,
+                      icon: const Icon(
+                        Icons.close,
+                        color: AppColors.white,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    isTr
+                        ? session.type.turkishTitle
+                        : session.type.englishTitle,
+                    style: const TextStyle(
+                      color: AppColors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.white.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(session.type.icon, color: AppColors.white, size: 14),
+                      const SizedBox(width: 4),
+                      Text(
+                        _getDifficultyText(session.type.difficulty, isTr),
+                        style: const TextStyle(
+                          color: AppColors.white,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+
+            // Progress and Stats Row
+            Row(
+              children: [
+                // Progress Section
+                SizedBox(
+                  width: 220,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            '${session.currentQuestionIndex + 1}/${session.questions.length}',
+                            style: const TextStyle(
+                              color: AppColors.white,
+                              fontWeight: FontWeight.w500,
+                              fontSize: 12,
+                            ),
+                          ),
+                          Text(
+                            '%${(session.progress * 100).toInt()}',
+                            style: const TextStyle(
+                              color: AppColors.white,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: LinearProgressIndicator(
+                          value: session.progress.clamp(0, 1),
+                          backgroundColor: AppColors.white.withValues(
+                            alpha: 0.2,
+                          ),
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            AppColors.white,
+                          ),
+                          minHeight: 3,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Spacer(),
+
+                // Stats Section
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    _buildCompactStatItem(
+                      icon: Icons.check_circle,
+                      value: session.correctAnswers.toString(),
+                      color: AppColors.glowGreen,
+                    ),
+                    const SizedBox(width: 6),
+                    _buildCompactStatItem(
+                      icon: Icons.cancel,
+                      value: session.wrongAnswers.toString(),
+                      color: AppColors.powderRed,
+                    ),
+                    const SizedBox(width: 6),
+                    _buildCompactStatItem(
+                      icon: Icons.favorite,
+                      value: (session.maxWrongAnswers - session.wrongAnswers)
+                          .toString(),
+                      color: AppColors.pink,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCompactStatItem({
+    required IconData icon,
+    required String value,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: color, size: 12),
+          const SizedBox(width: 3),
+          Text(
+            value,
+            style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.bold,
+              fontSize: 11,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getDifficultyText(String difficulty, bool isTr) {
+    final d = difficulty.toLowerCase();
+    if (isTr) {
+      if (d == 'easy' || d == 'kolay') return 'Kolay';
+      if (d == 'medium' || d == 'orta') return 'Orta';
+      if (d == 'hard' || d == 'zor') return 'Zor';
+      return difficulty;
+    } else {
+      if (d == 'easy' || d == 'kolay') return 'Easy';
+      if (d == 'medium' || d == 'orta') return 'Medium';
+      if (d == 'hard' || d == 'zor') return 'Hard';
+      return difficulty;
+    }
+  }
+
+  ({Color primary, Color shadow}) _getQuizTypeColors(QuizType type) {
+    switch (type) {
+      case QuizType.symbol:
+        return (primary: AppColors.turquoise, shadow: AppColors.shTurquoise);
+      case QuizType.group:
+        return (primary: AppColors.steelBlue, shadow: AppColors.shSteelBlue);
+      case QuizType.number:
+        return (primary: AppColors.purple, shadow: AppColors.shPurple);
+    }
+  }
+}
+
+/// Modern quiz content widget similar to Puzzle Content
+class _ModernQuizContent extends StatelessWidget {
+  final QuizSession session;
+  final QuizProvider quizProvider;
+  final Animation<double> fadeAnimation;
+  final Animation<Offset> slideAnimation;
+
+  const _ModernQuizContent({
+    required this.session,
+    required this.quizProvider,
+    required this.fadeAnimation,
+    required this.slideAnimation,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        const SizedBox(height: 8),
+        // Question and Options with optimized layout
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              children: [
+                // Question Card - Modern design
+                if (session.currentQuestion != null)
+                  Flexible(flex: 2, child: _buildModernQuestionCard(context)),
+
+                const SizedBox(height: 12),
+
+                // Answer Options - Modern grid
+                if (session.currentQuestion != null)
+                  Flexible(flex: 3, child: _buildModernAnswerOptions(context)),
+
+                // Refresh Button - Centered below answers
+                if (session.currentQuestion != null)
+                  _buildRefreshButton(context),
+
+                const SizedBox(height: 16),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildModernQuestionCard(BuildContext context) {
+    final isTr = context.read<LocalizationProvider>().isTr;
+    final colors = _getQuizTypeColors(session.type);
+    final question = session.currentQuestion!;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.darkBlue.withValues(alpha: 0.9),
+            AppColors.darkBlue.withValues(alpha: 0.7),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: colors.primary.withValues(alpha: 0.3),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: colors.primary.withValues(alpha: 0.15),
+            offset: const Offset(0, 4),
+            blurRadius: 12,
+            spreadRadius: 1,
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Question type indicator
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: colors.primary.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: colors.primary.withValues(alpha: 0.4),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(session.type.icon, color: colors.primary, size: 14),
+                const SizedBox(width: 4),
+                Text(
+                  _getQuestionTypeText(session.type, isTr),
+                  style: TextStyle(
+                    color: colors.primary,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // Question content
+          Expanded(
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.white.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: AppColors.white.withValues(alpha: 0.2),
+                  width: 1,
+                ),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Question text - More prominent and larger
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 16,
+                    ),
+                    decoration: BoxDecoration(
+                      color: colors.primary.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: colors.primary.withValues(alpha: 0.4),
+                        width: 2,
+                      ),
+                    ),
+                    child: Text(
+                      question.questionText,
+                      style: TextStyle(
+                        color: colors.primary,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        height: 1.2,
+                        shadows: [
+                          Shadow(
+                            color: colors.primary.withValues(alpha: 0.3),
+                            offset: const Offset(0, 2),
+                            blurRadius: 4,
+                          ),
+                        ],
+                      ),
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+
+                  // Question hint
+                  Text(
+                    _getQuestionHint(question.type, isTr),
+                    style: TextStyle(
+                      color: AppColors.white.withValues(alpha: 0.7),
+                      fontSize: 12,
+                      height: 1.1,
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildModernAnswerOptions(BuildContext context) {
+    final colors = _getQuizTypeColors(session.type);
+    final question = session.currentQuestion!;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final spacing = 8.0;
+        final optionWidth = (constraints.maxWidth - spacing) / 2;
+        final optionHeight = optionWidth * 0.75;
+
+        return Column(
+          children: [
+            // First row (2 options)
+            Row(
+              children: [
+                Expanded(
+                  child: _buildModernOptionButton(
+                    context,
+                    option: question.options[0],
+                    isSelected: session.selectedAnswer == question.options[0],
+                    isCorrect:
+                        (session.state == QuizState.correct ||
+                            session.state == QuizState.incorrect) &&
+                        question.options[0] == question.correctAnswer,
+                    isWrong:
+                        (session.state == QuizState.correct ||
+                            session.state == QuizState.incorrect) &&
+                        session.selectedAnswer == question.options[0] &&
+                        question.options[0] != question.correctAnswer,
+                    width: optionWidth,
+                    height: optionHeight,
+                    colors: colors,
+                  ),
+                ),
+                SizedBox(width: spacing),
+                Expanded(
+                  child: _buildModernOptionButton(
+                    context,
+                    option: question.options[1],
+                    isSelected: session.selectedAnswer == question.options[1],
+                    isCorrect:
+                        (session.state == QuizState.correct ||
+                            session.state == QuizState.incorrect) &&
+                        question.options[1] == question.correctAnswer,
+                    isWrong:
+                        (session.state == QuizState.correct ||
+                            session.state == QuizState.incorrect) &&
+                        session.selectedAnswer == question.options[1] &&
+                        question.options[1] != question.correctAnswer,
+                    width: optionWidth,
+                    height: optionHeight,
+                    colors: colors,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: spacing),
+            // Second row (2 options)
+            Row(
+              children: [
+                Expanded(
+                  child: _buildModernOptionButton(
+                    context,
+                    option: question.options[2],
+                    isSelected: session.selectedAnswer == question.options[2],
+                    isCorrect:
+                        (session.state == QuizState.correct ||
+                            session.state == QuizState.incorrect) &&
+                        question.options[2] == question.correctAnswer,
+                    isWrong:
+                        (session.state == QuizState.correct ||
+                            session.state == QuizState.incorrect) &&
+                        session.selectedAnswer == question.options[2] &&
+                        question.options[2] != question.correctAnswer,
+                    width: optionWidth,
+                    height: optionHeight,
+                    colors: colors,
+                  ),
+                ),
+                SizedBox(width: spacing),
+                Expanded(
+                  child: _buildModernOptionButton(
+                    context,
+                    option: question.options[3],
+                    isSelected: session.selectedAnswer == question.options[3],
+                    isCorrect:
+                        (session.state == QuizState.correct ||
+                            session.state == QuizState.incorrect) &&
+                        question.options[3] == question.correctAnswer,
+                    isWrong:
+                        (session.state == QuizState.correct ||
+                            session.state == QuizState.incorrect) &&
+                        session.selectedAnswer == question.options[3] &&
+                        question.options[3] != question.correctAnswer,
+                    width: optionWidth,
+                    height: optionHeight,
+                    colors: colors,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildRefreshButton(BuildContext context) {
+    return Consumer<QuizProvider>(
+      builder: (context, quizProvider, child) {
+        if (!quizProvider.canRefreshQuestion) {
+          return const SizedBox.shrink();
+        }
+
+        final isTr = context.watch<LocalizationProvider>().isTr;
+        final colors = _getQuizTypeColors(session.type);
+
+        return Container(
+          margin: const EdgeInsets.only(top: 8),
+          child: Center(
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  context.read<QuizProvider>().refreshCurrentQuestion();
+                },
+                borderRadius: BorderRadius.circular(20),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        colors.primary.withValues(alpha: 0.8),
+                        colors.primary.withValues(alpha: 0.6),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: AppColors.white.withValues(alpha: 0.3),
+                      width: 1.5,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: colors.primary.withValues(alpha: 0.3),
+                        offset: const Offset(0, 4),
+                        blurRadius: 12,
+                        spreadRadius: 0,
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 20,
+                        height: 20,
+                        decoration: BoxDecoration(
+                          color: AppColors.white.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.refresh_rounded,
+                          color: AppColors.white,
+                          size: 14,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        isTr ? 'Soruyu Yenile' : 'Refresh Question',
+                        style: const TextStyle(
+                          color: AppColors.white,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildModernOptionButton(
+    BuildContext context, {
+    required String option,
+    required bool isSelected,
+    required bool isCorrect,
+    required bool isWrong,
+    required double width,
+    required double height,
+    required ({Color primary, Color shadow}) colors,
+  }) {
+    Color backgroundColor;
+    Color borderColor;
+    Color textColor;
+    IconData? icon;
+
+    if (isCorrect) {
+      backgroundColor = AppColors.glowGreen.withValues(alpha: 0.2);
+      borderColor = AppColors.glowGreen;
+      textColor = AppColors.glowGreen;
+      icon = Icons.check_circle;
+    } else if (isWrong) {
+      backgroundColor = AppColors.powderRed.withValues(alpha: 0.2);
+      borderColor = AppColors.powderRed;
+      textColor = AppColors.powderRed;
+      icon = Icons.cancel;
+    } else if (isSelected) {
+      backgroundColor = colors.primary.withValues(alpha: 0.2);
+      borderColor = colors.primary;
+      textColor = colors.primary;
+    } else {
+      backgroundColor = AppColors.white.withValues(alpha: 0.1);
+      borderColor = AppColors.white.withValues(alpha: 0.3);
+      textColor = AppColors.white;
+    }
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: session.state == QuizState.loaded
+            ? () {
+                HapticFeedback.lightImpact();
+                quizProvider.submitAnswer(option);
+              }
+            : null,
+        borderRadius: BorderRadius.circular(16),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          width: width,
+          height: height,
+          decoration: BoxDecoration(
+            color: backgroundColor,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: borderColor,
+              width: isSelected || isCorrect || isWrong ? 2 : 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: borderColor.withValues(alpha: 0.2),
+                offset: const Offset(0, 4),
+                blurRadius: 8,
+                spreadRadius: 0,
+              ),
+            ],
+          ),
+          child: Stack(
+            children: [
+              // Option content
+              Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    if (icon != null) ...[
+                      Icon(icon, color: textColor, size: 16),
+                      const SizedBox(height: 4),
+                    ],
+                    Text(
+                      option,
+                      style: TextStyle(
+                        color: textColor,
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+
+              // Selection indicator
+              if (isSelected && !isCorrect && !isWrong)
+                Positioned(
+                  top: 6,
+                  right: 6,
+                  child: Container(
+                    width: 16,
+                    height: 16,
+                    decoration: BoxDecoration(
+                      color: colors.primary,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.check,
+                      color: AppColors.white,
+                      size: 10,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _getQuestionTypeText(QuizType type, bool isTr) {
+    switch (type) {
+      case QuizType.symbol:
+        return isTr ? 'Sembol Testi' : 'Symbol Test';
+      case QuizType.group:
+        return isTr ? 'Grup Testi' : 'Group Test';
+      case QuizType.number:
+        return isTr ? 'Numara Testi' : 'Number Test';
+    }
+  }
+
+  String _getQuestionHint(QuizType type, bool isTr) {
+    switch (type) {
+      case QuizType.symbol:
+        return isTr
+            ? 'Element sembolüne göre doğru elementi seçin'
+            : 'Select the correct element based on its symbol';
+      case QuizType.group:
+        return isTr
+            ? 'Element adına göre doğru grubu seçin'
+            : 'Select the correct group based on the element name';
+      case QuizType.number:
+        return isTr
+            ? 'Atom numarasına göre doğru elementi seçin'
+            : 'Select the correct element based on its atomic number';
+    }
+  }
+
+  ({Color primary, Color shadow}) _getQuizTypeColors(QuizType type) {
+    switch (type) {
+      case QuizType.symbol:
+        return (primary: AppColors.turquoise, shadow: AppColors.shTurquoise);
+      case QuizType.group:
+        return (primary: AppColors.steelBlue, shadow: AppColors.shSteelBlue);
+      case QuizType.number:
+        return (primary: AppColors.purple, shadow: AppColors.shPurple);
     }
   }
 }

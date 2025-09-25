@@ -48,13 +48,18 @@ class AdRouteObserver extends NavigatorObserver {
     );
   }
 
-  void _handleRouteChange(BuildContext? context,
-      {String? routeName, bool isPageRoute = true}) {
+  void _handleRouteChange(
+    BuildContext? context, {
+    String? routeName,
+    bool isPageRoute = true,
+  }) {
     if (context != null) {
       try {
-        context
-            .read<AdmobProvider>()
-            .onRouteChanged(routeName: routeName, isPageRoute: isPageRoute);
+        context.read<AdmobProvider>().onRouteChanged(
+          routeName: routeName,
+          isPageRoute: isPageRoute,
+          context: context,
+        );
       } catch (e) {
         debugPrint('Error tracking route change: \$e');
       }

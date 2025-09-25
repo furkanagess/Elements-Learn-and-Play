@@ -1,11 +1,13 @@
 import 'package:elements_app/core/initialize/app_initializer.dart';
 import 'package:elements_app/core/initialize/application_provider.dart';
 import 'package:elements_app/feature/view/home/home_view.dart';
+import 'package:elements_app/feature/view/onboarding/onboarding_view.dart';
 import 'package:elements_app/product/constants/stringConstants/en_app_strings.dart';
 import 'package:elements_app/core/theme/app_theme.dart';
 import 'package:elements_app/core/observer/route_observer.dart';
 import 'package:elements_app/core/services/widget/element_home_widget_service.dart';
 import 'package:elements_app/core/services/purchases/revenue_cat_service.dart';
+import 'package:elements_app/core/services/first_time_service.dart';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -33,6 +35,13 @@ Future<void> main() async {
     await RevenueCatService.instance.initialize();
   } catch (e) {
     debugPrint('Failed to initialize RevenueCat: $e');
+  }
+
+  // Initialize ApplicationProvider (including PurchaseProvider)
+  try {
+    await ApplicationProvider.instance.initializeProviders();
+  } catch (e) {
+    debugPrint('Failed to initialize ApplicationProvider: $e');
   }
 
   // Configure iOS App Group for HomeWidget and optional background callback
@@ -65,8 +74,43 @@ Future<void> main() async {
 //   }
 // }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  Widget? _initialScreen;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkInitialScreen();
+  }
+
+  Future<void> _checkInitialScreen() async {
+    try {
+      final shouldShowOnboarding = await FirstTimeService.instance
+          .shouldShowOnboarding();
+
+      if (mounted) {
+        setState(() {
+          _initialScreen = shouldShowOnboarding
+              ? const OnboardingView()
+              : const HomeView();
+        });
+      }
+    } catch (e) {
+      debugPrint('❌ Error checking initial screen: $e');
+      if (mounted) {
+        setState(() {
+          _initialScreen = const HomeView(); // Default to home on error
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -74,7 +118,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: EnAppStrings.appName,
       theme: AppTheme.theme,
-      home: const HomeView(),
+      home: _initialScreen ?? const HomeView(), // Show home as fallback
       navigatorObservers: [AdRouteObserver()],
       // Device Preview Configuration
       locale: DevicePreview.locale(context),

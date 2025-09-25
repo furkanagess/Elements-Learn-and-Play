@@ -4,6 +4,7 @@ import 'package:elements_app/product/constants/app_colors.dart';
 import 'package:elements_app/product/extensions/context_extensions.dart';
 import 'package:elements_app/feature/model/quiz/quiz_models.dart';
 import 'package:elements_app/feature/provider/localization_provider.dart';
+import 'package:elements_app/feature/provider/purchase_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:elements_app/product/widget/common/modern_game_result_dialog.dart';
 
@@ -661,6 +662,9 @@ class QuizResultDialog extends StatelessWidget {
     final score = (session.scorePercentage * 100).toInt();
     final isTr = context.watch<LocalizationProvider>().isTr;
 
+    // Check if user is premium
+    final isPremium = context.watch<PurchaseProvider>().isPremium;
+
     return ModernGameResultDialog(
       success: isWin,
       title: isWin
@@ -673,7 +677,8 @@ class QuizResultDialog extends StatelessWidget {
       wrong: session.wrongAnswers,
       gameTime: session.duration,
       scoreText: '%$score',
-      showExtraLifeOption: !isWin && onWatchAdForExtraLife != null,
+      showExtraLifeOption:
+          !isWin && onWatchAdForExtraLife != null && !isPremium,
       watchAdText: isTr ? 'Reklam İzle - Ek Can' : 'Watch Ad - Extra Life',
       onWatchAdForExtraLife: onWatchAdForExtraLife,
       onPlayAgain: onRestart,

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:elements_app/feature/provider/admob_provider.dart';
 import 'package:elements_app/feature/provider/banner_ads_provider.dart';
 import 'package:elements_app/feature/provider/favorite_elements_provider.dart';
@@ -19,6 +20,7 @@ import 'package:provider/single_child_widget.dart';
 /// a central location to initialize and access these providers.
 class ApplicationProvider {
   static ApplicationProvider? _instance;
+  late PurchaseProvider _purchaseProvider;
 
   /// Singleton instance getter for accessing the `ApplicationProvider`.
   static ApplicationProvider get instance {
@@ -27,13 +29,27 @@ class ApplicationProvider {
   }
 
   /// Private constructor for initializing the `ApplicationProvider`.
-  ApplicationProvider._init();
+  ApplicationProvider._init() {
+    _purchaseProvider = PurchaseProvider();
+  }
+
+  /// Initialize all providers that need initialization
+  Future<void> initializeProviders() async {
+    try {
+      await _purchaseProvider.initialize();
+      debugPrint(
+        '✅ ApplicationProvider: All providers initialized successfully',
+      );
+    } catch (e) {
+      debugPrint('❌ ApplicationProvider: Failed to initialize providers: $e');
+    }
+  }
 
   /// Represents the type of API being used by the application.
   late String apiType;
 
   /// List of application-level providers that can be used within the app.
-  List<SingleChildWidget> appProviders = [
+  List<SingleChildWidget> get appProviders => [
     StreamProvider(
       create: (context) => NetworkService().controller.stream,
       initialData: NetworkStatus.online,
@@ -61,7 +77,7 @@ class ApplicationProvider {
     ),
     ChangeNotifierProvider<InfoProvider>(create: (context) => InfoProvider()),
     ChangeNotifierProvider<PurchaseProvider>(
-      create: (context) => PurchaseProvider(),
+      create: (context) => _purchaseProvider,
     ),
   ];
 }

@@ -7,6 +7,7 @@ import 'package:elements_app/feature/provider/localization_provider.dart';
 import 'package:elements_app/product/widget/appBar/app_bars.dart';
 import 'package:elements_app/core/services/pattern/pattern_service.dart';
 import 'package:elements_app/feature/provider/trivia_provider.dart';
+import 'package:elements_app/product/widget/premium/premium_overlay.dart';
 
 class TriviaAchievementsView extends StatefulWidget {
   const TriviaAchievementsView({super.key});
@@ -629,8 +630,18 @@ class _TriviaAchievementsViewState extends State<TriviaAchievementsView>
                       physics: const BouncingScrollPhysics(),
                       itemCount: badges.length,
                       separatorBuilder: (_, __) => const SizedBox(width: 12),
-                      itemBuilder: (context, index) =>
-                          _badgeTileHorizontal(badges[index], color, isTr),
+                      itemBuilder: (context, index) {
+                        final badge = badges[index];
+                        final isPremiumBadge = _isPremiumBadge(badge, category);
+
+                        if (isPremiumBadge) {
+                          return PremiumOverlay(
+                            child: _badgeTileHorizontal(badge, color, isTr),
+                          );
+                        } else {
+                          return _badgeTileHorizontal(badge, color, isTr);
+                        }
+                      },
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -1126,6 +1137,34 @@ class _TriviaAchievementsViewState extends State<TriviaAchievementsView>
       ),
     );
   }
+
+  bool _isPremiumBadge(_TriviaBadge badge, TriviaCategory category) {
+    // Her trivia kategorisi için %30'u premium (10 başarımın 3'ü)
+    final premiumBadgeIndices = _getPremiumBadgeIndices(category);
+    final badgeIndex =
+        badge.titleEn.hashCode % 10; // 10 başarım olduğunu varsayıyoruz
+    return premiumBadgeIndices.contains(badgeIndex);
+  }
+
+  List<int> _getPremiumBadgeIndices(TriviaCategory category) {
+    // Her kategori için farklı premium badge indeksleri
+    switch (category) {
+      case TriviaCategory.classification:
+        return [0, 3, 6]; // 3/10 = %30
+      case TriviaCategory.weight:
+        return [1, 4, 7]; // 3/10 = %30
+      case TriviaCategory.period:
+        return [2, 5, 8]; // 3/10 = %30
+      case TriviaCategory.description:
+        return [0, 4, 8]; // 3/10 = %30
+      case TriviaCategory.usage:
+        return [1, 5, 9]; // 3/10 = %30
+      case TriviaCategory.source:
+        return [2, 6, 0]; // 3/10 = %30
+      case TriviaCategory.mixed:
+        return [3, 7, 1]; // 3/10 = %30
+    }
+  }
 }
 
 /// Dedicated page to show all achievements for a specific trivia category
@@ -1451,7 +1490,16 @@ class _TriviaCategoryAchievementsPageState
           ),
           itemCount: badges.length,
           itemBuilder: (context, index) {
-            return _buildGridBadgeTile(badges[index], isTr, index, color);
+            final badge = badges[index];
+            final isPremiumBadge = _isPremiumBadge(badge, widget.category);
+
+            if (isPremiumBadge) {
+              return PremiumOverlay(
+                child: _buildGridBadgeTile(badge, isTr, index, color),
+              );
+            } else {
+              return _buildGridBadgeTile(badge, isTr, index, color);
+            }
           },
         ),
       ],
@@ -1970,6 +2018,34 @@ class _TriviaCategoryAchievementsPageState
         return isTr ? 'Kaynak' : 'Source';
       case TriviaCategory.mixed:
         return isTr ? 'Karışık' : 'Mixed';
+    }
+  }
+
+  bool _isPremiumBadge(_TriviaBadge badge, TriviaCategory category) {
+    // Her trivia kategorisi için %30'u premium (10 başarımın 3'ü)
+    final premiumBadgeIndices = _getPremiumBadgeIndices(category);
+    final badgeIndex =
+        badge.titleEn.hashCode % 10; // 10 başarım olduğunu varsayıyoruz
+    return premiumBadgeIndices.contains(badgeIndex);
+  }
+
+  List<int> _getPremiumBadgeIndices(TriviaCategory category) {
+    // Her kategori için farklı premium badge indeksleri
+    switch (category) {
+      case TriviaCategory.classification:
+        return [0, 3, 6]; // 3/10 = %30
+      case TriviaCategory.weight:
+        return [1, 4, 7]; // 3/10 = %30
+      case TriviaCategory.period:
+        return [2, 5, 8]; // 3/10 = %30
+      case TriviaCategory.description:
+        return [0, 4, 8]; // 3/10 = %30
+      case TriviaCategory.usage:
+        return [1, 5, 9]; // 3/10 = %30
+      case TriviaCategory.source:
+        return [2, 6, 0]; // 3/10 = %30
+      case TriviaCategory.mixed:
+        return [3, 7, 1]; // 3/10 = %30
     }
   }
 }

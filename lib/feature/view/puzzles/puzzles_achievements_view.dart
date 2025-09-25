@@ -8,6 +8,7 @@ import 'package:elements_app/feature/provider/localization_provider.dart';
 import 'package:elements_app/feature/provider/puzzle_provider.dart';
 import 'package:elements_app/feature/model/puzzle/puzzle_models.dart';
 import 'package:elements_app/core/services/pattern/pattern_service.dart';
+import 'package:elements_app/product/widget/premium/premium_overlay.dart';
 
 class PuzzlesAchievementsView extends StatefulWidget {
   const PuzzlesAchievementsView({super.key});
@@ -152,20 +153,26 @@ class _PuzzlesAchievementsViewState extends State<PuzzlesAchievementsView>
                           const SizedBox(height: 16),
                           _buildHint(isTr),
                           const SizedBox(height: 16),
-                          _buildModeStrip(
-                            context,
-                            isTr: isTr,
-                            type: PuzzleType.word,
-                            color: AppColors.glowGreen,
-                            badges: wordBadges,
-                          ),
-                          const SizedBox(height: 16),
-                          _buildModeStrip(
-                            context,
-                            isTr: isTr,
-                            type: PuzzleType.matching,
-                            color: AppColors.yellow,
-                            badges: matchingBadges,
+                          Column(
+                            children: [
+                              // Word Puzzle - per-badge premium handled inside strip (3/11)
+                              _buildModeStrip(
+                                context,
+                                isTr: isTr,
+                                type: PuzzleType.word,
+                                color: AppColors.glowGreen,
+                                badges: wordBadges,
+                              ),
+                              const SizedBox(height: 16),
+                              // Matching Game - per-badge premium handled inside strip (3/11)
+                              _buildModeStrip(
+                                context,
+                                isTr: isTr,
+                                type: PuzzleType.matching,
+                                color: AppColors.yellow,
+                                badges: matchingBadges,
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 100),
                         ],
@@ -560,8 +567,18 @@ class _PuzzlesAchievementsViewState extends State<PuzzlesAchievementsView>
                       physics: const BouncingScrollPhysics(),
                       itemCount: badges.length,
                       separatorBuilder: (_, __) => const SizedBox(width: 12),
-                      itemBuilder: (context, index) =>
-                          _buildBadgeTile(badges[index], color, isTr),
+                      itemBuilder: (context, index) {
+                        final badge = badges[index];
+                        final isPremiumBadge = _isPremiumBadge(badge, type);
+
+                        if (isPremiumBadge) {
+                          return PremiumOverlay(
+                            child: _buildBadgeTile(badge, color, isTr),
+                          );
+                        } else {
+                          return _buildBadgeTile(badge, color, isTr);
+                        }
+                      },
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -1159,6 +1176,28 @@ class _PuzzlesAchievementsViewState extends State<PuzzlesAchievementsView>
     );
   }
 
+  bool _isPremiumBadge(_PuzzleBadge badge, PuzzleType type) {
+    // Her puzzle türü için %30'u premium (11 başarımın 3'ü)
+    final premiumBadgeIndices = _getPremiumBadgeIndices(type);
+    final badgeIndex =
+        badge.id.hashCode % 11; // 11 başarım olduğunu varsayıyoruz
+    return premiumBadgeIndices.contains(badgeIndex);
+  }
+
+  List<int> _getPremiumBadgeIndices(PuzzleType type) {
+    // Her puzzle türü için farklı premium badge indeksleri
+    switch (type) {
+      case PuzzleType.word:
+        return [0, 4, 8]; // 3/11 = %27.3
+      case PuzzleType.matching:
+        return [1, 5, 9]; // 3/11 = %27.3
+      case PuzzleType.crossword:
+        return [2, 6, 10]; // 3/11 = %27.3
+      case PuzzleType.placement:
+        return [3, 7, 11]; // 3/11 = %27.3
+    }
+  }
+
   void _showClearAchievementsDialog(BuildContext context) {
     final isTr = context.read<LocalizationProvider>().isTr;
     showDialog(
@@ -1571,7 +1610,16 @@ class _PuzzleTypeAchievementsPageState extends State<PuzzleTypeAchievementsPage>
           ),
           itemCount: badges.length,
           itemBuilder: (context, index) {
-            return _buildGridBadgeTile(badges[index], isTr, index, color);
+            final badge = badges[index];
+            final isPremiumBadge = _isPremiumBadge(badge, widget.puzzleType);
+
+            if (isPremiumBadge) {
+              return PremiumOverlay(
+                child: _buildGridBadgeTile(badge, isTr, index, color),
+              );
+            } else {
+              return _buildGridBadgeTile(badge, isTr, index, color);
+            }
           },
         ),
       ],
@@ -2184,6 +2232,25 @@ class _PuzzleTypeAchievementsPageState extends State<PuzzleTypeAchievementsPage>
         return AppColors.powderRed;
       case PuzzleType.placement:
         return AppColors.turquoise;
+    }
+  }
+
+  bool _isPremiumBadge(_PuzzleBadge badge, PuzzleType type) {
+    final premiumBadgeIndices = _getPremiumBadgeIndices(type);
+    final badgeIndex = badge.id.hashCode % 11; // assume 11 badges
+    return premiumBadgeIndices.contains(badgeIndex);
+  }
+
+  List<int> _getPremiumBadgeIndices(PuzzleType type) {
+    switch (type) {
+      case PuzzleType.word:
+        return [0, 4, 8];
+      case PuzzleType.matching:
+        return [1, 5, 9];
+      case PuzzleType.crossword:
+        return [2, 6, 10];
+      case PuzzleType.placement:
+        return [3, 7, 11];
     }
   }
 }

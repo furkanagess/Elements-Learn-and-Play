@@ -256,7 +256,8 @@ class AdmobProvider with ChangeNotifier {
 
   /// @deprecated Use onRouteChanged() instead
   /// This method is kept for backward compatibility
-  void onBackNavigation() => onRouteChanged();
+  void onBackNavigation([BuildContext? context]) =>
+      onRouteChanged(context: context);
 
   /// Gets debug information about the current state
   Map<String, dynamic> getDebugInfo() {

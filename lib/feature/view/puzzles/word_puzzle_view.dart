@@ -16,7 +16,9 @@ import 'package:elements_app/feature/view/trivia/trivia_achievements_view.dart';
 import 'package:elements_app/product/widget/common/modern_game_result_dialog.dart';
 
 class WordPuzzleView extends StatefulWidget {
-  const WordPuzzleView({super.key});
+  final bool first20Only;
+
+  const WordPuzzleView({super.key, this.first20Only = false});
 
   @override
   State<WordPuzzleView> createState() => _WordPuzzleViewState();
@@ -72,7 +74,10 @@ class _WordPuzzleViewState extends State<WordPuzzleView>
       if (!_providerRef!.wordSessionActive &&
           !_providerRef!.wordSessionCompleted &&
           !_providerRef!.wordSessionFailed) {
-        _providerRef!.startWordSession(turkish: isTr);
+        _providerRef!.startWordSession(
+          turkish: isTr,
+          first20Only: widget.first20Only,
+        );
       }
     });
   }
@@ -316,10 +321,13 @@ class _WordPuzzleViewState extends State<WordPuzzleView>
             );
             // Show ad after dialog is closed
             await Future.delayed(const Duration(milliseconds: 500));
-            await InterstitialAdManager.instance.showAdOnAction();
+            await InterstitialAdManager.instance.showAdOnAction(context);
             context.read<PuzzleProvider>().resetWordSessionFlags();
             final isTr = context.read<LocalizationProvider>().isTr;
-            context.read<PuzzleProvider>().startWordSession(turkish: isTr);
+            context.read<PuzzleProvider>().startWordSession(
+              turkish: isTr,
+              first20Only: widget.first20Only,
+            );
           },
           onHome: () async {
             Navigator.of(context).pop();
@@ -329,7 +337,7 @@ class _WordPuzzleViewState extends State<WordPuzzleView>
             );
             // Show ad after dialog is closed
             await Future.delayed(const Duration(milliseconds: 500));
-            await InterstitialAdManager.instance.showAdOnAction();
+            await InterstitialAdManager.instance.showAdOnAction(context);
             _navigateToHome(context, context.read<PuzzleProvider>());
           },
           playAgainText: isTr ? 'Yeniden Oyna' : 'Play Again',
@@ -732,7 +740,9 @@ class _PuzzleHeader extends StatelessWidget {
                         const SizedBox(width: 6),
                         _buildCompactStatItem(
                           icon: Icons.favorite,
-                          value: provider.wordAttemptsLeft.toString(),
+                          value: provider
+                              .getWordAttemptsLeft(context)
+                              .toString(),
                           color: AppColors.pink,
                         ),
                       ],

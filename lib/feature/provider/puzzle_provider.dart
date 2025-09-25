@@ -6,6 +6,8 @@ import 'package:elements_app/feature/model/puzzle/puzzle_models.dart';
 import 'package:elements_app/feature/model/periodic_element.dart';
 import 'package:elements_app/feature/service/periodicTable/periodic_table_service.dart';
 import 'package:elements_app/feature/service/api_service.dart';
+import 'package:provider/provider.dart';
+import 'package:elements_app/feature/provider/purchase_provider.dart';
 
 enum PuzzleRoundStatus { playing, success, failure }
 
@@ -102,7 +104,7 @@ class PuzzleProvider extends ChangeNotifier {
   int _matchingCorrect = 0;
   int _matchingWrong = 0;
   final int matchingTotalRounds = 10;
-  final int matchingMaxWrong = 5;
+  final int matchingMaxWrong = 3; // Default for non-premium users
   PuzzleRoundStatus _matchingRoundStatus = PuzzleRoundStatus.playing;
   bool _pendingNextMatching = false;
   // Word puzzle state
@@ -117,7 +119,7 @@ class PuzzleProvider extends ChangeNotifier {
   int _wordCorrect = 0;
   int _wordWrong = 0;
   final int wordTotalRounds = 10;
-  final int wordMaxWrong = 5;
+  final int wordMaxWrong = 3; // Default for non-premium users
   int _roundHintsUsed = 0; // per-round used hints
   PuzzleRoundStatus _wordRoundStatus = PuzzleRoundStatus.playing;
   bool _pendingNextWord = false;
@@ -127,6 +129,27 @@ class PuzzleProvider extends ChangeNotifier {
   bool get isLoading => _loading;
   PuzzleProgress getProgress(PuzzleType t) =>
       _progress[t] ?? PuzzleProgress(type: t);
+
+  /// Get max wrong answers for matching puzzle based on premium status
+  int getMatchingMaxWrong(BuildContext context) {
+    try {
+      final purchaseProvider = context.read<PurchaseProvider>();
+      return purchaseProvider.isPremium ? 5 : 3;
+    } catch (e) {
+      return 3; // Default for non-premium users
+    }
+  }
+
+  /// Get max wrong answers for word puzzle based on premium status
+  int getWordMaxWrong(BuildContext context) {
+    try {
+      final purchaseProvider = context.read<PurchaseProvider>();
+      return purchaseProvider.isPremium ? 5 : 3;
+    } catch (e) {
+      return 3; // Default for non-premium users
+    }
+  }
+
   WordPuzzleRound? get currentWordRound => _currentWordRound;
   bool get wordSessionActive => _wordSessionActive;
   bool get wordSessionCompleted => _wordSessionCompleted;
@@ -134,7 +157,8 @@ class PuzzleProvider extends ChangeNotifier {
   int get wordRoundIndex => _wordRoundIndex;
   int get wordCorrect => _wordCorrect;
   int get wordWrong => _wordWrong;
-  int get wordAttemptsLeft => wordMaxWrong - _wordWrong;
+  int getWordAttemptsLeft(BuildContext context) =>
+      getWordMaxWrong(context) - _wordWrong;
   int get wordHintsUsed => _roundHintsUsed;
   int get wordHintsTotalEarned => _currentWordRound == null
       ? 0
@@ -158,11 +182,12 @@ class PuzzleProvider extends ChangeNotifier {
   int get matchingRoundIndex => _matchingRoundIndex;
   int get matchingCorrect => _matchingCorrect;
   int get matchingWrong => _matchingWrong;
-  int get matchingAttemptsLeft => matchingMaxWrong - _matchingWrong;
+  int getMatchingAttemptsLeft(BuildContext context) =>
+      getMatchingMaxWrong(context) - _matchingWrong;
   PuzzleRoundStatus get matchingRoundStatus => _matchingRoundStatus;
   bool get hasPendingNextMatching => _pendingNextMatching;
   int get matchingTotalRoundsCount => matchingTotalRounds;
-  int get matchingMaxLives => matchingMaxWrong;
+  int getMatchingMaxLives(BuildContext context) => getMatchingMaxWrong(context);
   Map<String, String> get matchingLeftSymbols =>
       _currentMatchingRound?.leftSymbols ?? {};
 
@@ -240,7 +265,10 @@ class PuzzleProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> startWordSession({required bool turkish}) async {
+  Future<void> startWordSession({
+    required bool turkish,
+    bool first20Only = false,
+  }) async {
     _wordSessionActive = true;
     _wordSessionCompleted = false;
     _wordSessionFailed = false;
@@ -438,7 +466,10 @@ class PuzzleProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> startMatchingSession({required bool turkish}) async {
+  Future<void> startMatchingSession({
+    required bool turkish,
+    bool first20Only = false,
+  }) async {
     _matchingSessionActive = true;
     _matchingSessionCompleted = false;
     _matchingSessionFailed = false;
@@ -448,12 +479,17 @@ class PuzzleProvider extends ChangeNotifier {
     _matchingWrong = 0;
     _matchingRoundStatus = PuzzleRoundStatus.playing;
     _pendingNextMatching = false;
-    await startMatchingRound(turkish: turkish, showLoading: true);
+    await startMatchingRound(
+      turkish: turkish,
+      showLoading: true,
+      first20Only: first20Only,
+    );
   }
 
   Future<void> startMatchingRound({
     bool turkish = true,
     bool showLoading = true,
+    bool first20Only = false,
   }) async {
     if (showLoading) {
       _loading = true;
@@ -611,6 +647,7 @@ class PuzzleProvider extends ChangeNotifier {
     await startMatchingRound(
       turkish: _matchingTurkishLocale,
       showLoading: false,
+      first20Only: false, // Keep existing behavior for next rounds
     );
   }
 

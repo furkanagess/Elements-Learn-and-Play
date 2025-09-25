@@ -1,6 +1,9 @@
 import 'package:elements_app/feature/model/periodic_element.dart';
 import 'package:elements_app/feature/provider/favorite_elements_provider.dart';
 import 'package:elements_app/feature/provider/localization_provider.dart';
+import 'package:elements_app/feature/provider/purchase_provider.dart';
+import 'package:elements_app/feature/view/favorites/favorites_view.dart';
+import 'package:elements_app/feature/view/settings/settings_view.dart';
 import 'package:elements_app/product/constants/app_colors.dart';
 import 'package:elements_app/product/extensions/color_extension.dart';
 import 'package:elements_app/product/extensions/context_extensions.dart';
@@ -144,9 +147,9 @@ class _ElementDetailViewState extends State<ElementDetailView>
           : (widget.element.trCategory ?? '');
     }
 
-    // If still empty, use group as fallback
+    // If still empty, use group as fallback (localized)
     if (category.isEmpty) {
-      category = widget.element.group ?? 'Bilinmiyor';
+      category = widget.element.group ?? (isTr ? 'Bilinmiyor' : 'Unknown');
     }
 
     return category.toUpperCase();
@@ -471,9 +474,14 @@ class _ElementDetailViewState extends State<ElementDetailView>
 
   List<Widget> _buildActionButtons(Color elementColor) {
     return [
-      Consumer<FavoriteElementsProvider>(
-        builder: (context, provider, child) {
-          final isFavorite = provider.isFavorite(widget.element);
+      Consumer2<FavoriteElementsProvider, PurchaseProvider>(
+        builder: (context, favoriteProvider, purchaseProvider, child) {
+          final isFavorite = favoriteProvider.isFavorite(widget.element);
+          final isPremium = purchaseProvider.isPremium;
+          final canAddFavorite = favoriteProvider.canAddFavorite(
+            isPremium: isPremium,
+          );
+
           return Container(
             margin: const EdgeInsets.all(8),
             decoration: BoxDecoration(
@@ -486,25 +494,82 @@ class _ElementDetailViewState extends State<ElementDetailView>
                 color: AppColors.white,
               ),
               onPressed: () {
-                provider.toggleFavorite(widget.element);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      context.read<LocalizationProvider>().isTr
-                          ? isFavorite
-                                ? 'Favorilerden kaldırıldı'
-                                : 'Favorilere eklendi'
-                          : isFavorite
-                          ? 'Removed from favorites'
-                          : 'Added to favorites',
-                    ),
-                    backgroundColor: elementColor,
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                );
+                final isTr = context.read<LocalizationProvider>().isTr;
+
+                if (isFavorite) {
+                  // Remove from favorites
+                  favoriteProvider.toggleFavorite(
+                    widget.element,
+                    isPremium: isPremium,
+                  );
+                  final message = isTr
+                      ? 'Favorilerden kaldırıldı'
+                      : 'Removed from favorites';
+
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(message),
+                        backgroundColor: elementColor,
+                        behavior: SnackBarBehavior.floating,
+                        duration: const Duration(seconds: 2),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    );
+                  }
+                } else {
+                  // Add to favorites
+                  if (canAddFavorite) {
+                    favoriteProvider.toggleFavorite(
+                      widget.element,
+                      isPremium: isPremium,
+                    );
+                    final message = isTr
+                        ? 'Favorilere eklendi'
+                        : 'Added to favorites';
+
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: GestureDetector(
+                            onTap: () {
+                              if (context.mounted) {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const FavoritesView(),
+                                  ),
+                                );
+                              }
+                            },
+                            child: Row(
+                              children: [
+                                Expanded(child: Text(message)),
+                                const SizedBox(width: 8),
+                                Icon(
+                                  Icons.arrow_forward_ios,
+                                  color: AppColors.white.withValues(alpha: 0.8),
+                                  size: 16,
+                                ),
+                              ],
+                            ),
+                          ),
+                          backgroundColor: elementColor,
+                          behavior: SnackBarBehavior.floating,
+                          duration: const Duration(seconds: 2),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      );
+                    }
+                  } else {
+                    // Show premium upgrade dialog
+                    _showPremiumUpgradeDialog(context, isTr);
+                  }
+                }
               },
             ),
           );
@@ -513,13 +578,113 @@ class _ElementDetailViewState extends State<ElementDetailView>
     ];
   }
 
+  void _showPremiumUpgradeDialog(BuildContext context, bool isTr) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.darkBlue,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.yellow.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.star_rounded,
+                color: AppColors.yellow,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              isTr ? 'Premium Gerekli' : 'Premium Required',
+              style: const TextStyle(
+                color: AppColors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              isTr
+                  ? 'Normal kullanıcılar en fazla 10 favori element ekleyebilir.'
+                  : 'Regular users can add up to 10 favorite elements.',
+              style: TextStyle(
+                color: AppColors.white.withValues(alpha: 0.8),
+                fontSize: 14,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              isTr
+                  ? 'Premium olarak sınırsız favori ekleyebilirsiniz!'
+                  : 'With Premium, you can add unlimited favorites!',
+              style: TextStyle(
+                color: AppColors.yellow.withValues(alpha: 0.9),
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            ),
+            child: Text(
+              isTr ? 'İptal' : 'Cancel',
+              style: TextStyle(
+                color: AppColors.white.withValues(alpha: 0.7),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SettingsView()),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.yellow,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            ),
+            child: Text(
+              isTr ? 'Premium Ol' : 'Go Premium',
+              style: const TextStyle(
+                color: AppColors.darkBlue,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildQuickStatsCards(BuildContext context, Color elementColor) {
+    final isTr = Provider.of<LocalizationProvider>(context).isTr;
     return Row(
       children: [
         Expanded(
           child: _buildStatCard(
             context,
-            'Ağırlık',
+            isTr ? 'Ağırlık' : 'Weight',
             _formatWeight(widget.element.weight),
             Icons.scale,
             elementColor,
@@ -529,7 +694,7 @@ class _ElementDetailViewState extends State<ElementDetailView>
         Expanded(
           child: _buildStatCard(
             context,
-            'Grup',
+            isTr ? 'Grup' : 'Group',
             widget.element.group ?? '',
             Icons.group_work,
             elementColor,
@@ -539,7 +704,7 @@ class _ElementDetailViewState extends State<ElementDetailView>
         Expanded(
           child: _buildStatCard(
             context,
-            'Periyot',
+            isTr ? 'Periyot' : 'Period',
             widget.element.period ?? '',
             Icons.timeline,
             elementColor,
@@ -596,7 +761,12 @@ class _ElementDetailViewState extends State<ElementDetailView>
   }
 
   Widget _buildTabNavigation(BuildContext context, Color elementColor) {
-    final tabs = ['Genel Bakış', 'Özellikler', 'Detaylar'];
+    final isTr = Provider.of<LocalizationProvider>(context).isTr;
+    final tabs = [
+      isTr ? 'Genel Bakış' : 'Overview',
+      isTr ? 'Özellikler' : 'Properties',
+      isTr ? 'Detaylar' : 'Details',
+    ];
 
     return Container(
       height: 50,
@@ -668,7 +838,7 @@ class _ElementDetailViewState extends State<ElementDetailView>
       children: [
         _buildInfoSection(
           context,
-          'Açıklama',
+          isTr ? 'Açıklama' : 'Description',
           isTr
               ? widget.element.trDescription ?? ''
               : widget.element.enDescription ?? '',
@@ -678,7 +848,7 @@ class _ElementDetailViewState extends State<ElementDetailView>
         const SizedBox(height: 20),
         _buildInfoSection(
           context,
-          'Kullanım Alanları',
+          isTr ? 'Kullanım Alanları' : 'Applications',
           isTr ? widget.element.trUsage ?? '' : widget.element.enUsage ?? '',
           Icons.science,
           elementColor,
@@ -698,7 +868,7 @@ class _ElementDetailViewState extends State<ElementDetailView>
         const SizedBox(height: 20),
         _buildInfoSection(
           context,
-          'Kaynak',
+          isTr ? 'Kaynak' : 'Source',
           isTr ? widget.element.trSource ?? '' : widget.element.enSource ?? '',
           Icons.source,
           elementColor,
@@ -712,21 +882,23 @@ class _ElementDetailViewState extends State<ElementDetailView>
       children: [
         _buildDetailCard(
           context,
-          'Fiziksel Özellikler',
+          isTr ? 'Fiziksel Özellikler' : 'Physical Properties',
           [
             DetailItem.highlighted(
-              label: 'Atom Numarası',
+              label: isTr ? 'Atom Numarası' : 'Atomic Number',
               value: widget.element.number?.toString() ?? '',
               icon: Icons.tag,
             ),
             DetailItem.withUnit(
-              label: 'Atom Ağırlığı',
+              label: isTr ? 'Atom Ağırlığı' : 'Atomic Weight',
               value: _formatWeight(widget.element.weight),
               unit: 'u',
               icon: Icons.scale,
             ),
             DetailItem(
-              label: 'Elektron Konfigürasyonu',
+              label: isTr
+                  ? 'Elektron Konfigürasyonu'
+                  : 'Electron Configuration',
               value: widget.element.electronConfiguration ?? '-',
               icon: Icons.science_outlined,
               valueColor: widget.element.electronConfiguration != null
@@ -740,16 +912,16 @@ class _ElementDetailViewState extends State<ElementDetailView>
         const SizedBox(height: 16),
         _buildDetailCard(
           context,
-          'Kimyasal Özellikler',
+          isTr ? 'Kimyasal Özellikler' : 'Chemical Properties',
           [
             DetailItem.withUnit(
-              label: 'Elektronegatiflik',
+              label: isTr ? 'Elektronegatiflik' : 'Electronegativity',
               value: widget.element.electronegativity?.toString() ?? '-',
               unit: '',
               svgPath: AssetConstants.instance.svgThunder,
             ),
             DetailItem.withUnit(
-              label: 'Atom Yarıçapı',
+              label: isTr ? 'Atom Yarıçapı' : 'Atomic Radius',
               value: widget.element.atomicRadius?.toString() ?? '-',
               unit: 'pm',
               svgPath: AssetConstants.instance.svgRadius,
@@ -761,25 +933,25 @@ class _ElementDetailViewState extends State<ElementDetailView>
         const SizedBox(height: 16),
         _buildDetailCard(
           context,
-          'Sınıflandırma',
+          isTr ? 'Sınıflandırma' : 'Classification',
           [
             DetailItem(
-              label: 'Blok',
+              label: isTr ? 'Blok' : 'Block',
               value: widget.element.block ?? '',
               icon: Icons.crop_square,
             ),
             DetailItem(
-              label: 'Periyot',
+              label: isTr ? 'Periyot' : 'Period',
               value: widget.element.period ?? '',
               icon: Icons.timeline,
             ),
             DetailItem(
-              label: 'Grup',
+              label: isTr ? 'Grup' : 'Group',
               value: widget.element.group ?? '',
               icon: Icons.group_work,
             ),
             DetailItem(
-              label: 'Kategori',
+              label: isTr ? 'Kategori' : 'Category',
               value: isTr
                   ? widget.element.trCategory ?? ''
                   : widget.element.enCategory ?? '',
@@ -794,25 +966,28 @@ class _ElementDetailViewState extends State<ElementDetailView>
   }
 
   Widget _buildPropertyGrid(BuildContext context, Color elementColor) {
+    final isTr = Provider.of<LocalizationProvider>(context).isTr;
     final properties = [
       DetailItem(
-        label: 'Blok',
+        label: isTr ? 'Blok' : 'Block',
         value: widget.element.block ?? '',
         icon: Icons.crop_square,
       ),
       DetailItem(
-        label: 'Periyot',
+        label: isTr ? 'Periyot' : 'Period',
         value: widget.element.period ?? '',
         icon: Icons.timeline,
       ),
       DetailItem(
-        label: 'Grup',
+        label: isTr ? 'Grup' : 'Group',
         value: widget.element.group ?? '',
         icon: Icons.group_work,
       ),
       DetailItem(
-        label: 'Kategori',
-        value: widget.element.enCategory ?? '',
+        label: isTr ? 'Kategori' : 'Category',
+        value: isTr
+            ? widget.element.trCategory ?? ''
+            : widget.element.enCategory ?? '',
         icon: Icons.category,
       ),
     ];
@@ -835,7 +1010,7 @@ class _ElementDetailViewState extends State<ElementDetailView>
               Icon(Icons.tune, color: elementColor, size: 24),
               const SizedBox(width: 12),
               Text(
-                'Temel Özellikler',
+                isTr ? 'Temel Özellikler' : 'Basic Properties',
                 style: context.textTheme.titleLarge?.copyWith(
                   color: AppColors.white,
                   fontWeight: FontWeight.bold,

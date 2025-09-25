@@ -1,92 +1,143 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="8dp"
-    android:background="#00141F"
-    android:orientation="vertical">
+    android:padding="0dp"
+    android:background="#062c39">
 
-    <!-- Main Card -->
-    <LinearLayout
+    <!-- Main Card with atom patterned background -->
+    <FrameLayout
         android:id="@+id/card"
-        android:orientation="horizontal"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:padding="12dp"
-        android:background="#1C2A3E"
-        android:elevation="4dp"
-        android:gravity="center_vertical">
+        android:layout_height="match_parent"
+        android:background="@drawable/bg_widget_atom"
+        android:padding="10dp">
 
-        <!-- Element Symbol (Large) -->
-        <TextView
-            android:id="@+id/txtSymbol"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="He"
-            android:textColor="#FFFFFF"
-            android:textStyle="bold"
-            android:textSize="24sp"
-            android:layout_marginRight="12dp"/>
-
-        <!-- Element Info -->
+        <!-- Vertical structure: header + content (compact for 3x1) -->
         <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
             android:orientation="vertical">
 
-            <!-- Element Name -->
-            <TextView
-                android:id="@+id/txtName"
-                android:layout_width="wrap_content"
+            <!-- Header row: title chip + date -->
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Helium"
-                android:textColor="#FFFFFF"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:maxLines="1"
-                android:ellipsize="end"/>
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
 
-            <!-- Element Number -->
-            <TextView
-                android:id="@+id/txtNumber"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="#2"
-                android:textColor="#7DDFF8"
-                android:textSize="12sp"
-                android:textStyle="bold"
-                android:layout_marginTop="2dp"/>
+                <TextView
+                    android:id="@+id/txtTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_chip_pill"
+                    android:paddingLeft="8dp"
+                    android:paddingRight="8dp"
+                    android:paddingTop="2dp"
+                    android:paddingBottom="2dp"
+                    android:text="@string/widget_title_element_of_day"
+                    android:textColor="#50f8da"
+                    android:textStyle="bold"
+                    android:textSize="10sp" />
 
+                <TextView
+                    android:id="@+id/txtDate"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="end"
+                    android:text="Sep 25"
+                    android:textColor="#50f8da"
+                    android:textSize="10sp" />
+            </LinearLayout>
+
+            <!-- Content row: left square, center info, right arrow -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:layout_marginTop="4dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <!-- Left square: number + symbol -->
+                <LinearLayout
+                    android:layout_width="40dp"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:background="@drawable/bg_square_translucent">
+
+                    <TextView
+                        android:id="@+id/txtNumber"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="#79"
+                        android:textColor="#50f8da"
+                        android:textStyle="bold"
+                        android:textSize="10sp" />
+
+                    <TextView
+                        android:id="@+id/txtSymbol"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Au"
+                        android:textColor="#50f8da"
+                        android:textStyle="bold"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <!-- Middle: name, category, atomic weight -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginLeft="8dp">
+
+                    <TextView
+                        android:id="@+id/txtName"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Gold"
+                        android:textColor="#50f8da"
+                        android:textStyle="bold"
+                        android:textSize="14sp"
+                        android:maxLines="1"
+                        android:ellipsize="end" />
+
+                    <TextView
+                        android:id="@+id/txtCategory"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Transition Metals"
+                        android:textColor="#50f8da"
+                        android:textSize="11sp"
+                        android:maxLines="1"
+                        android:ellipsize="end" />
+
+                    <TextView
+                        android:id="@+id/txtAtomicWeight"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Atomic Weight: 196.97"
+                        android:textColor="#50f8da"
+                        android:textSize="10sp"
+                        android:maxLines="1"
+                        android:ellipsize="end" />
+                </LinearLayout>
+
+                <!-- Right arrow pill -->
+                <TextView
+                    android:id="@+id/btnOpen"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:gravity="center"
+                    android:text=">"
+                    android:textColor="#50f8da"
+                    android:background="@drawable/bg_chip_pill" />
+            </LinearLayout>
         </LinearLayout>
+    </FrameLayout>
 
-        <!-- Open App Icon -->
-        <ImageView
-            android:id="@+id/imgOpenApp"
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:src="@android:drawable/ic_menu_send"
-            android:tint="#7DDFF8"/>
-
-    </LinearLayout>
-
-    <!-- Category Badge (Bottom) -->
-    <TextView
-        android:id="@+id/txtCategory"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:layout_marginTop="4dp"
-        android:paddingLeft="8dp"
-        android:paddingRight="8dp"
-        android:paddingTop="2dp"
-        android:paddingBottom="2dp"
-        android:background="#2A3952"
-        android:textColor="#BFE3FF"
-        android:textSize="10sp"
-        android:text="Noble Gas"
-        android:maxLines="1"
-        android:ellipsize="end"/>
-
-</LinearLayout>
+</FrameLayout>

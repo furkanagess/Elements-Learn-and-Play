@@ -104,7 +104,7 @@ class QuizSession extends Equatable {
     this.currentQuestionIndex = 0,
     this.correctAnswers = 0,
     this.wrongAnswers = 0,
-    this.maxWrongAnswers = 5,
+    this.maxWrongAnswers = 3,
     this.retryCount = 3,
     this.maxRetries = 3,
     this.state = QuizState.initial,

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_title_element_of_day">Element of the Day</string>
+    <string name="widget_atomic_weight">Atomic Weight: %1$s</string>
+</resources>

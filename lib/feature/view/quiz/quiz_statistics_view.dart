@@ -11,6 +11,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:elements_app/product/constants/assets_constants.dart';
 import 'package:elements_app/product/widget/ads/banner_ads_widget.dart';
+import 'package:elements_app/product/widget/premium/premium_overlay.dart';
 
 class QuizStatisticsView extends StatefulWidget {
   const QuizStatisticsView({super.key});
@@ -127,14 +128,34 @@ class _QuizStatisticsViewState extends State<QuizStatisticsView>
                             padding: const EdgeInsets.all(20),
                             sliver: SliverList(
                               delegate: SliverChildListDelegate([
-                                ...QuizType.values
-                                    .map(
-                                      (type) => _buildDetailedStatCard(
+                                ...QuizType.values.map((type) {
+                                  final isPremiumType =
+                                      type ==
+                                      QuizType.symbol; // %30 premium (1/3)
+                                  final isTr = context
+                                      .read<LocalizationProvider>()
+                                      .isTr;
+
+                                  if (isPremiumType) {
+                                    return PremiumOverlay(
+                                      title: isTr
+                                          ? 'Atom Sembol Testi İstatistikleri'
+                                          : 'Atomic Symbol Test Statistics',
+                                      description: isTr
+                                          ? 'Premium ile atom sembol testinin detaylı istatistiklerini görün'
+                                          : 'View detailed statistics for atomic symbol test with Premium',
+                                      child: _buildDetailedStatCard(
                                         type,
                                         provider,
                                       ),
-                                    )
-                                    .toList(),
+                                    );
+                                  } else {
+                                    return _buildDetailedStatCard(
+                                      type,
+                                      provider,
+                                    );
+                                  }
+                                }).toList(),
                               ]),
                             ),
                           ),

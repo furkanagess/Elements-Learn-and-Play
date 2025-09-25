@@ -16,7 +16,9 @@ import 'package:elements_app/product/widget/common/modern_game_result_dialog.dar
 import 'package:elements_app/product/widget/ads/interstitial_ad_widget.dart';
 
 class MatchingPuzzleView extends StatefulWidget {
-  const MatchingPuzzleView({super.key});
+  final bool first20Only;
+
+  const MatchingPuzzleView({super.key, this.first20Only = false});
 
   @override
   State<MatchingPuzzleView> createState() => _MatchingPuzzleViewState();
@@ -75,7 +77,10 @@ class _MatchingPuzzleViewState extends State<MatchingPuzzleView>
       if (!_providerRef!.matchingSessionActive &&
           !_providerRef!.matchingSessionCompleted &&
           !_providerRef!.matchingSessionFailed) {
-        _providerRef!.startMatchingSession(turkish: isTr);
+        _providerRef!.startMatchingSession(
+          turkish: isTr,
+          first20Only: widget.first20Only,
+        );
       }
     });
   }
@@ -345,9 +350,12 @@ class _MatchingPuzzleViewState extends State<MatchingPuzzleView>
           );
           // Show ad after dialog is closed
           await Future.delayed(const Duration(milliseconds: 500));
-          await InterstitialAdManager.instance.showAdOnAction();
+          await InterstitialAdManager.instance.showAdOnAction(context);
           _providerRef?.resetMatchingSessionFlags();
-          _providerRef?.startMatchingSession(turkish: isTr);
+          _providerRef?.startMatchingSession(
+            turkish: isTr,
+            first20Only: widget.first20Only,
+          );
           setState(() {
             _showFeedback = false;
           });
@@ -361,7 +369,7 @@ class _MatchingPuzzleViewState extends State<MatchingPuzzleView>
           );
           // Show ad after dialog is closed
           await Future.delayed(const Duration(milliseconds: 500));
-          await InterstitialAdManager.instance.showAdOnAction();
+          await InterstitialAdManager.instance.showAdOnAction(context);
           _providerRef?.resetMatchingSessionFlags();
           Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(builder: (_) => TestsHomeView()),
@@ -537,7 +545,7 @@ class _MatchingHeader extends StatelessWidget {
                       const SizedBox(width: 6),
                       _compactStat(
                         Icons.favorite,
-                        p.matchingAttemptsLeft.toString(),
+                        p.getMatchingAttemptsLeft(context).toString(),
                         AppColors.pink,
                       ),
                     ],

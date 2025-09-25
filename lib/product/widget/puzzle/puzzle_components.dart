@@ -174,7 +174,9 @@ class PuzzleHeader extends StatelessWidget {
                         const SizedBox(width: 6),
                         _buildCompactStatItem(
                           icon: Icons.favorite,
-                          value: provider.wordAttemptsLeft.toString(),
+                          value: provider
+                              .getWordAttemptsLeft(context)
+                              .toString(),
                           color: AppColors.pink,
                         ),
                       ],

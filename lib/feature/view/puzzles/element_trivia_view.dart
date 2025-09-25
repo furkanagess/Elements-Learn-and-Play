@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:elements_app/feature/provider/trivia_provider.dart';
+import 'package:elements_app/feature/provider/purchase_provider.dart';
 import 'package:elements_app/product/widget/scaffold/app_scaffold.dart';
 import 'package:elements_app/product/constants/app_colors.dart';
 import 'package:elements_app/feature/provider/localization_provider.dart';
@@ -22,7 +23,13 @@ import 'package:elements_app/product/widget/common/modern_game_result_dialog.dar
 class ElementTriviaView extends StatefulWidget {
   final List<int>?
   allowedTypes; // 0:category,1:weight,2:period,3:desc,4:usage,5:source
-  const ElementTriviaView({super.key, this.allowedTypes});
+  final bool first20Only;
+
+  const ElementTriviaView({
+    super.key,
+    this.allowedTypes,
+    this.first20Only = false,
+  });
 
   @override
   State<ElementTriviaView> createState() => _ElementTriviaViewState();
@@ -49,9 +56,18 @@ class _ElementTriviaViewState extends State<ElementTriviaView>
   int _questionIndex = 0;
   int _correct = 0;
   int _wrong = 0;
-  static const int _maxWrong = 5;
   bool _hasShownResult = false;
   bool _hasExtraLife = false;
+
+  /// Get max wrong answers based on premium status
+  int get maxWrongAnswers {
+    try {
+      final purchaseProvider = context.read<PurchaseProvider>();
+      return purchaseProvider.isPremium ? 5 : 3;
+    } catch (e) {
+      return 3; // Default for non-premium users
+    }
+  }
 
   final List<_TriviaQuestion> _questions = [];
   List<PeriodicElement> _allElements = [];
@@ -184,6 +200,9 @@ class _ElementTriviaViewState extends State<ElementTriviaView>
   Future<void> _loadElementsAndGenerateQuestions() async {
     try {
       _allElements = await _tableService.getElements();
+      if (widget.first20Only) {
+        _allElements = _allElements.take(20).toList();
+      }
       _generateRandomQuestions();
       setState(() {
         _isLoading = false;
@@ -642,7 +661,7 @@ class _ElementTriviaViewState extends State<ElementTriviaView>
       await _feedbackController.reverse();
       if (!mounted) return;
       // Decide next step: fail, next question, or completed
-      if (_wrong >= _maxWrong) {
+      if (_wrong >= maxWrongAnswers) {
         _showEndDialog(success: false);
         return;
       }
@@ -720,7 +739,7 @@ class _ElementTriviaViewState extends State<ElementTriviaView>
             await _maybeShowAchievementsCongrats(_resolveCategoryForRun());
             // Show ad after dialog is closed
             await Future.delayed(const Duration(milliseconds: 500));
-            await InterstitialAdManager.instance.showAdOnAction();
+            await InterstitialAdManager.instance.showAdOnAction(context);
             _resetGame();
           },
           onHome: () async {
@@ -728,7 +747,7 @@ class _ElementTriviaViewState extends State<ElementTriviaView>
             await _maybeShowAchievementsCongrats(_resolveCategoryForRun());
             // Show ad after dialog is closed
             await Future.delayed(const Duration(milliseconds: 500));
-            await InterstitialAdManager.instance.showAdOnAction();
+            await InterstitialAdManager.instance.showAdOnAction(context);
             Navigator.of(context).pushAndRemoveUntil(
               MaterialPageRoute(builder: (_) => TestsHomeView()),
               (route) => false,
@@ -813,7 +832,7 @@ class _ElementTriviaViewState extends State<ElementTriviaView>
 
   Future<void> _handleExit(BuildContext context) async {
     final isTr = context.read<LocalizationProvider>().isTr;
-    final hasActive = _questions.isNotEmpty && (_wrong < _maxWrong);
+    final hasActive = _questions.isNotEmpty && (_wrong < maxWrongAnswers);
     if (hasActive) {
       final confirm =
           await showDialog<bool>(
@@ -903,11 +922,11 @@ class _ElementTriviaViewState extends State<ElementTriviaView>
                         wrong: _wrong,
                         index: _questionIndex,
                         total: _questions.length,
-                        remainingLives: (_maxWrong - _wrong).clamp(
+                        remainingLives: (maxWrongAnswers - _wrong).clamp(
                           0,
-                          _maxWrong,
+                          maxWrongAnswers,
                         ),
-                        maxLives: _maxWrong,
+                        maxLives: maxWrongAnswers,
                       ),
                     ),
                     const SizedBox(height: 12),

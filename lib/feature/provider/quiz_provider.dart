@@ -165,40 +165,10 @@ class QuizProvider extends ChangeNotifier {
           currentState == QuizState.answering);
 
   /// Starts a new quiz session
-  Future<void> startQuiz(QuizType type, {bool first20Only = false}) async {
-    try {
-      // Ensure we start completely fresh
-      _currentSession = null;
-      _updateSessionState(QuizState.loading);
-      _refreshUsedInSession = false;
-
-      final apiUrl = _getApiUrlForQuizType(type);
-      final questions = await _quizService.generateQuestions(
-        type: type,
-        apiUrl: apiUrl,
-        first20Only: first20Only,
-      );
-
-      _currentSession = _quizService.createQuizSession(
-        type: type,
-        questions: questions,
-      );
-
-      _updateSessionState(QuizState.loaded);
-      debugPrint('✅ New quiz started from scratch: ${type.turkishTitle}');
-      debugPrint('📊 Questions loaded: ${questions.length}');
-    } catch (e) {
-      _updateSessionState(QuizState.error);
-      _currentSession = _currentSession?.copyWith(errorMessage: e.toString());
-      debugPrint('❌ Error starting quiz: $e');
-    }
-  }
-
-  /// Starts a new quiz session with specific retry count
-  Future<void> _startQuizWithRetryCount(
-    QuizType type,
-    int retryCount, {
+  Future<void> startQuiz(
+    QuizType type, {
     bool first20Only = false,
+    BuildContext? context,
   }) async {
     try {
       // Ensure we start completely fresh
@@ -216,6 +186,43 @@ class QuizProvider extends ChangeNotifier {
       _currentSession = _quizService.createQuizSession(
         type: type,
         questions: questions,
+        context: context,
+      );
+
+      _updateSessionState(QuizState.loaded);
+      debugPrint('✅ New quiz started from scratch: ${type.turkishTitle}');
+      debugPrint('📊 Questions loaded: ${questions.length}');
+    } catch (e) {
+      _updateSessionState(QuizState.error);
+      _currentSession = _currentSession?.copyWith(errorMessage: e.toString());
+      debugPrint('❌ Error starting quiz: $e');
+    }
+  }
+
+  /// Starts a new quiz session with specific retry count
+  Future<void> _startQuizWithRetryCount(
+    QuizType type,
+    int retryCount, {
+    bool first20Only = false,
+    BuildContext? context,
+  }) async {
+    try {
+      // Ensure we start completely fresh
+      _currentSession = null;
+      _updateSessionState(QuizState.loading);
+      _refreshUsedInSession = false;
+
+      final apiUrl = _getApiUrlForQuizType(type);
+      final questions = await _quizService.generateQuestions(
+        type: type,
+        apiUrl: apiUrl,
+        first20Only: first20Only,
+      );
+
+      _currentSession = _quizService.createQuizSession(
+        type: type,
+        questions: questions,
+        context: context,
       );
 
       // Update retry count to the specified value
@@ -350,7 +357,7 @@ class QuizProvider extends ChangeNotifier {
   }
 
   /// Restarts the entire quiz from the beginning
-  void restartQuizFromBeginning() {
+  void restartQuizFromBeginning([BuildContext? context]) {
     if (_currentSession == null) return;
 
     // Store quiz type and retry count before resetting
@@ -362,7 +369,7 @@ class QuizProvider extends ChangeNotifier {
     );
 
     // Start a new quiz with the same type and updated retry count
-    _startQuizWithRetryCount(quizType, newRetryCount);
+    _startQuizWithRetryCount(quizType, newRetryCount, context: context);
   }
 
   /// Refreshes the current question by generating a new one

@@ -11,16 +11,32 @@ class RevenueCatService {
 
   // RevenueCat API Keys
   static const String _androidApiKey =
-      'goog_YOUR_ANDROID_API_KEY_HERE'; // Replace with your actual Android key from RevenueCat dashboard
+      'goog_QpLHDriAAYWHMAYETGlrIEaGQhg'; // Android API key from RevenueCat dashboard
   static const String _iosApiKey =
       'appl_WOGaKGocybabmcYEOKXeeUOWPfq'; // Your iOS API key
 
-  // Product IDs - Your actual product IDs
-  static const String _premiumProductId = 'remove_elements_ads';
+  // Platform-specific Product IDs
+  static const String _androidPremiumProductId = 'remove_ads_elements';
+  static const String _iosPremiumProductId = 'remove_elements_ads';
 
-  // Offering and Package identifiers from RevenueCat dashboard
-  static const String _offeringIdentifier = 'remove_elements_ads';
+  // Platform-specific Offering identifiers
+  static const String _androidOfferingIdentifier = 'remove_ads_elements';
+  static const String _iosOfferingIdentifier = 'remove_elements_ads';
+
+  // Package identifier (same for both platforms)
   static const String _packageIdentifier = '\$rc_lifetime';
+
+  // Get platform-specific product ID
+  static String get _premiumProductId {
+    return Platform.isAndroid ? _androidPremiumProductId : _iosPremiumProductId;
+  }
+
+  // Get platform-specific offering identifier
+  static String get _offeringIdentifier {
+    return Platform.isAndroid
+        ? _androidOfferingIdentifier
+        : _iosOfferingIdentifier;
+  }
 
   static RevenueCatService? _instance;
   static RevenueCatService get instance => _instance ??= RevenueCatService._();
@@ -35,6 +51,8 @@ class RevenueCatService {
   bool get isInitialized => _isInitialized;
   bool get isPremium => _isPremium;
   String? get userId => _userId;
+  String get premiumProductId => _premiumProductId;
+  String get offeringIdentifier => _offeringIdentifier;
 
   /// Initialize RevenueCat
   Future<void> initialize() async {
@@ -43,6 +61,14 @@ class RevenueCatService {
     try {
       // Configure RevenueCat
       final apiKey = Platform.isIOS ? _iosApiKey : _androidApiKey;
+      final platform = Platform.isIOS ? 'iOS' : 'Android';
+
+      debugPrint('🚀 Initializing RevenueCat for $platform');
+      debugPrint('📱 Platform: $platform');
+      debugPrint('🔑 API Key: ${apiKey.substring(0, 10)}...');
+      debugPrint('🛍️ Product ID: $_premiumProductId');
+      debugPrint('📦 Offering ID: $_offeringIdentifier');
+      debugPrint('🎁 Package ID: $_packageIdentifier');
 
       await Purchases.setLogLevel(LogLevel.debug);
       await Purchases.configure(PurchasesConfiguration(apiKey));
@@ -53,7 +79,7 @@ class RevenueCatService {
       // Load cached premium status
       await _loadCachedPremiumStatus();
 
-      // Get current customer info
+      // Get current customer info (this will also check billing availability)
       await _updateCustomerInfo();
 
       _isInitialized = true;
@@ -115,7 +141,24 @@ class RevenueCatService {
   /// Get available offerings
   Future<Offerings?> getOfferings() async {
     try {
+      final platform = Platform.isIOS ? 'iOS' : 'Android';
+      debugPrint('🔍 Getting offerings for $platform...');
+
       final offerings = await Purchases.getOfferings();
+
+      debugPrint('📦 Total offerings: ${offerings.all.length}');
+      debugPrint('🎯 Current offering: ${offerings.current?.identifier}');
+
+      if (offerings.current != null) {
+        debugPrint(
+          '📋 Available packages: ${offerings.current!.availablePackages.length}',
+        );
+        for (final package in offerings.current!.availablePackages) {
+          debugPrint('  - Package: ${package.identifier}');
+          debugPrint('  - Product: ${package.storeProduct.identifier}');
+          debugPrint('  - Price: ${package.storeProduct.priceString}');
+        }
+      }
 
       // Check if offerings are empty
       if (offerings.current == null ||
@@ -139,11 +182,29 @@ class RevenueCatService {
   /// Get specific offering by identifier
   Future<Offering?> getSpecificOffering(String identifier) async {
     try {
+      final platform = Platform.isIOS ? 'iOS' : 'Android';
+      debugPrint(
+        '🔍 Looking for specific offering: $identifier (Platform: $platform)',
+      );
+
       final offerings = await Purchases.getOfferings();
 
+      debugPrint('📦 All available offerings: ${offerings.all.keys.toList()}');
+
       if (offerings.all[identifier] != null) {
+        final offering = offerings.all[identifier]!;
         debugPrint('✅ Found offering: $identifier');
-        return offerings.all[identifier];
+        debugPrint(
+          '📋 Packages in offering: ${offering.availablePackages.length}',
+        );
+
+        for (final package in offering.availablePackages) {
+          debugPrint('  - Package: ${package.identifier}');
+          debugPrint('  - Product: ${package.storeProduct.identifier}');
+          debugPrint('  - Price: ${package.storeProduct.priceString}');
+        }
+
+        return offering;
       } else {
         debugPrint('⚠️ Offering not found: $identifier');
         debugPrint('Available offerings: ${offerings.all.keys.toList()}');
@@ -165,11 +226,12 @@ class RevenueCatService {
     try {
       final result = await Purchases.purchaseStoreProduct(product);
 
-      if (result.entitlements.all[_premiumProductId]?.isActive == true) {
+      if (result.customerInfo.entitlements.all[_premiumProductId]?.isActive ==
+          true) {
         await _updatePremiumStatus(true);
       }
 
-      return result;
+      return result.customerInfo;
     } catch (e) {
       debugPrint('❌ Purchase failed: $e');
       rethrow;
@@ -181,86 +243,191 @@ class RevenueCatService {
     try {
       final result = await Purchases.purchasePackage(package);
 
-      if (result.entitlements.all[_premiumProductId]?.isActive == true) {
+      if (result.customerInfo.entitlements.all[_premiumProductId]?.isActive ==
+          true) {
         await _updatePremiumStatus(true);
       }
 
-      return result;
+      return result.customerInfo;
     } catch (e) {
       debugPrint('❌ Package purchase failed: $e');
       rethrow;
     }
   }
 
-  /// Purchase remove ads product directly (iOS optimized)
+  /// Purchase remove ads product directly (Platform optimized)
   Future<CustomerInfo> purchaseRemoveAds() async {
     try {
-      // First try to get the specific "remove_elements_ads" offering
-      final removeAdsOffering = await getRemoveAdsOffering();
-      if (removeAdsOffering != null) {
-        // Look for the lifetime package
-        for (final package in removeAdsOffering.availablePackages) {
-          if (package.identifier == _packageIdentifier) {
-            debugPrint(
-              '✅ Found lifetime package in remove_elements_ads offering, purchasing...',
-            );
-            return await purchasePackage(package);
-          }
-        }
-
-        // If lifetime package not found, try any package with remove_elements_ads product
-        for (final package in removeAdsOffering.availablePackages) {
-          if (package.storeProduct.identifier == _premiumProductId) {
-            debugPrint(
-              '✅ Found remove ads package in remove_elements_ads offering, purchasing...',
-            );
-            return await purchasePackage(package);
-          }
-        }
-      }
-
-      // Fallback: Try current offering
-      final offerings = await getOfferings();
-      if (offerings?.current != null) {
-        for (final package in offerings!.current!.availablePackages) {
-          if (package.storeProduct.identifier == _premiumProductId) {
-            debugPrint(
-              '✅ Found remove ads package in current offering, purchasing...',
-            );
-            return await purchasePackage(package);
-          }
-        }
-      }
-
-      // Final fallback: Get product directly and purchase
+      final platform = Platform.isIOS ? 'iOS' : 'Android';
+      debugPrint('🛒 Starting remove ads purchase for $platform');
+      debugPrint('🎯 Looking for offering: $_offeringIdentifier');
+      debugPrint('🛍️ Looking for product: $_premiumProductId');
       debugPrint(
-        '⚠️ Package not found in offerings, trying direct product purchase...',
+        '🔑 Using API Key: ${Platform.isIOS ? _iosApiKey.substring(0, 10) : _androidApiKey.substring(0, 10)}...',
       );
-      final products = await getProductsByIds([_premiumProductId]);
 
-      if (products.isEmpty) {
-        throw Exception(
-          'Remove ads product not found. Please check your RevenueCat configuration.',
-        );
+      // Platform-specific purchase strategy
+      if (Platform.isIOS) {
+        return await _purchaseRemoveAdsIOS();
+      } else {
+        return await _purchaseRemoveAdsAndroid();
       }
-
-      final product = products.first;
-      debugPrint('✅ Found remove ads product directly, purchasing...');
-      return await purchaseProduct(product);
     } catch (e) {
-      debugPrint('❌ Remove ads purchase failed: $e');
+      final platform = Platform.isIOS ? 'iOS' : 'Android';
+      debugPrint('❌ Remove ads purchase failed for $platform: $e');
       rethrow;
     }
   }
 
-  /// Restore purchases
+  /// iOS-specific remove ads purchase
+  Future<CustomerInfo> _purchaseRemoveAdsIOS() async {
+    debugPrint('🍎 iOS-specific purchase strategy');
+
+    // First try to get the iOS-specific offering
+    final removeAdsOffering = await getRemoveAdsOffering();
+    if (removeAdsOffering != null) {
+      debugPrint('📦 Found iOS offering: ${removeAdsOffering.identifier}');
+
+      // Look for the lifetime package first
+      for (final package in removeAdsOffering.availablePackages) {
+        if (package.identifier == _packageIdentifier) {
+          debugPrint('✅ Found iOS lifetime package, purchasing...');
+          return await purchasePackage(package);
+        }
+      }
+
+      // If lifetime package not found, try any package with iOS product
+      for (final package in removeAdsOffering.availablePackages) {
+        if (package.storeProduct.identifier == _premiumProductId) {
+          debugPrint('✅ Found iOS remove ads package, purchasing...');
+          return await purchasePackage(package);
+        }
+      }
+    }
+
+    // Fallback: Try current offering
+    final offerings = await getOfferings();
+    if (offerings?.current != null) {
+      debugPrint('📦 Trying current iOS offering...');
+      for (final package in offerings!.current!.availablePackages) {
+        if (package.storeProduct.identifier == _premiumProductId) {
+          debugPrint('✅ Found iOS product in current offering, purchasing...');
+          return await purchasePackage(package);
+        }
+      }
+    }
+
+    // Final fallback: Direct product purchase for iOS
+    debugPrint(
+      '⚠️ iOS: Package not found in offerings, trying direct product purchase...',
+    );
+    return await _directProductPurchase();
+  }
+
+  /// Android-specific remove ads purchase
+  Future<CustomerInfo> _purchaseRemoveAdsAndroid() async {
+    debugPrint('🤖 Android-specific purchase strategy');
+    debugPrint('🎯 Target Product: remove_ads_elements (Non-consumable)');
+    debugPrint('🎯 Target Offering: remove_ads_elements');
+
+    // Android often works better with direct product purchase
+    debugPrint('🔍 Android: Trying direct product purchase first...');
+
+    try {
+      final result = await _directProductPurchase();
+      debugPrint('✅ Android direct purchase successful');
+      return result;
+    } catch (e) {
+      debugPrint(
+        '⚠️ Android direct purchase failed, trying offering approach...',
+      );
+      debugPrint('❌ Direct purchase error: $e');
+    }
+
+    // Fallback: Try offering approach for Android
+    final removeAdsOffering = await getRemoveAdsOffering();
+    if (removeAdsOffering != null) {
+      debugPrint('📦 Found Android offering: ${removeAdsOffering.identifier}');
+
+      // Look for Android-specific product
+      for (final package in removeAdsOffering.availablePackages) {
+        if (package.storeProduct.identifier == _premiumProductId) {
+          debugPrint('✅ Found Android remove ads package, purchasing...');
+          return await purchasePackage(package);
+        }
+      }
+    }
+
+    // Final fallback: Try current offering
+    final offerings = await getOfferings();
+    if (offerings?.current != null) {
+      debugPrint('📦 Trying current Android offering...');
+      for (final package in offerings!.current!.availablePackages) {
+        if (package.storeProduct.identifier == _premiumProductId) {
+          debugPrint(
+            '✅ Found Android product in current offering, purchasing...',
+          );
+          return await purchasePackage(package);
+        }
+      }
+    }
+
+    throw Exception(
+      'Android: Remove ads product not found in any offering or direct purchase',
+    );
+  }
+
+  /// Direct product purchase (platform-agnostic)
+  Future<CustomerInfo> _directProductPurchase() async {
+    debugPrint('🔍 Looking for product directly: $_premiumProductId');
+
+    final products = await getProductsByIds([_premiumProductId]);
+    debugPrint('📦 Found ${products.length} products');
+
+    if (products.isEmpty) {
+      final platform = Platform.isIOS ? 'iOS' : 'Android';
+      debugPrint('❌ $platform: No products found for ID: $_premiumProductId');
+
+      if (Platform.isAndroid) {
+        debugPrint('💡 Android Troubleshooting:');
+        debugPrint('   1. Check Google Play Console → Monetize → Products');
+        debugPrint('   2. Verify remove_ads_elements is Published (not Draft)');
+        debugPrint('   3. Check RevenueCat-Google Play Console connection');
+        debugPrint('   4. Ensure test device is added to Google Play Console');
+        debugPrint('   5. Verify test account is added to Google Play Console');
+        debugPrint(
+          '   6. Check if Google Play Services is available on device',
+        );
+      }
+
+      throw Exception(
+        '$platform: Remove ads product not found. Please check your RevenueCat and Google Play Console configuration.',
+      );
+    }
+
+    final product = products.first;
+    debugPrint('✅ Found remove ads product directly: ${product.identifier}');
+    debugPrint('💰 Product price: ${product.priceString}');
+    debugPrint('🏪 Product currency: ${product.currencyCode}');
+    debugPrint('📱 Product title: ${product.title}');
+    debugPrint('📝 Product description: ${product.description}');
+    return await purchaseProduct(product);
+  }
+
+  /// Restore purchases (Platform optimized)
   Future<CustomerInfo> restorePurchases() async {
     try {
+      final platform = Platform.isIOS ? 'iOS' : 'Android';
+      debugPrint('🔄 Starting restore purchases for $platform');
+
       final customerInfo = await Purchases.restorePurchases();
       await _updateCustomerInfo();
+
+      debugPrint('✅ Restore purchases successful for $platform');
       return customerInfo;
     } catch (e) {
-      debugPrint('❌ Restore purchases failed: $e');
+      final platform = Platform.isIOS ? 'iOS' : 'Android';
+      debugPrint('❌ Restore purchases failed for $platform: $e');
       rethrow;
     }
   }
@@ -327,6 +494,26 @@ class RevenueCatService {
       await _updatePremiumStatus(isActive);
     } catch (e) {
       debugPrint('❌ Failed to update customer info: $e');
+
+      // Handle Android billing availability errors gracefully
+      if (Platform.isAndroid) {
+        final errorString = e.toString().toLowerCase();
+        if (errorString.contains('billing') &&
+            (errorString.contains('unavailable') ||
+                errorString.contains('not available'))) {
+          debugPrint('⚠️ Android billing service unavailable on this device');
+          debugPrint('💡 This is normal for:');
+          debugPrint('   - Emulators without Google Play Services');
+          debugPrint('   - Devices without Google Play Store');
+          debugPrint('   - Devices with outdated Google Play Services');
+          debugPrint('   - Test devices not properly configured');
+          debugPrint('✅ App will continue with cached premium status');
+          return;
+        }
+      }
+
+      // For other errors, just log them but don't throw
+      debugPrint('⚠️ Customer info update failed, using cached status');
     }
   }
 

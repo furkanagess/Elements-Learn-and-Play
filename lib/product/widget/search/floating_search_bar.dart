@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:elements_app/product/constants/app_colors.dart';
-import 'package:elements_app/product/extensions/context_extensions.dart';
 
 class FloatingSearchBar extends StatefulWidget {
   final TextEditingController controller;
@@ -33,7 +32,6 @@ class _FloatingSearchBarState extends State<FloatingSearchBar>
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
   late Animation<double> _widthAnimation;
-  late Animation<double> _opacityAnimation;
 
   @override
   void initState() {
@@ -43,29 +41,13 @@ class _FloatingSearchBarState extends State<FloatingSearchBar>
       vsync: this,
     );
 
-    _scaleAnimation = Tween<double>(
-      begin: 1.0,
-      end: 1.05,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOut,
-    ));
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 1.05).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
 
-    _widthAnimation = Tween<double>(
-      begin: 1.0,
-      end: 1.2,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOut,
-    ));
-
-    _opacityAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeOut,
-    ));
+    _widthAnimation = Tween<double>(begin: 1.0, end: 1.2).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
 
     widget.focusNode.addListener(_onFocusChanged);
     widget.controller.addListener(_onTextChanged);
@@ -83,7 +65,7 @@ class _FloatingSearchBarState extends State<FloatingSearchBar>
     setState(() {
       _isFocused = widget.focusNode.hasFocus;
     });
-    
+
     if (_isFocused) {
       _animationController.forward();
     } else {
@@ -114,7 +96,10 @@ class _FloatingSearchBarState extends State<FloatingSearchBar>
         return Transform.scale(
           scale: _scaleAnimation.value,
           child: Container(
-            width: MediaQuery.of(context).size.width * 0.85 * _widthAnimation.value,
+            width:
+                MediaQuery.of(context).size.width *
+                0.85 *
+                _widthAnimation.value,
             height: 56,
             decoration: BoxDecoration(
               color: AppColors.white,
@@ -251,7 +236,9 @@ class _FloatingSearchBarState extends State<FloatingSearchBar>
                           // Filter functionality
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: const Text('Filtreleme özelliği yakında!'),
+                              content: const Text(
+                                'Filtreleme özelliği yakında!',
+                              ),
                               backgroundColor: AppColors.glowGreen,
                               behavior: SnackBarBehavior.floating,
                               shape: RoundedRectangleBorder(
@@ -276,4 +263,3 @@ class _FloatingSearchBarState extends State<FloatingSearchBar>
     );
   }
 }
-

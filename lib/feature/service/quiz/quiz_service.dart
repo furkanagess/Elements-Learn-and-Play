@@ -4,6 +4,9 @@ import 'package:http/http.dart' as http;
 import 'package:elements_app/feature/model/periodic_element.dart';
 import 'package:elements_app/feature/model/quiz/quiz_models.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:elements_app/feature/provider/purchase_provider.dart';
 
 /// Service class responsible for quiz data management and business logic
 class QuizService {
@@ -288,11 +291,28 @@ class QuizService {
   QuizSession createQuizSession({
     required QuizType type,
     required List<QuizQuestion> questions,
+    BuildContext? context,
   }) {
+    // Determine max wrong answers based on premium status
+    int maxWrongAnswers = 3; // Default for non-premium users
+
+    if (context != null) {
+      try {
+        final purchaseProvider = context.read<PurchaseProvider>();
+        if (purchaseProvider.isPremium) {
+          maxWrongAnswers = 5; // Premium users get 5 lives
+        }
+      } catch (e) {
+        // If context is not available or provider not found, use default
+        debugPrint('⚠️ Could not check premium status: $e');
+      }
+    }
+
     return QuizSession(
       id: 'quiz_${DateTime.now().millisecondsSinceEpoch}',
       type: type,
       questions: questions,
+      maxWrongAnswers: maxWrongAnswers,
       startTime: DateTime.now(),
       state: QuizState.loaded,
     );

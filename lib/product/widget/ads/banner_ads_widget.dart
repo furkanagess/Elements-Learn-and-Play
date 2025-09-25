@@ -1,4 +1,5 @@
 import 'package:elements_app/feature/provider/banner_ads_provider.dart';
+import 'package:elements_app/feature/provider/purchase_provider.dart';
 import 'package:elements_app/product/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -44,8 +45,13 @@ class _BannerAdsWidgetState extends State<BannerAdsWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<BannerAdsProvider>(
-      builder: (context, bannerAdsProvider, child) {
+    return Consumer2<BannerAdsProvider, PurchaseProvider>(
+      builder: (context, bannerAdsProvider, purchaseProvider, child) {
+        // Don't show ads for premium users
+        if (purchaseProvider.isPremium) {
+          return const SizedBox.shrink();
+        }
+
         return Container(
           margin: widget.margin ?? const EdgeInsets.symmetric(vertical: 8),
           padding: widget.padding,
@@ -56,8 +62,8 @@ class _BannerAdsWidgetState extends State<BannerAdsWidget> {
             borderRadius: widget.borderRadius ?? BorderRadius.circular(12),
           ),
           child: widget.showLoadingIndicator
-              ? bannerAdsProvider.getBannerAdWidgetWithLoading()
-              : bannerAdsProvider.getBannerAdWidget() ??
+              ? bannerAdsProvider.getBannerAdWidgetWithLoading(context)
+              : bannerAdsProvider.getBannerAdWidget(context) ??
                     const SizedBox.shrink(),
         );
       },
@@ -82,9 +88,14 @@ class CompactBannerAdsWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<BannerAdsProvider>(
-      builder: (context, bannerAdsProvider, child) {
-        final bannerWidget = bannerAdsProvider.getBannerAdWidget();
+    return Consumer2<BannerAdsProvider, PurchaseProvider>(
+      builder: (context, bannerAdsProvider, purchaseProvider, child) {
+        // Don't show ads for premium users
+        if (purchaseProvider.isPremium) {
+          return const SizedBox.shrink();
+        }
+
+        final bannerWidget = bannerAdsProvider.getBannerAdWidget(context);
 
         if (bannerWidget == null) {
           return const SizedBox.shrink();

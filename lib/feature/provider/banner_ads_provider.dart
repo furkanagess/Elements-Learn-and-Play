@@ -70,20 +70,28 @@ class BannerAdsProvider with ChangeNotifier {
         alignment: Alignment.center,
         width: bannerAd!.size.width.toDouble(),
         height: bannerAd!.size.height.toDouble(),
-        child: AdWidget(ad: bannerAd!),
+        child: _createNewBannerAdWidget(),
       );
     }
     return null;
   }
 
   /// Returns a banner ad widget with loading state.
-  Widget getBannerAdWidgetWithLoading() {
+  Widget getBannerAdWidgetWithLoading([BuildContext? context]) {
+    // Check if user is premium (if context is provided)
+    if (context != null) {
+      final purchaseProvider = context.read<PurchaseProvider>();
+      if (purchaseProvider.isPremium) {
+        return const SizedBox.shrink(); // Don't show ads for premium users
+      }
+    }
+
     return Container(
       alignment: Alignment.center,
       width: AdSize.banner.width.toDouble(),
       height: AdSize.banner.height.toDouble(),
       child: _isBannerAdLoaded && bannerAd != null
-          ? AdWidget(ad: bannerAd!)
+          ? _createNewBannerAdWidget()
           : Center(
               child: SizedBox(
                 width: 30,
@@ -96,5 +104,32 @@ class BannerAdsProvider with ChangeNotifier {
               ),
             ),
     );
+  }
+
+  /// Creates a new banner ad widget to avoid the "already in widget tree" error
+  Widget _createNewBannerAdWidget() {
+    final newBannerAd = BannerAd(
+      adUnitId: bannerAd!.adUnitId,
+      size: bannerAd!.size,
+      request: const AdRequest(),
+      listener: BannerAdListener(
+        onAdLoaded: (ad) {
+          // Ad loaded successfully
+        },
+        onAdFailedToLoad: (ad, error) {
+          ad.dispose();
+        },
+        onAdOpened: (ad) {
+          // Handle ad opened
+        },
+        onAdClosed: (ad) {
+          // Handle ad closed
+        },
+      ),
+    );
+
+    newBannerAd.load();
+
+    return AdWidget(ad: newBannerAd);
   }
 }

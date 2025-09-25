@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 
 import 'package:elements_app/product/constants/app_colors.dart';
+import 'package:elements_app/feature/provider/purchase_provider.dart';
 // Removed pattern painter usage per request
 
 /// Modern, consistent game result dialog for all game types
@@ -129,9 +131,8 @@ class _ModernGameResultDialogState extends State<ModernGameResultDialog>
   Widget _buildDialogContent() {
     return Center(
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 860, minWidth: 380),
+        constraints: const BoxConstraints(maxWidth: 1000, minWidth: 420),
         child: Container(
-          margin: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topLeft,
@@ -203,7 +204,7 @@ class _ModernGameResultDialogState extends State<ModernGameResultDialog>
 
                 // Main Content
                 Padding(
-                  padding: const EdgeInsets.all(28),
+                  padding: const EdgeInsets.all(32),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -433,83 +434,106 @@ class _ModernGameResultDialogState extends State<ModernGameResultDialog>
   }
 
   Widget _buildActionButtons() {
-    // If showing extra life option (failure state), show 3 buttons
-    if (widget.showExtraLifeOption &&
-        !widget.success &&
-        widget.onWatchAdForExtraLife != null) {
-      return Column(
-        children: [
-          // Extra life button (full width)
-          _buildActionButton(
-            text: widget.watchAdText ?? 'Reklam İzle - Ek Can',
-            icon: Icons.favorite,
-            onTap: () {
-              HapticFeedback.lightImpact();
-              widget.onWatchAdForExtraLife!();
-            },
-            isPrimary: true,
-            isFullWidth: true,
-          ),
-          const SizedBox(height: 12),
-          // Play again and home buttons
-          Row(
+    return Consumer<PurchaseProvider>(
+      builder: (context, purchaseProvider, child) {
+        final isPremium = purchaseProvider.isPremium;
+
+        // Debug logging for premium status
+        debugPrint('🎮 ModernGameResultDialog - Premium Status: $isPremium');
+        debugPrint(
+          '🎮 ModernGameResultDialog - Show Extra Life: ${widget.showExtraLifeOption}',
+        );
+        debugPrint('🎮 ModernGameResultDialog - Success: ${widget.success}');
+        debugPrint(
+          '🎮 ModernGameResultDialog - Has Extra Life Callback: ${widget.onWatchAdForExtraLife != null}',
+        );
+
+        // If showing extra life option (failure state) and user is NOT premium, show 3 buttons
+        if (widget.showExtraLifeOption &&
+            !widget.success &&
+            widget.onWatchAdForExtraLife != null &&
+            !isPremium) {
+          return Column(
             children: [
-              Expanded(
-                child: _buildActionButton(
-                  text: widget.playAgainText,
-                  icon: Icons.refresh_rounded,
-                  onTap: () {
-                    HapticFeedback.lightImpact();
-                    widget.onPlayAgain();
-                  },
-                  isPrimary: false,
-                ),
+              // Extra life button (full width)
+              _buildActionButton(
+                text: widget.watchAdText ?? 'Reklam İzle - Ek Can',
+                icon: Icons.favorite,
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  widget.onWatchAdForExtraLife!();
+                },
+                isPrimary: true,
+                isFullWidth: true,
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildActionButton(
-                  text: widget.homeText,
-                  icon: Icons.home_rounded,
-                  onTap: () {
-                    HapticFeedback.lightImpact();
-                    widget.onHome();
-                  },
-                  isPrimary: false,
-                ),
+              const SizedBox(height: 16),
+              // Play again and home buttons
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildActionButton(
+                      text: widget.playAgainText,
+                      icon: Icons.refresh_rounded,
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        widget.onPlayAgain();
+                      },
+                      isPrimary: false,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _buildActionButton(
+                      text: widget.homeText,
+                      icon: Icons.home_rounded,
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        widget.onHome();
+                      },
+                      isPrimary: false,
+                    ),
+                  ),
+                ],
               ),
             ],
-          ),
-        ],
-      );
-    }
+          );
+        }
 
-    // Default 2-button layout
-    return Row(
-      children: [
-        Expanded(
-          child: _buildActionButton(
-            text: widget.playAgainText,
-            icon: Icons.refresh_rounded,
-            onTap: () {
-              HapticFeedback.lightImpact();
-              widget.onPlayAgain();
-            },
-            isPrimary: true,
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _buildActionButton(
-            text: widget.homeText,
-            icon: Icons.home_rounded,
-            onTap: () {
-              HapticFeedback.lightImpact();
-              widget.onHome();
-            },
-            isPrimary: false,
-          ),
-        ),
-      ],
+        // Default 2-button layout (for success states or premium users)
+        if (isPremium && widget.showExtraLifeOption && !widget.success) {
+          debugPrint(
+            '🎮 ModernGameResultDialog - Premium user: Extra life button hidden',
+          );
+        }
+
+        return Row(
+          children: [
+            Expanded(
+              child: _buildActionButton(
+                text: widget.playAgainText,
+                icon: Icons.refresh_rounded,
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  widget.onPlayAgain();
+                },
+                isPrimary: true,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _buildActionButton(
+                text: widget.homeText,
+                icon: Icons.home_rounded,
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  widget.onHome();
+                },
+                isPrimary: false,
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -521,7 +545,7 @@ class _ModernGameResultDialogState extends State<ModernGameResultDialog>
     bool isFullWidth = false,
   }) {
     Widget buttonContent = Container(
-      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+      padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 24),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: isPrimary
@@ -536,7 +560,7 @@ class _ModernGameResultDialogState extends State<ModernGameResultDialog>
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(
           color: Colors.white.withValues(alpha: 0.3),
           width: 1,
@@ -552,18 +576,16 @@ class _ModernGameResultDialogState extends State<ModernGameResultDialog>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, color: AppColors.white, size: 18),
-          const SizedBox(width: 8),
           Flexible(
             child: Text(
               text,
               style: const TextStyle(
                 color: AppColors.white,
-                fontSize: 14,
+                fontSize: 16,
                 fontWeight: FontWeight.w600,
               ),
               textAlign: TextAlign.center,
-              maxLines: 1,
+              maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
           ),
@@ -575,7 +597,7 @@ class _ModernGameResultDialogState extends State<ModernGameResultDialog>
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
         child: isFullWidth ? buttonContent : buttonContent,
       ),
     );

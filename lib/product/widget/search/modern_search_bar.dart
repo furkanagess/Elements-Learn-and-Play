@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:elements_app/product/constants/app_colors.dart';
-import 'package:elements_app/product/extensions/context_extensions.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:elements_app/product/constants/assets_constants.dart';
 
 class ModernSearchBar extends StatefulWidget {
   final TextEditingController controller;
@@ -52,29 +49,21 @@ class _ModernSearchBarState extends State<ModernSearchBar>
       vsync: this,
     );
 
-    _scaleAnimation = Tween<double>(
-      begin: 1.0,
-      end: 1.02,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOut,
-    ));
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 1.02).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
 
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _suggestionController,
-      curve: Curves.easeOut,
-    ));
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _suggestionController, curve: Curves.easeOut),
+    );
 
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, -0.1),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _suggestionController,
-      curve: Curves.easeOutCubic,
-    ));
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, -0.1), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _suggestionController,
+            curve: Curves.easeOutCubic,
+          ),
+        );
 
     widget.focusNode.addListener(_onFocusChanged);
     widget.controller.addListener(_onTextChanged);
@@ -93,7 +82,7 @@ class _ModernSearchBarState extends State<ModernSearchBar>
     setState(() {
       _isFocused = widget.focusNode.hasFocus;
     });
-    
+
     if (_isFocused) {
       _animationController.forward();
       if (widget.showSuggestions && widget.suggestions != null) {
@@ -376,7 +365,9 @@ class _ModernSearchBarState extends State<ModernSearchBar>
                                   children: [
                                     Icon(
                                       Icons.search_rounded,
-                                      color: AppColors.darkBlue.withValues(alpha: 0.5),
+                                      color: AppColors.darkBlue.withValues(
+                                        alpha: 0.5,
+                                      ),
                                       size: 18,
                                     ),
                                     const SizedBox(width: 12),
@@ -407,4 +398,3 @@ class _ModernSearchBarState extends State<ModernSearchBar>
     );
   }
 }
-

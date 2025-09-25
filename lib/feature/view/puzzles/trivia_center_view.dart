@@ -14,7 +14,9 @@ import 'package:elements_app/feature/model/puzzle/puzzle_models.dart';
 import 'package:elements_app/product/widget/ads/banner_ads_widget.dart';
 
 class TriviaCenterView extends StatelessWidget {
-  TriviaCenterView({super.key});
+  final bool first20Only;
+
+  TriviaCenterView({super.key, this.first20Only = false});
   final PatternService _pattern = PatternService();
 
   @override
@@ -194,7 +196,10 @@ class TriviaCenterView extends StatelessWidget {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => ElementTriviaView(allowedTypes: allowedTypes),
+              builder: (_) => ElementTriviaView(
+                allowedTypes: allowedTypes,
+                first20Only: first20Only,
+              ),
             ),
           );
         },
