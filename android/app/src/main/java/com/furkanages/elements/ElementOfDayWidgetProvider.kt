@@ -127,7 +127,7 @@ class ElementOfDayWidgetProvider : AppWidgetProvider() {
 
             // Background and colors
             setInt(R.id.card, "setBackgroundResource", R.drawable.bg_widget_atom)
-            val accent = Color.parseColor("#50f8da")
+            val accent = Color.parseColor("#FFFFFF")
             setTextViewText(R.id.txtDate, date)
             setTextColor(R.id.txtTitle, accent)
             setTextColor(R.id.txtSymbol, accent)

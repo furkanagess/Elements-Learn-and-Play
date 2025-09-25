@@ -8,4 +8,4 @@
     android:initialLayout="@layout/element_of_day_widget"
     android:resizeMode="none"
     android:widgetCategory="home_screen"
-    android:previewImage="@mipmap/ic_launcher" />
+    android:previewImage="@mipmap/launcher_icon" />

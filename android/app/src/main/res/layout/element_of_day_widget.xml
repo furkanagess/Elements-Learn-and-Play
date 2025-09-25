@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="0dp"
-    android:background="#062c39">
+    android:background="#262638">
 
     <!-- Main Card with atom patterned background -->
     <FrameLayout
@@ -36,7 +36,7 @@
                     android:paddingTop="2dp"
                     android:paddingBottom="2dp"
                     android:text="@string/widget_title_element_of_day"
-                    android:textColor="#50f8da"
+                    android:textColor="#ffffff"
                     android:textStyle="bold"
                     android:textSize="10sp" />
 
@@ -47,7 +47,7 @@
                     android:layout_weight="1"
                     android:gravity="end"
                     android:text="Sep 25"
-                    android:textColor="#50f8da"
+                    android:textColor="#ffffff"
                     android:textSize="10sp" />
             </LinearLayout>
 
@@ -73,7 +73,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="#79"
-                        android:textColor="#50f8da"
+                        android:textColor="#ffffff"
                         android:textStyle="bold"
                         android:textSize="10sp" />
 
@@ -82,7 +82,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Au"
-                        android:textColor="#50f8da"
+                        android:textColor="#ffffff"
                         android:textStyle="bold"
                         android:textSize="12sp" />
                 </LinearLayout>
@@ -100,7 +100,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Gold"
-                        android:textColor="#50f8da"
+                        android:textColor="#ffffff"
                         android:textStyle="bold"
                         android:textSize="14sp"
                         android:maxLines="1"
@@ -111,7 +111,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Transition Metals"
-                        android:textColor="#50f8da"
+                        android:textColor="#ffffff"
                         android:textSize="11sp"
                         android:maxLines="1"
                         android:ellipsize="end" />

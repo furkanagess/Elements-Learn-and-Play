@@ -50,7 +50,8 @@
         <receiver
             android:name=".ElementOfDayWidgetProvider"
             android:exported="false"
-            android:label="Element of the Day">
+            android:label="Element of the Day"
+            android:icon="@mipmap/launcher_icon">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
