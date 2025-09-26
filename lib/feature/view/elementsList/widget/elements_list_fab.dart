@@ -1,4 +1,4 @@
-import 'package:elements_app/feature/view/quiz/modern_quiz_home.dart';
+import 'package:elements_app/feature/view/tests/tests_home_view.dart';
 import 'package:elements_app/product/constants/app_colors.dart';
 import 'package:elements_app/product/constants/assets_constants.dart';
 import 'package:flutter/material.dart';
@@ -49,7 +49,7 @@ class ElementsListFAB extends StatelessWidget {
             HapticFeedback.lightImpact();
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const ModernQuizHome()),
+              MaterialPageRoute(builder: (context) => TestsHomeView()),
             );
           },
           child: Center(

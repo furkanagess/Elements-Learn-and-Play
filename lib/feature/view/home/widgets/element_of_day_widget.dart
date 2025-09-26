@@ -190,6 +190,11 @@ class _ElementOfDayWidgetState extends State<ElementOfDayWidget>
           return const SizedBox.shrink();
         }
 
+        // Update iOS widget with current element
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          ElementHomeWidgetService.updateWidgetDirectly(element);
+        });
+
         final elementColor = _getElementColor(element.enCategory);
 
         // Get localized strings

@@ -121,7 +121,7 @@ class ElementOfDayService {
     115,
     116,
     117,
-    118
+    118,
   ];
 
   /// Gets the element of the day based on the current date
@@ -150,7 +150,18 @@ class ElementOfDayService {
     final now = DateTime.now();
     final seed = int.parse('${now.year}${now.month}${now.day}');
     final rng = Random(seed);
-    return elements[rng.nextInt(elements.length)];
+    final selectedElement = elements[rng.nextInt(elements.length)];
+
+    // Debug: Print selected element
+    print(
+      'Flutter App - Selected Element: ${selectedElement.symbol} (${selectedElement.enName})',
+    );
+    print('Flutter App - Seed: $seed, Random: ${rng.nextInt(elements.length)}');
+    print('Flutter App - Element Number: ${selectedElement.number}');
+    print('Flutter App - Element Weight: ${selectedElement.weight}');
+    print('Flutter App - Element Category: ${selectedElement.enCategory}');
+
+    return selectedElement;
   }
 
   /// Gets the element of the day for a specific date

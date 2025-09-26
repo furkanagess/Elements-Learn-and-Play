@@ -2,7 +2,7 @@
 //  ElementOfDayWidgetControl.swift
 //  ElementOfDayWidget
 //
-//  Created by furkan çağlar on 14.09.2025.
+//  Created by furkan çağlar on 26.09.2025.
 //
 
 import AppIntents

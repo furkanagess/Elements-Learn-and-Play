@@ -32,9 +32,19 @@ class ElementHomeWidgetService {
   static Future<void> _updateWidget(PeriodicElement element) async {
     final data = ElementOfDayService.buildWidgetPayload(element);
 
-    // Save widget data
+    // Debug: Print widget data being saved
+    print(
+      'Flutter Widget Service - Saving element: ${element.symbol} (${element.enName})',
+    );
+    print('Flutter Widget Service - Data: $data');
+    print('Flutter Widget Service - Element Number: ${element.number}');
+    print('Flutter Widget Service - Element Weight: ${element.weight}');
+    print('Flutter Widget Service - Element Category: ${element.enCategory}');
+
+    // Save widget data with App Group for iOS
     for (final entry in data.entries) {
       await HomeWidget.saveWidgetData(entry.key, entry.value);
+      print('Flutter Widget Service - Saved: ${entry.key} = ${entry.value}');
     }
 
     // Update widget
@@ -42,6 +52,8 @@ class ElementHomeWidgetService {
       name: androidWidgetName,
       iOSName: iOSWidgetName,
     );
+
+    print('Flutter Widget Service - Widget update requested');
   }
 
   static Future<void> forceUpdate() async {
