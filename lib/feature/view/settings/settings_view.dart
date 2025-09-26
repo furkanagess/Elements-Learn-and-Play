@@ -661,7 +661,7 @@ class _SettingsViewState extends State<SettingsView> {
                         ),
                       ),
                       child: Text(
-                        isTr ? 'Şimdi Kaldır' : 'Remove Now',
+                        isTr ? 'Satın Al' : 'Buy Now',
                         style: TextStyle(
                           color: AppColors.powderRed,
                           fontWeight: FontWeight.bold,
