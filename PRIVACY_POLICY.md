@@ -1,8 +1,5 @@
 # Privacy Policy
 
-**Effective Date:** [Tarih]  
-**Last Updated:** [Tarih]
-
 ## Developer Information
 
 - **Developer:** Furkan Caglar
