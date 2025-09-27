@@ -176,7 +176,7 @@ Your continued use of the App after changes constitutes acceptance of the new Pr
 If you have any questions about this Privacy Policy or our data practices, please contact us:
 
 **Developer:** Furkan Caglar  
-**Email:** [E-posta adresiniz]  
+**Email:** caglarrfurkann@gmail.com
 **Subject:** Privacy Policy Inquiry
 
 ---
