@@ -31,7 +31,7 @@ struct Provider: TimelineProvider {
     func getTimeline(in context: Context, completion: @escaping (Timeline<SimpleEntry>) -> ()) {
         var entries: [SimpleEntry] = []
 
-        // Generate a timeline with entries for the next 24 hours
+        // Generate a timeline with entries for the next 7 days
         let currentDate = Date()
         let calendar = Calendar.current
         
@@ -40,11 +40,13 @@ struct Provider: TimelineProvider {
         let currentEntry = SimpleEntry(date: currentDate, elementData: currentElement)
         entries.append(currentEntry)
         
-        // Add entry for tomorrow at midnight (when element changes)
-        if let tomorrow = calendar.date(byAdding: .day, value: 1, to: currentDate) {
-            let tomorrowElement = getElementDataSync() // This will be the same for today
-            let tomorrowEntry = SimpleEntry(date: tomorrow, elementData: tomorrowElement)
-            entries.append(tomorrowEntry)
+        // Add entries for the next 7 days at midnight (when element changes)
+        for dayOffset in 1...7 {
+            if let futureDate = calendar.date(byAdding: .day, value: dayOffset, to: currentDate) {
+                let futureElement = getElementDataForDate(futureDate)
+                let futureEntry = SimpleEntry(date: futureDate, elementData: futureElement)
+                entries.append(futureEntry)
+            }
         }
 
         let timeline = Timeline(entries: entries, policy: .atEnd)
@@ -92,6 +94,38 @@ struct Provider: TimelineProvider {
             trName: element.trName,
             weight: element.weight,
             category: element.category
+        )
+    }
+    
+    private func getElementDataForDate(_ date: Date) -> ElementData {
+        // Calculate element for a specific date using the same algorithm as Flutter
+        let calendar = Calendar.current
+        let year = calendar.component(.year, from: date)
+        let month = calendar.component(.month, from: date)
+        let day = calendar.component(.day, from: date)
+        
+        // Create seed exactly like Flutter: year + month + day as string, then parse as int
+        let seedString = "\(year)\(month)\(day)"
+        let seed = Int(seedString) ?? 0
+        
+        // Debug: Print seed and algorithm details for future date
+        print("iOS Widget - Future Date Algorithm - Date: \(date), Seed: \(seed), Elements count: \(ElementOfDayService.elements.count)")
+        
+        // Use simple random with seed (same as Flutter's Random(seed).nextInt())
+        let randomIndex = seed % ElementOfDayService.elements.count
+        let selectedElement = ElementOfDayService.elements[randomIndex]
+        
+        // Debug: Print selected element for future date
+        print("iOS Widget - Future Date Algorithm - Selected: \(selectedElement.symbol) (\(selectedElement.enName))")
+        print("iOS Widget - Future Date Algorithm - Random Index: \(randomIndex)")
+        
+        return ElementData(
+            number: String(selectedElement.number),
+            symbol: selectedElement.symbol,
+            enName: selectedElement.enName,
+            trName: selectedElement.trName,
+            weight: selectedElement.weight,
+            category: selectedElement.category
         )
     }
 }

@@ -19,6 +19,7 @@ class QuizService {
     required String apiUrl,
     int questionCount = _defaultQuestionCount,
     bool first20Only = false,
+    bool isTurkish = true,
   }) async {
     try {
       var elements = await _fetchElements(apiUrl);
@@ -35,6 +36,7 @@ class QuizService {
         elements: elements,
         type: type,
         count: questionCount,
+        isTurkish: isTurkish,
       );
     } catch (e) {
       debugPrint('Error generating questions: $e');
@@ -71,6 +73,7 @@ class QuizService {
     required List<PeriodicElement> elements,
     required QuizType type,
     required int count,
+    bool isTurkish = true,
   }) {
     final random = Random();
     final questions = <QuizQuestion>[];
@@ -98,6 +101,7 @@ class QuizService {
         allElements: availableElements,
         type: type,
         questionId: 'q_${i + 1}',
+        isTurkish: isTurkish,
       );
 
       questions.add(question);
@@ -111,6 +115,7 @@ class QuizService {
     required List<PeriodicElement> elements,
     required QuizType type,
     required String questionId,
+    bool isTurkish = true,
   }) {
     final valid = elements.where(_isValidElement).toList();
     final random = Random();
@@ -120,6 +125,7 @@ class QuizService {
       allElements: valid,
       type: type,
       questionId: questionId,
+      isTurkish: isTurkish,
     );
   }
 
@@ -129,6 +135,7 @@ class QuizService {
     required List<PeriodicElement> allElements,
     required QuizType type,
     required String questionId,
+    bool isTurkish = true,
   }) {
     switch (type) {
       case QuizType.symbol:
@@ -136,18 +143,21 @@ class QuizService {
           element: element,
           allElements: allElements,
           questionId: questionId,
+          isTurkish: isTurkish,
         );
       case QuizType.group:
         return _createGroupQuestion(
           element: element,
           allElements: allElements,
           questionId: questionId,
+          isTurkish: isTurkish,
         );
       case QuizType.number:
         return _createNumberQuestion(
           element: element,
           allElements: allElements,
           questionId: questionId,
+          isTurkish: isTurkish,
         );
     }
   }
@@ -157,14 +167,19 @@ class QuizService {
     required PeriodicElement element,
     required List<PeriodicElement> allElements,
     required String questionId,
+    bool isTurkish = true,
   }) {
-    final correctAnswer = element.trName ?? element.enName ?? 'Unknown';
+    final correctAnswer = isTurkish
+        ? (element.trName ?? element.enName ?? 'Unknown')
+        : (element.enName ?? element.trName ?? 'Unknown');
     final questionText = element.symbol ?? 'Unknown Symbol';
 
     final options = _generateOptions(
       correctAnswer: correctAnswer,
       allElements: allElements,
-      extractValue: (e) => e.trName ?? e.enName ?? 'Unknown',
+      extractValue: (e) => isTurkish
+          ? (e.trName ?? e.enName ?? 'Unknown')
+          : (e.enName ?? e.trName ?? 'Unknown'),
     );
 
     return QuizQuestion(
@@ -182,14 +197,21 @@ class QuizService {
     required PeriodicElement element,
     required List<PeriodicElement> allElements,
     required String questionId,
+    bool isTurkish = true,
   }) {
-    final correctAnswer = element.trCategory ?? element.enCategory ?? 'Unknown';
-    final questionText = element.trName ?? element.enName ?? 'Unknown Element';
+    final correctAnswer = isTurkish
+        ? (element.trCategory ?? element.enCategory ?? 'Unknown')
+        : (element.enCategory ?? element.trCategory ?? 'Unknown');
+    final questionText = isTurkish
+        ? (element.trName ?? element.enName ?? 'Unknown Element')
+        : (element.enName ?? element.trName ?? 'Unknown Element');
 
     final options = _generateOptions(
       correctAnswer: correctAnswer,
       allElements: allElements,
-      extractValue: (e) => e.trCategory ?? e.enCategory ?? 'Unknown',
+      extractValue: (e) => isTurkish
+          ? (e.trCategory ?? e.enCategory ?? 'Unknown')
+          : (e.enCategory ?? e.trCategory ?? 'Unknown'),
     );
 
     return QuizQuestion(
@@ -207,14 +229,19 @@ class QuizService {
     required PeriodicElement element,
     required List<PeriodicElement> allElements,
     required String questionId,
+    bool isTurkish = true,
   }) {
-    final correctAnswer = element.trName ?? element.enName ?? 'Unknown';
+    final correctAnswer = isTurkish
+        ? (element.trName ?? element.enName ?? 'Unknown')
+        : (element.enName ?? element.trName ?? 'Unknown');
     final questionText = element.number?.toString() ?? 'Unknown Number';
 
     final options = _generateOptions(
       correctAnswer: correctAnswer,
       allElements: allElements,
-      extractValue: (e) => e.trName ?? e.enName ?? 'Unknown',
+      extractValue: (e) => isTurkish
+          ? (e.trName ?? e.enName ?? 'Unknown')
+          : (e.enName ?? e.trName ?? 'Unknown'),
     );
 
     return QuizQuestion(

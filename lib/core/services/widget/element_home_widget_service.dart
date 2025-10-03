@@ -66,4 +66,21 @@ class ElementHomeWidgetService {
       print('Force update error: $e');
     }
   }
+
+  /// Schedule daily widget updates at midnight
+  static Future<void> scheduleDailyUpdates() async {
+    try {
+      // For iOS, we rely on the widget's timeline to handle updates
+      // For Android, we schedule a daily update using WorkManager or similar
+      await _scheduleAndroidDailyUpdate();
+    } catch (e) {
+      print('Schedule daily updates error: $e');
+    }
+  }
+
+  static Future<void> _scheduleAndroidDailyUpdate() async {
+    // This would typically use WorkManager for Android
+    // For now, we'll rely on the Android widget's AlarmManager
+    print('Android daily update scheduling handled by widget provider');
+  }
 }

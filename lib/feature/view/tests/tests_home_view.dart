@@ -12,6 +12,7 @@ import 'package:elements_app/feature/view/puzzles/trivia_center_view.dart';
 import 'package:elements_app/feature/view/home/home_view.dart';
 import 'package:elements_app/product/widget/ads/banner_ads_widget.dart';
 import 'package:elements_app/feature/provider/quiz_provider.dart';
+import 'package:elements_app/product/widget/button/back_button.dart';
 
 class TestsHomeView extends StatelessWidget {
   TestsHomeView({super.key});
@@ -36,15 +37,7 @@ class TestsHomeView extends StatelessWidget {
             theme: AppBarVariant.quiz,
             style: AppBarStyle.gradient,
             title: isTr ? 'Oyunlar' : 'Games',
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back, color: Colors.white),
-              onPressed: () {
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (_) => const HomeView()),
-                  (route) => false,
-                );
-              },
-            ),
+            leading: const ModernBackButton(),
           ).toAppBar(),
           body: Stack(
             children: [

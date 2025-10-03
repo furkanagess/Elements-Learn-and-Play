@@ -8,6 +8,8 @@ import 'package:elements_app/feature/service/quiz/quiz_service.dart';
 import 'package:elements_app/feature/model/periodic_element.dart';
 import 'package:elements_app/product/constants/api_types.dart';
 import 'package:elements_app/product/widget/ads/interstitial_ad_widget.dart';
+import 'package:elements_app/feature/provider/localization_provider.dart';
+import 'package:provider/provider.dart';
 
 /// Provider class for managing quiz state and operations
 class QuizProvider extends ChangeNotifier {
@@ -176,11 +178,23 @@ class QuizProvider extends ChangeNotifier {
       _updateSessionState(QuizState.loading);
       _refreshUsedInSession = false;
 
+      // Get language preference from LocalizationProvider
+      bool isTurkish = true; // Default to Turkish
+      if (context != null) {
+        try {
+          final localizationProvider = context.read<LocalizationProvider>();
+          isTurkish = localizationProvider.isTr;
+        } catch (e) {
+          debugPrint('⚠️ Could not get language preference: $e');
+        }
+      }
+
       final apiUrl = _getApiUrlForQuizType(type);
       final questions = await _quizService.generateQuestions(
         type: type,
         apiUrl: apiUrl,
         first20Only: first20Only,
+        isTurkish: isTurkish,
       );
 
       _currentSession = _quizService.createQuizSession(
@@ -192,6 +206,7 @@ class QuizProvider extends ChangeNotifier {
       _updateSessionState(QuizState.loaded);
       debugPrint('✅ New quiz started from scratch: ${type.turkishTitle}');
       debugPrint('📊 Questions loaded: ${questions.length}');
+      debugPrint('🌐 Language: ${isTurkish ? 'Turkish' : 'English'}');
     } catch (e) {
       _updateSessionState(QuizState.error);
       _currentSession = _currentSession?.copyWith(errorMessage: e.toString());
@@ -212,11 +227,23 @@ class QuizProvider extends ChangeNotifier {
       _updateSessionState(QuizState.loading);
       _refreshUsedInSession = false;
 
+      // Get language preference from LocalizationProvider
+      bool isTurkish = true; // Default to Turkish
+      if (context != null) {
+        try {
+          final localizationProvider = context.read<LocalizationProvider>();
+          isTurkish = localizationProvider.isTr;
+        } catch (e) {
+          debugPrint('⚠️ Could not get language preference: $e');
+        }
+      }
+
       final apiUrl = _getApiUrlForQuizType(type);
       final questions = await _quizService.generateQuestions(
         type: type,
         apiUrl: apiUrl,
         first20Only: first20Only,
+        isTurkish: isTurkish,
       );
 
       _currentSession = _quizService.createQuizSession(
@@ -231,6 +258,7 @@ class QuizProvider extends ChangeNotifier {
       _updateSessionState(QuizState.loaded);
       debugPrint('✅ Quiz restarted with retry count: $retryCount');
       debugPrint('📊 Questions loaded: ${questions.length}');
+      debugPrint('🌐 Language: ${isTurkish ? 'Turkish' : 'English'}');
     } catch (e) {
       _updateSessionState(QuizState.error);
       _currentSession = _currentSession?.copyWith(errorMessage: e.toString());

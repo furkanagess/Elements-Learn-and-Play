@@ -48,6 +48,9 @@ Future<void> main() async {
   try {
     await HomeWidget.setAppGroupId('group.com.furkanages.elements');
     // await HomeWidget.registerInteractivityCallback(_backgroundCallback);
+
+    // Schedule daily widget updates
+    await ElementHomeWidgetService.scheduleDailyUpdates();
   } catch (_) {}
 
   runApp(
