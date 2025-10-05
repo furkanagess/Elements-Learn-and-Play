@@ -175,15 +175,6 @@ class ElementOfDayWidgetProvider : AppWidgetProvider() {
     }
     
     private fun scheduleDailyUpdate(context: Context) {
-        // Check if we have permission to schedule exact alarms (Android 12+)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-            if (!alarmManager.canScheduleExactAlarms()) {
-                // Permission not granted, skip scheduling
-                return
-            }
-        }
-        
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val intent = Intent(context, ElementOfDayWidgetProvider::class.java).apply {
             action = "com.furkanages.elements.DAILY_UPDATE"
@@ -206,23 +197,25 @@ class ElementOfDayWidgetProvider : AppWidgetProvider() {
         }
         
         try {
-            // Use setExactAndAllowWhileIdle for better reliability on newer Android versions
+            // Use setInexactRepeating for daily widget updates - no special permissions required
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                alarmManager.setExactAndAllowWhileIdle(
+                alarmManager.setInexactRepeating(
                     AlarmManager.RTC_WAKEUP,
                     calendar.timeInMillis,
+                    AlarmManager.INTERVAL_DAY,
                     pendingIntent
                 )
             } else {
-                alarmManager.setExact(
+                alarmManager.setRepeating(
                     AlarmManager.RTC_WAKEUP,
                     calendar.timeInMillis,
+                    AlarmManager.INTERVAL_DAY,
                     pendingIntent
                 )
             }
         } catch (e: SecurityException) {
             // Handle permission denied gracefully
-            android.util.Log.w("ElementOfDayWidget", "Cannot schedule exact alarm: ${e.message}")
+            android.util.Log.w("ElementOfDayWidget", "Cannot schedule alarm: ${e.message}")
         }
     }
 }
