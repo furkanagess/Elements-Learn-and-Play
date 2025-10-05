@@ -8,6 +8,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
+import android.os.Build
 import android.widget.RemoteViews
 import es.antonborri.home_widget.HomeWidgetPlugin
 import java.util.Calendar
@@ -174,6 +175,15 @@ class ElementOfDayWidgetProvider : AppWidgetProvider() {
     }
     
     private fun scheduleDailyUpdate(context: Context) {
+        // Check if we have permission to schedule exact alarms (Android 12+)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+            if (!alarmManager.canScheduleExactAlarms()) {
+                // Permission not granted, skip scheduling
+                return
+            }
+        }
+        
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val intent = Intent(context, ElementOfDayWidgetProvider::class.java).apply {
             action = "com.furkanages.elements.DAILY_UPDATE"
@@ -195,19 +205,24 @@ class ElementOfDayWidgetProvider : AppWidgetProvider() {
             set(Calendar.MILLISECOND, 0)
         }
         
-        // Use setExactAndAllowWhileIdle for better reliability on newer Android versions
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
-            alarmManager.setExactAndAllowWhileIdle(
-                AlarmManager.RTC_WAKEUP,
-                calendar.timeInMillis,
-                pendingIntent
-            )
-        } else {
-            alarmManager.setExact(
-                AlarmManager.RTC_WAKEUP,
-                calendar.timeInMillis,
-                pendingIntent
-            )
+        try {
+            // Use setExactAndAllowWhileIdle for better reliability on newer Android versions
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                alarmManager.setExactAndAllowWhileIdle(
+                    AlarmManager.RTC_WAKEUP,
+                    calendar.timeInMillis,
+                    pendingIntent
+                )
+            } else {
+                alarmManager.setExact(
+                    AlarmManager.RTC_WAKEUP,
+                    calendar.timeInMillis,
+                    pendingIntent
+                )
+            }
+        } catch (e: SecurityException) {
+            // Handle permission denied gracefully
+            android.util.Log.w("ElementOfDayWidget", "Cannot schedule exact alarm: ${e.message}")
         }
     }
 }

@@ -1,7 +1,7 @@
 name: elements_app
 description: Periodic Table - Learn and explore chemical elements
 publish_to: 'none'
-version: 2.0.0+10
+version: 2.0.1+11
 
 environment:
   sdk: '>=3.8.0 <4.0.0'
@@ -76,11 +76,11 @@ dev_dependencies:
 flutter_launcher_icons:
   android: "launcher_icon"
   ios: true
-  image_path_android: "assets/icon/android.png"
-  image_path_ios: "assets/icon/ios_new_icon.png"
+  image_path_android: "assets/icon/new-icon.png"
+  image_path_ios: "assets/icon/new-icon.png"
   min_sdk_android: 21 
   adaptive_icon_background: "#212437"
-  adaptive_icon_foreground: "assets/icon/android.png"
+  adaptive_icon_foreground: "assets/icon/new-icon.png"
 
 flutter_native_splash:
   android: true
