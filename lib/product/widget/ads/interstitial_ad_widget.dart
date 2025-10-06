@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:elements_app/feature/service/google_ads_service.dart';
 import 'package:flutter/material.dart';
@@ -8,28 +9,63 @@ import 'banner_ad_widget.dart';
 class InterstitialAdWidget {
   static InterstitialAd? _interstitialAd;
   static bool _isAdLoaded = false;
+  static int _loadAttempts = 0;
+  static const int _maxLoadAttempts = 3;
 
-  // Interstitial Ad Unit IDs (using AdUnitIds class)
-
-  /// Load an interstitial ad
+  /// Load an interstitial ad with iOS-specific configuration
   static Future<void> loadInterstitialAd() async {
-    await InterstitialAd.load(
-      adUnitId: _isDebugMode()
-          ? AdUnitIds.testInterstitial
-          : GoogleAdsService.interstitialAdUnitId,
-      request: const AdRequest(),
-      adLoadCallback: InterstitialAdLoadCallback(
-        onAdLoaded: (ad) {
-          _interstitialAd = ad;
-          _isAdLoaded = true;
-          print('Interstitial ad loaded successfully');
-        },
-        onAdFailedToLoad: (error) {
-          _isAdLoaded = false;
-          print('Interstitial ad failed to load: $error');
-        },
-      ),
-    );
+    if (_loadAttempts >= _maxLoadAttempts) {
+      debugPrint('❌ Max interstitial ad load attempts reached');
+      return;
+    }
+
+    try {
+      await InterstitialAd.load(
+        adUnitId: _isDebugMode()
+            ? AdUnitIds.testInterstitial
+            : GoogleAdsService.interstitialAdUnitId,
+        request: _createAdRequest(),
+        adLoadCallback: InterstitialAdLoadCallback(
+          onAdLoaded: (ad) {
+            _interstitialAd = ad;
+            _isAdLoaded = true;
+            _loadAttempts = 0;
+            debugPrint('✅ Interstitial ad loaded successfully');
+          },
+          onAdFailedToLoad: (error) {
+            _isAdLoaded = false;
+            _loadAttempts++;
+            debugPrint(
+              '❌ Interstitial ad failed to load (attempt $_loadAttempts): $error',
+            );
+
+            // Retry loading after delay if attempts remaining
+            if (_loadAttempts < _maxLoadAttempts) {
+              Future.delayed(Duration(seconds: _loadAttempts * 3), () {
+                loadInterstitialAd();
+              });
+            }
+          },
+        ),
+      );
+    } catch (e) {
+      debugPrint('❌ Exception loading interstitial ad: $e');
+      _loadAttempts++;
+    }
+  }
+
+  /// Create platform-specific ad request
+  static AdRequest _createAdRequest() {
+    if (Platform.isIOS) {
+      // iOS-specific ad request configuration
+      return const AdRequest(
+        keywords: ['education', 'science', 'chemistry', 'periodic table'],
+        contentUrl: 'https://elements-app.com',
+        nonPersonalizedAds: false,
+      );
+    } else {
+      return const AdRequest();
+    }
   }
 
   /// Show the loaded interstitial ad

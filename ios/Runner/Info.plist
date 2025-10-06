@@ -60,6 +60,14 @@
 		<!-- AdMob Application ID -->
 		<key>GADApplicationIdentifier</key>
 		<string>ca-app-pub-3499593115543692~7549075426</string>
+		<!-- iOS 14+ App Tracking Transparency -->
+		<key>NSUserTrackingUsageDescription</key>
+		<string>This app uses advertising to provide free content. Your data helps us show relevant ads and improve your experience.</string>
+		<!-- AdMob Configuration -->
+		<key>GADIsAdManagerApp</key>
+		<false/>
+		<key>GADDelayAppMeasurementInit</key>
+		<false/>
 		<key>UIStatusBarHidden</key>
 		<false/>
 	</dict>

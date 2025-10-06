@@ -1,5 +1,8 @@
+import 'dart:io';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:elements_app/core/services/notifications/fcm_token_service.dart';
+import 'package:elements_app/core/services/ios_ad_tracking_service.dart';
+import 'package:elements_app/core/services/ad_configuration_service.dart';
 import '../../product/widget/ads/interstitial_ad_widget.dart';
 import '../../product/ads/rewarded_helper.dart';
 
@@ -27,8 +30,16 @@ class AppInitializer {
   Future<void> initialize() async {
     if (!_isInitialized) {
       try {
-        // Initialize Google Mobile Ads with error handling
+        // Initialize Google Mobile Ads with iOS-specific configuration
         await MobileAds.instance.initialize();
+
+        // Initialize iOS ad tracking service
+        await IOSAdTrackingService.instance.initialize();
+
+        // iOS-specific initialization delay
+        if (Platform.isIOS) {
+          await Future.delayed(const Duration(milliseconds: 1000));
+        }
 
         // Initialize Interstitial Ad Manager
         await InterstitialAdManager.instance.initialize();
@@ -39,11 +50,15 @@ class AppInitializer {
         // Log FCM token once during app startup (Android/iOS)
         await FcmTokenService.instance.logFcmTokenIfAvailable();
 
+        // Verify ad configuration
+        AdConfigurationService.instance.logAdConfiguration();
+
         // Marks the completion of the initialization process.
         _isInitialized = true;
+        print('✅ App initialization completed successfully');
       } catch (e) {
         // Handle any exceptions during initialization
-        print('Error during app initialization: $e');
+        print('❌ Error during app initialization: $e');
         // Still mark as initialized to prevent infinite retry
         _isInitialized = true;
       }

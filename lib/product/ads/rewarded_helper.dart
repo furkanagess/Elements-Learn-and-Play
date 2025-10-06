@@ -4,16 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:provider/provider.dart';
 import 'package:elements_app/feature/provider/purchase_provider.dart';
+import 'package:elements_app/feature/service/google_ads_service.dart';
 
 /// Simple helper to show a rewarded ad and invoke [onRewardEarned]
 /// when the user successfully earns the reward.
 class RewardedHelper {
-  // Provided ad unit ids
-  static const String _androidRewardedId =
-      'ca-app-pub-3499593115543692/5817895627';
-  static const String _iosRewardedId = 'ca-app-pub-3499593115543692/3125989969';
-
-  // Platform-specific ad unit selection is handled in showRewardedAd
+  // Use centralized ad unit IDs from GoogleAdsService
 
   // Cached rewarded interstitial to reduce latency
   static RewardedInterstitialAd? _cachedAd;
@@ -35,11 +31,11 @@ class RewardedHelper {
     _isLoading = true;
     _lastLoadAt = DateTime.now();
 
-    final adUnitId = Platform.isIOS ? _iosRewardedId : _androidRewardedId;
+    final adUnitId = GoogleAdsService.rewardedAdUnitId;
     try {
       await RewardedInterstitialAd.load(
         adUnitId: adUnitId,
-        request: const AdRequest(),
+        request: _createAdRequest(),
         rewardedInterstitialAdLoadCallback: RewardedInterstitialAdLoadCallback(
           onAdLoaded: (RewardedInterstitialAd ad) {
             if (kDebugMode) debugPrint('✅ RewardedInterstitial cached');
@@ -59,6 +55,20 @@ class RewardedHelper {
         debugPrint('❌ RewardedInterstitial preload exception: $e');
       _isLoading = false;
       _cachedAd = null;
+    }
+  }
+
+  /// Create platform-specific ad request
+  static AdRequest _createAdRequest() {
+    if (Platform.isIOS) {
+      // iOS-specific ad request configuration
+      return const AdRequest(
+        keywords: ['education', 'science', 'chemistry', 'periodic table'],
+        contentUrl: 'https://elements-app.com',
+        nonPersonalizedAds: false,
+      );
+    } else {
+      return const AdRequest();
     }
   }
 
