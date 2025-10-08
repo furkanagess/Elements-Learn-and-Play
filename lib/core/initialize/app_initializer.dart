@@ -3,6 +3,8 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:elements_app/core/services/notifications/fcm_token_service.dart';
 import 'package:elements_app/core/services/ios_ad_tracking_service.dart';
 import 'package:elements_app/core/services/ad_configuration_service.dart';
+import 'package:elements_app/core/services/ios_production_ad_service.dart';
+import 'package:elements_app/core/services/android_production_service.dart';
 import '../../product/widget/ads/interstitial_ad_widget.dart';
 import '../../product/ads/rewarded_helper.dart';
 
@@ -30,28 +32,73 @@ class AppInitializer {
   Future<void> initialize() async {
     if (!_isInitialized) {
       try {
-        // Initialize Google Mobile Ads with iOS-specific configuration
-        await MobileAds.instance.initialize();
+        print('🚀 Starting app initialization...');
 
-        // Initialize iOS ad tracking service
-        await IOSAdTrackingService.instance.initialize();
+        // Initialize Google Mobile Ads with timeout
+        await MobileAds.instance.initialize().timeout(
+          const Duration(seconds: 10),
+        );
 
-        // iOS-specific initialization delay
+        // Initialize iOS ad tracking service with timeout
+        await IOSAdTrackingService.instance.initialize().timeout(
+          const Duration(seconds: 5),
+        );
+
+        // iOS-specific initialization delay (reduced)
         if (Platform.isIOS) {
-          await Future.delayed(const Duration(milliseconds: 1000));
+          await Future.delayed(const Duration(milliseconds: 500));
         }
 
-        // Initialize Interstitial Ad Manager
-        await InterstitialAdManager.instance.initialize();
+        // Initialize Interstitial Ad Manager with timeout
+        await InterstitialAdManager.instance.initialize().timeout(
+          const Duration(seconds: 10),
+        );
 
-        // Preload rewarded interstitial to reduce first-show latency
-        await RewardedHelper.initialize();
+        // Preload rewarded interstitial with timeout (non-critical)
+        try {
+          await RewardedHelper.initialize().timeout(const Duration(seconds: 5));
+        } catch (e) {
+          print('⚠️ Rewarded ads initialization failed (non-critical): $e');
+        }
 
-        // Log FCM token once during app startup (Android/iOS)
-        await FcmTokenService.instance.logFcmTokenIfAvailable();
+        // Log FCM token with timeout (non-critical)
+        try {
+          await FcmTokenService.instance.logFcmTokenIfAvailable().timeout(
+            const Duration(seconds: 5),
+          );
+        } catch (e) {
+          print('⚠️ FCM token logging failed (non-critical): $e');
+        }
 
-        // Verify ad configuration
-        AdConfigurationService.instance.logAdConfiguration();
+        // Initialize platform-specific production services
+        if (Platform.isIOS) {
+          try {
+            await IOSProductionAdService.instance.initialize().timeout(
+              const Duration(seconds: 5),
+            );
+          } catch (e) {
+            print(
+              '⚠️ iOS production ad service initialization failed (non-critical): $e',
+            );
+          }
+        } else if (Platform.isAndroid) {
+          try {
+            await AndroidProductionService.instance.initialize().timeout(
+              const Duration(seconds: 5),
+            );
+          } catch (e) {
+            print(
+              '⚠️ Android production service initialization failed (non-critical): $e',
+            );
+          }
+        }
+
+        // Verify ad configuration (non-blocking)
+        try {
+          AdConfigurationService.instance.logAdConfiguration();
+        } catch (e) {
+          print('⚠️ Ad configuration logging failed (non-critical): $e');
+        }
 
         // Marks the completion of the initialization process.
         _isInitialized = true;

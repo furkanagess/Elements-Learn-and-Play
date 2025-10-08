@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:elements_app/feature/provider/periodicTable/periodic_table_provider.dart';
 import 'package:elements_app/feature/provider/purchase_provider.dart';
 import 'package:elements_app/feature/view/home/widgets/element_of_day_widget.dart';
@@ -8,6 +9,7 @@ import 'package:elements_app/product/widget/navigation/app_bottom_navbar.dart';
 import 'package:elements_app/product/widget/scaffold/app_scaffold.dart';
 import 'package:elements_app/core/services/widget/element_home_widget_service.dart';
 import 'package:elements_app/core/services/first_time_service.dart';
+import 'package:elements_app/core/services/notifications/permission_service.dart';
 import 'package:elements_app/product/widget/premium/first_time_paywall.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -30,6 +32,8 @@ class _HomeViewState extends State<StatefulWidget> {
       ElementHomeWidgetService.updateFromContext(context);
       // Check if we should show paywall
       _checkAndShowPaywall();
+      // Check notification permission for iOS
+      _checkNotificationPermission();
     });
   }
 
@@ -59,6 +63,39 @@ class _HomeViewState extends State<StatefulWidget> {
       }
     } catch (e) {
       debugPrint('❌ Error checking paywall: $e');
+    }
+  }
+
+  Future<void> _checkNotificationPermission() async {
+    try {
+      // Only check on iOS
+      if (!Platform.isIOS) return;
+
+      // Wait a bit for the UI to be fully loaded
+      await Future.delayed(const Duration(seconds: 2));
+
+      if (!mounted) return;
+
+      // Check if permission is already granted
+      final isGranted = await NotificationPermissionService.instance
+          .isPermissionGranted();
+
+      if (!isGranted) {
+        // Show custom permission dialog
+        final shouldRequest = await NotificationPermissionService.instance
+            .showPermissionDialog(context);
+
+        if (shouldRequest && mounted) {
+          // Request system permission
+          await NotificationPermissionService.instance
+              .requestPermissionWithDelay(
+                context: context,
+                delay: Duration.zero,
+              );
+        }
+      }
+    } catch (e) {
+      debugPrint('❌ Error checking notification permission: $e');
     }
   }
 

@@ -9,11 +9,14 @@ class RevenueCatService {
   static const String _premiumKey = 'is_premium_user';
   static const String _userIdKey = 'revenue_cat_user_id';
 
-  // RevenueCat API Keys
-  static const String _androidApiKey =
-      'goog_QpLHDriAAYWHMAYETGlrIEaGQhg'; // Android API key from RevenueCat dashboard
-  static const String _iosApiKey =
-      'appl_WOGaKGocybabmcYEOKXeeUOWPfq'; // Your iOS API key
+  // RevenueCat API Keys - Load from environment or use defaults
+  static String get _androidApiKey =>
+      Platform.environment['REVENUECAT_ANDROID_API_KEY'] ??
+      'goog_QpLHDriAAYWHMAYETGlrIEaGQhg';
+
+  static String get _iosApiKey =>
+      Platform.environment['REVENUECAT_IOS_API_KEY'] ??
+      'appl_WOGaKGocybabmcYEOKXeeUOWPfq';
 
   // Platform-specific Product IDs
   static const String _androidPremiumProductId = 'remove_ads_elements';

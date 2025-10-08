@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'permission_service.dart';
 
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -34,59 +35,72 @@ class PushNotificationService {
   Future<void> initialize() async {
     if (_initialized) return;
 
-    // iOS permission
-    if (Platform.isIOS) {
-      await FirebaseMessaging.instance.requestPermission(
-        alert: true,
-        badge: true,
-        sound: true,
+    try {
+      print('🔔 Initializing push notifications...');
+
+      // Local notifications setup first (non-blocking)
+      const AndroidInitializationSettings androidInit =
+          AndroidInitializationSettings('@mipmap/ic_launcher');
+      const DarwinInitializationSettings iosInit =
+          DarwinInitializationSettings();
+      const InitializationSettings initSettings = InitializationSettings(
+        android: androidInit,
+        iOS: iosInit,
       );
+      await _local.initialize(initSettings);
+
+      // Android 13+ runtime notification permission
+      await _local
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >()
+          ?.requestNotificationsPermission();
+
+      // Android channel
+      await _local
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >()
+          ?.createNotificationChannel(_defaultAndroidChannel);
+
+      // Foreground presentation (iOS)
+      await FirebaseMessaging.instance
+          .setForegroundNotificationPresentationOptions(
+            alert: true,
+            badge: true,
+            sound: true,
+          );
+
+      // Foreground messages
+      FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+        _showLocalFromMessage(message);
+      });
+
+      // App opened from background via notification tap
+      FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+        print('FCM_OPENED: ${message.messageId}');
+      });
+
+      // iOS permission request (delayed to avoid blocking UI)
+      if (Platform.isIOS) {
+        // Use permission service for better handling
+        Future.delayed(const Duration(seconds: 3), () async {
+          try {
+            await NotificationPermissionService.instance
+                .requestPermissionWithDelay();
+          } catch (e) {
+            print('❌ iOS notification permission failed: $e');
+          }
+        });
+      }
+
+      _initialized = true;
+      print('✅ Push notifications initialized successfully');
+    } catch (e) {
+      print('❌ Push notifications initialization failed: $e');
+      // Still mark as initialized to prevent retry loops
+      _initialized = true;
     }
-
-    // Local notifications setup
-    const AndroidInitializationSettings androidInit =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
-    const DarwinInitializationSettings iosInit = DarwinInitializationSettings();
-    const InitializationSettings initSettings = InitializationSettings(
-      android: androidInit,
-      iOS: iosInit,
-    );
-    await _local.initialize(initSettings);
-
-    // Android 13+ runtime notification permission
-    await _local
-        .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin
-        >()
-        ?.requestNotificationsPermission();
-
-    // Android channel
-    await _local
-        .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin
-        >()
-        ?.createNotificationChannel(_defaultAndroidChannel);
-
-    // Foreground presentation (iOS)
-    await FirebaseMessaging.instance
-        .setForegroundNotificationPresentationOptions(
-          alert: true,
-          badge: true,
-          sound: true,
-        );
-
-    // Foreground messages
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      _showLocalFromMessage(message);
-    });
-
-    // App opened from background via notification tap
-    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      // ignore: avoid_print
-      print('FCM_OPENED: ${message.messageId}');
-    });
-
-    _initialized = true;
   }
 
   Future<void> _showLocalFromMessage(RemoteMessage message) async {

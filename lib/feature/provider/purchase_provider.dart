@@ -4,10 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:elements_app/core/services/purchases/revenue_cat_service.dart';
+import 'package:elements_app/core/services/purchase_error_localization_service.dart';
 
 /// Provider for managing purchase state and premium features
 class PurchaseProvider extends ChangeNotifier {
   final RevenueCatService _revenueCatService = RevenueCatService.instance;
+  final PurchaseErrorLocalizationService _localizationService =
+      PurchaseErrorLocalizationService.instance;
 
   bool _isLoading = false;
   bool _isPremium = false;
@@ -30,27 +33,37 @@ class PurchaseProvider extends ChangeNotifier {
     _clearError();
 
     try {
-      // Initialize SharedPreferences
-      _prefs = await SharedPreferences.getInstance();
+      // Initialize SharedPreferences with timeout
+      _prefs = await SharedPreferences.getInstance().timeout(
+        const Duration(seconds: 5),
+      );
 
       // Load saved premium status
       _isPremium = _prefs.getBool(_premiumKey) ?? false;
 
       // RevenueCat is already initialized in main.dart, just ensure it's ready
       if (!_revenueCatService.isInitialized) {
-        await _revenueCatService.initialize();
+        await _revenueCatService.initialize().timeout(
+          const Duration(seconds: 10),
+        );
       }
 
-      // Load products and offerings
-      await _loadProducts();
-      await _loadOfferings();
+      // Load products and offerings with timeout
+      await _loadProducts().timeout(const Duration(seconds: 10));
+      await _loadOfferings().timeout(const Duration(seconds: 10));
 
-      // Check premium status
-      _isPremium = await _revenueCatService.checkPremiumStatus();
+      // Check premium status with timeout
+      _isPremium = await _revenueCatService.checkPremiumStatus().timeout(
+        const Duration(seconds: 5),
+      );
 
       notifyListeners();
     } catch (e) {
       _setError('Failed to initialize purchases: $e');
+      // Set default values to prevent hanging
+      _isPremium = false;
+      _products = [];
+      _offerings = null;
     } finally {
       _setLoading(false);
     }
@@ -196,7 +209,7 @@ class PurchaseProvider extends ChangeNotifier {
   }
 
   /// Purchase remove ads (iOS optimized)
-  Future<bool> purchaseRemoveAds() async {
+  Future<bool> purchaseRemoveAds({bool isTurkish = true}) async {
     _setLoading(true);
     _clearError();
 
@@ -217,7 +230,12 @@ class PurchaseProvider extends ChangeNotifier {
       debugPrint('⚠️ Purchase completed but premium status not active');
       return false;
     } catch (e) {
-      _setError('Remove ads purchase failed: $e');
+      final errorDetails = _localizationService.parsePurchaseError(
+        e,
+        isTurkish: isTurkish,
+      );
+      _localizationService.logError(e, isTurkish: isTurkish);
+      _setError(errorDetails['message'] ?? 'Remove ads purchase failed: $e');
       return false;
     } finally {
       _setLoading(false);
@@ -225,7 +243,7 @@ class PurchaseProvider extends ChangeNotifier {
   }
 
   /// Direct purchase remove ads (for settings card)
-  Future<bool> directPurchaseRemoveAds() async {
+  Future<bool> directPurchaseRemoveAds({bool isTurkish = true}) async {
     _setLoading(true);
     _clearError();
 
@@ -246,7 +264,14 @@ class PurchaseProvider extends ChangeNotifier {
       debugPrint('⚠️ Direct purchase completed but premium status not active');
       return false;
     } catch (e) {
-      _setError('Direct remove ads purchase failed: $e');
+      final errorDetails = _localizationService.parsePurchaseError(
+        e,
+        isTurkish: isTurkish,
+      );
+      _localizationService.logError(e, isTurkish: isTurkish);
+      _setError(
+        errorDetails['message'] ?? 'Direct remove ads purchase failed: $e',
+      );
       return false;
     } finally {
       _setLoading(false);
@@ -254,7 +279,9 @@ class PurchaseProvider extends ChangeNotifier {
   }
 
   /// Direct purchase remove ads with detailed error info
-  Future<Map<String, dynamic>> directPurchaseRemoveAdsWithDetails() async {
+  Future<Map<String, dynamic>> directPurchaseRemoveAdsWithDetails({
+    bool isTurkish = true,
+  }) async {
     _setLoading(true);
     _clearError();
 
@@ -331,15 +358,25 @@ class PurchaseProvider extends ChangeNotifier {
         debugPrint('❌ Purchase failed - no result returned');
         return {
           'success': false,
-          'message': 'Satın alma işlemi başarısız oldu',
-          'reason': 'Satın alma işlemi tamamlanamadı',
-          'solution': 'Lütfen tekrar deneyin',
+          'message': isTurkish
+              ? 'Satın alma işlemi başarısız oldu'
+              : 'Purchase failed',
+          'reason': isTurkish
+              ? 'Satın alma işlemi tamamlanamadı'
+              : 'Purchase could not be completed',
+          'solution': isTurkish ? 'Lütfen tekrar deneyin' : 'Please try again',
           'icon': '❌',
         };
       }
     } catch (e) {
-      final errorDetails = _parsePurchaseError(e);
-      _setError('Direct remove ads purchase failed: $e');
+      final errorDetails = _localizationService.parsePurchaseError(
+        e,
+        isTurkish: isTurkish,
+      );
+      _localizationService.logError(e, isTurkish: isTurkish);
+      _setError(
+        errorDetails['message'] ?? 'Direct remove ads purchase failed: $e',
+      );
       return {
         'success': false,
         'message': errorDetails['message'],
@@ -350,132 +387,6 @@ class PurchaseProvider extends ChangeNotifier {
     } finally {
       _setLoading(false);
     }
-  }
-
-  /// Parse purchase error to get detailed information (Platform optimized)
-  Map<String, String> _parsePurchaseError(dynamic error) {
-    final errorString = error.toString().toLowerCase();
-    final storeName = Platform.isIOS ? 'App Store' : 'Google Play';
-
-    // Network errors
-    if (errorString.contains('network') ||
-        errorString.contains('connection') ||
-        errorString.contains('timeout') ||
-        errorString.contains('unreachable')) {
-      return {
-        'message': 'İnternet bağlantınızı kontrol edin',
-        'reason': 'İnternet bağlantınız kesilmiş veya yavaş olabilir',
-        'solution':
-            'Wi-Fi veya mobil veri bağlantınızı kontrol edip tekrar deneyin',
-        'icon': '🌐',
-      };
-    }
-
-    // Payment errors
-    if (errorString.contains('payment') ||
-        errorString.contains('billing') ||
-        errorString.contains('card') ||
-        errorString.contains('declined')) {
-      return {
-        'message': 'Ödeme bilgilerinizi kontrol edin',
-        'reason':
-            'Kartınız reddedilmiş veya ödeme bilgilerinizde sorun olabilir',
-        'solution':
-            'Kart bilgilerinizi kontrol edin veya farklı bir ödeme yöntemi deneyin',
-        'icon': '💳',
-      };
-    }
-
-    // User cancellation
-    if (errorString.contains('cancel') ||
-        errorString.contains('user') ||
-        errorString.contains('abort') ||
-        errorString.contains('dismiss')) {
-      return {
-        'message': 'Satın alma iptal edildi',
-        'reason': 'İşlemi iptal ettiniz veya çıkış yaptınız',
-        'solution': 'İstediğiniz zaman tekrar satın alabilirsiniz',
-        'icon': '❌',
-      };
-    }
-
-    // Product not found
-    if (errorString.contains('product') ||
-        errorString.contains('not found') ||
-        errorString.contains('unavailable') ||
-        errorString.contains('missing')) {
-      return {
-        'message': 'Ürün şu anda mevcut değil',
-        'reason': 'Ürün mağazada bulunamadı veya geçici olarak kaldırılmış',
-        'solution':
-            'Lütfen daha sonra tekrar deneyin veya uygulamayı güncelleyin',
-        'icon': '🔍',
-      };
-    }
-
-    // Store errors (Platform specific)
-    if (errorString.contains('store') ||
-        errorString.contains('app store') ||
-        errorString.contains('itunes') ||
-        errorString.contains('play store') ||
-        errorString.contains('google play')) {
-      return {
-        'message': '$storeName servisi geçici olarak kullanılamıyor',
-        'reason': '$storeName servislerinde geçici bir sorun var',
-        'solution': 'Birkaç dakika sonra tekrar deneyin',
-        'icon': '🏪',
-      };
-    }
-
-    // Configuration errors
-    if (errorString.contains('config') ||
-        errorString.contains('setup') ||
-        errorString.contains('api') ||
-        errorString.contains('key')) {
-      return {
-        'message': 'Uygulama yapılandırması hatası',
-        'reason': 'Uygulama ayarlarında bir sorun oluştu',
-        'solution':
-            'Uygulamayı güncelleyin veya destek ekibiyle iletişime geçin',
-        'icon': '⚙️',
-      };
-    }
-
-    // Insufficient funds
-    if (errorString.contains('fund') ||
-        errorString.contains('balance') ||
-        errorString.contains('insufficient') ||
-        errorString.contains('limit')) {
-      return {
-        'message': 'Yetersiz bakiye',
-        'reason': 'Hesabınızda yeterli bakiye bulunmuyor',
-        'solution': 'Hesabınıza yeterli bakiye ekleyip tekrar deneyin',
-        'icon': '💰',
-      };
-    }
-
-    // Account issues
-    if (errorString.contains('account') ||
-        errorString.contains('login') ||
-        errorString.contains('auth') ||
-        errorString.contains('sign')) {
-      return {
-        'message': 'Hesap doğrulama hatası',
-        'reason':
-            'Hesap bilgilerinizde bir sorun var veya oturum süreniz dolmuş',
-        'solution': 'Hesabınızdan çıkış yapıp tekrar giriş yapın',
-        'icon': '👤',
-      };
-    }
-
-    // Generic error
-    return {
-      'message': 'Beklenmeyen bir hata oluştu',
-      'reason': 'Bilinmeyen bir sorun nedeniyle işlem tamamlanamadı',
-      'solution':
-          'Lütfen tekrar deneyin veya sorun devam ederse destek ekibiyle iletişime geçin',
-      'icon': '⚠️',
-    };
   }
 
   /// Restore purchases
@@ -497,7 +408,9 @@ class PurchaseProvider extends ChangeNotifier {
   }
 
   /// Restore purchases with detailed result
-  Future<Map<String, dynamic>> restorePurchasesWithDetails() async {
+  Future<Map<String, dynamic>> restorePurchasesWithDetails({
+    bool isTurkish = true,
+  }) async {
     _setLoading(true);
     _clearError();
 
@@ -509,30 +422,27 @@ class PurchaseProvider extends ChangeNotifier {
       if (_isPremium) {
         return {
           'success': true,
-          'message': 'Satın alımlar başarıyla geri yüklendi!',
-          'congratulations': 'Premium özellikleriniz aktif edildi!',
-          'benefits': [
-            'Reklamsız deneyim',
-            'Quizlerde fazladan can',
-            'Premium özellikler',
-          ],
-          'icon': '🎉',
+          ..._localizationService.getRestoreMessage(
+            isTurkish: isTurkish,
+            hasPurchases: true,
+          ),
         };
       } else {
-        final accountType = Platform.isIOS ? 'Apple ID' : 'Google hesabı';
-
         return {
           'success': false,
-          'message': 'Geri yüklenecek satın alım bulunamadı',
-          'reason': 'Bu cihazda daha önce yapılmış bir satın alım bulunamadı',
-          'solution':
-              'Farklı bir $accountType ile giriş yapmayı deneyin veya satın alım yapın',
-          'icon': '🔍',
+          ..._localizationService.getRestoreMessage(
+            isTurkish: isTurkish,
+            hasPurchases: false,
+          ),
         };
       }
     } catch (e) {
-      final errorDetails = _parsePurchaseError(e);
-      _setError('Restore failed: $e');
+      final errorDetails = _localizationService.parsePurchaseError(
+        e,
+        isTurkish: isTurkish,
+      );
+      _localizationService.logError(e, isTurkish: isTurkish);
+      _setError(errorDetails['message'] ?? 'Restore failed: $e');
       return {
         'success': false,
         'message': errorDetails['message'],

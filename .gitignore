@@ -49,3 +49,34 @@ app.*.map.json
 /android/key.properties
 /android/app/upload-keystore.jks
 
+# Environment files (contains sensitive data like ad IDs)
+.env
+.env.*
+!.env.example
+*.env
+*.env.local
+*.env.development
+*.env.production
+*.env.staging
+*.env.test
+
+# Configuration files with sensitive data
+config/secrets.dart
+config/environment.dart
+lib/core/config/secrets.dart
+lib/core/config/environment.dart
+
+# Ad configuration files
+lib/core/config/ad_config.dart
+lib/core/config/admob_config.dart
+lib/core/config/ads_config.dart
+
+# Firebase configuration (if contains sensitive data)
+firebase_config.dart
+firebase_secrets.dart
+
+# API keys and secrets
+api_keys.dart
+secrets.dart
+credentials.dart
+

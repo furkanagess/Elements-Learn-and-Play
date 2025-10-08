@@ -18,7 +18,9 @@ class AdConfigurationService {
     if (kDebugMode) {
       debugPrint('🔧 Ad Configuration Verification:');
       debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      debugPrint('📱 Platform: ${Platform.operatingSystem}');
+      debugPrint('🌍 Environment: ${GoogleAdsService.environmentName}');
+      debugPrint('📱 Platform: ${GoogleAdsService.platformName}');
+      debugPrint('🧪 Using Test Ads: ${GoogleAdsService.isUsingTestAds}');
       debugPrint('🏷️  Application ID: ${GoogleAdsService.applicationId}');
       debugPrint('📺 Banner Ad Unit ID: ${GoogleAdsService.bannerAdUnitId}');
       debugPrint(
@@ -29,10 +31,29 @@ class AdConfigurationService {
       );
       debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
-      // Verify iOS configuration matches AdMob dashboard
-      if (Platform.isIOS) {
-        _verifyIOSConfiguration();
-      }
+      // Verify configuration
+      _verifyConfiguration();
+    }
+  }
+
+  /// Verify configuration matches expected values
+  void _verifyConfiguration() {
+    debugPrint('🔍 Configuration Verification:');
+
+    // Validate configuration
+    final isValid = GoogleAdsService.validateConfiguration();
+
+    if (isValid) {
+      debugPrint('✅ Configuration validation: PASSED');
+    } else {
+      debugPrint('❌ Configuration validation: FAILED');
+    }
+
+    // Platform-specific verification
+    if (Platform.isIOS) {
+      _verifyIOSConfiguration();
+    } else if (Platform.isAndroid) {
+      _verifyAndroidConfiguration();
     }
   }
 
@@ -40,7 +61,7 @@ class AdConfigurationService {
   void _verifyIOSConfiguration() {
     debugPrint('🍎 iOS Configuration Verification:');
 
-    // Expected values from AdMob dashboard
+    // Expected values from AdMob dashboard (production)
     const expectedAppId = 'ca-app-pub-3499593115543692~7549075426';
     const expectedBannerId = 'ca-app-pub-3499593115543692/3363871102';
     const expectedInterstitialId = 'ca-app-pub-3499593115543692/8013508657';
@@ -51,15 +72,49 @@ class AdConfigurationService {
     final actualInterstitialId = GoogleAdsService.interstitialAdUnitId;
     final actualRewardedId = GoogleAdsService.rewardedAdUnitId;
 
-    // Verify each ID
-    _verifyId('Application ID', expectedAppId, actualAppId);
-    _verifyId('Banner Ad Unit ID', expectedBannerId, actualBannerId);
-    _verifyId(
-      'Interstitial Ad Unit ID',
-      expectedInterstitialId,
-      actualInterstitialId,
-    );
-    _verifyId('Rewarded Ad Unit ID', expectedRewardedId, actualRewardedId);
+    // Only verify production IDs (skip test IDs)
+    if (!GoogleAdsService.isUsingTestAds) {
+      _verifyId('Application ID', expectedAppId, actualAppId);
+      _verifyId('Banner Ad Unit ID', expectedBannerId, actualBannerId);
+      _verifyId(
+        'Interstitial Ad Unit ID',
+        expectedInterstitialId,
+        actualInterstitialId,
+      );
+      _verifyId('Rewarded Ad Unit ID', expectedRewardedId, actualRewardedId);
+    } else {
+      debugPrint('🧪 Using test ad IDs (development mode)');
+    }
+  }
+
+  /// Verify Android configuration matches AdMob dashboard
+  void _verifyAndroidConfiguration() {
+    debugPrint('🤖 Android Configuration Verification:');
+
+    // Expected values from AdMob dashboard (production)
+    const expectedAppId = 'ca-app-pub-3499593115543692~1498506854';
+    const expectedBannerId = 'ca-app-pub-3499593115543692/7394614482';
+    const expectedInterstitialId = 'ca-app-pub-3499593115543692/7181453654';
+    const expectedRewardedId = 'ca-app-pub-3499593115543692/5817895627';
+
+    final actualAppId = GoogleAdsService.applicationId;
+    final actualBannerId = GoogleAdsService.bannerAdUnitId;
+    final actualInterstitialId = GoogleAdsService.interstitialAdUnitId;
+    final actualRewardedId = GoogleAdsService.rewardedAdUnitId;
+
+    // Only verify production IDs (skip test IDs)
+    if (!GoogleAdsService.isUsingTestAds) {
+      _verifyId('Application ID', expectedAppId, actualAppId);
+      _verifyId('Banner Ad Unit ID', expectedBannerId, actualBannerId);
+      _verifyId(
+        'Interstitial Ad Unit ID',
+        expectedInterstitialId,
+        actualInterstitialId,
+      );
+      _verifyId('Rewarded Ad Unit ID', expectedRewardedId, actualRewardedId);
+    } else {
+      debugPrint('🧪 Using test ad IDs (development mode)');
+    }
   }
 
   /// Verify individual ad unit ID
@@ -92,13 +147,7 @@ class AdConfigurationService {
   }
 
   /// Get configuration summary for debugging
-  Map<String, String> getConfigurationSummary() {
-    return {
-      'platform': Platform.operatingSystem,
-      'applicationId': GoogleAdsService.applicationId,
-      'bannerAdUnitId': GoogleAdsService.bannerAdUnitId,
-      'interstitialAdUnitId': GoogleAdsService.interstitialAdUnitId,
-      'rewardedAdUnitId': GoogleAdsService.rewardedAdUnitId,
-    };
+  Map<String, dynamic> getConfigurationSummary() {
+    return GoogleAdsService.getConfigurationSummary();
   }
 }

@@ -4,6 +4,7 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:provider/provider.dart';
 import 'package:elements_app/feature/provider/purchase_provider.dart';
 import 'package:elements_app/core/services/ios_ad_debug_service.dart';
+import 'package:elements_app/core/services/ios_production_ad_service.dart';
 
 class BannerAdWidget extends StatefulWidget {
   final String adUnitId;
@@ -62,6 +63,7 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
               _loadAttempts = 0;
             });
             IOSAdDebugService.instance.logAdLoadSuccess('Banner');
+            IOSProductionAdService.instance.trackBannerAdLoad();
           }
         },
         onAdFailedToLoad: (ad, error) {
@@ -73,6 +75,7 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
               _isLoading = false;
             });
             IOSAdDebugService.instance.logAdLoadFailure('Banner', error);
+            IOSProductionAdService.instance.trackBannerAdError();
 
             // Retry loading after delay if attempts remaining
             if (_loadAttempts < _maxLoadAttempts) {
@@ -86,6 +89,7 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
         },
         onAdOpened: (ad) {
           IOSAdDebugService.instance.logAdShowSuccess('Banner');
+          IOSProductionAdService.instance.trackBannerAdShow();
         },
         onAdClosed: (ad) {
           debugPrint('📱 Banner ad closed');
@@ -98,9 +102,20 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
 
   AdRequest _createAdRequest() {
     if (Platform.isIOS) {
-      // iOS-specific ad request configuration
+      // iOS-specific ad request configuration for production
       return const AdRequest(
-        keywords: ['education', 'science', 'chemistry', 'periodic table'],
+        keywords: [
+          'education',
+          'science',
+          'chemistry',
+          'periodic table',
+          'learning',
+          'study',
+          'academic',
+          'school',
+          'university',
+          'student',
+        ],
         contentUrl: 'https://elements-app.com',
         nonPersonalizedAds: false,
       );
@@ -149,19 +164,4 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
     // Show nothing if ad failed to load after all attempts
     return const SizedBox.shrink();
   }
-}
-
-// Ad Unit IDs for development and production
-class AdUnitIds {
-  // iOS Banner Ad Unit ID
-  static const String iosBanner = 'ca-app-pub-3499593115543692/3363871102';
-
-  // iOS Interstitial Ad Unit ID
-  static const String iosInterstitial =
-      'ca-app-pub-3499593115543692/8013508657';
-
-  // Test ad unit IDs for development
-  static const String testBanner = 'ca-app-pub-3940256099942544/6300978111';
-  static const String testInterstitial =
-      'ca-app-pub-3940256099942544/1033173712';
 }

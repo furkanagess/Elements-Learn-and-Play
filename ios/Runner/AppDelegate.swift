@@ -1,7 +1,6 @@
 import Flutter
 import UIKit
 import UserNotifications
-import GoogleMobileAds
 
 @main
 @objc class AppDelegate: FlutterAppDelegate {
@@ -10,9 +9,6 @@ import GoogleMobileAds
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
     GeneratedPluginRegistrant.register(with: self)
-    
-    // Initialize Google Mobile Ads SDK
-    GADMobileAds.sharedInstance().start(completionHandler: nil)
     
     // Ensure iOS foreground notification presentation via delegate
     UNUserNotificationCenter.current().delegate = self

@@ -61,9 +61,20 @@ class RewardedHelper {
   /// Create platform-specific ad request
   static AdRequest _createAdRequest() {
     if (Platform.isIOS) {
-      // iOS-specific ad request configuration
+      // iOS-specific ad request configuration for production
       return const AdRequest(
-        keywords: ['education', 'science', 'chemistry', 'periodic table'],
+        keywords: [
+          'education',
+          'science',
+          'chemistry',
+          'periodic table',
+          'learning',
+          'study',
+          'academic',
+          'school',
+          'university',
+          'student',
+        ],
         contentUrl: 'https://elements-app.com',
         nonPersonalizedAds: false,
       );

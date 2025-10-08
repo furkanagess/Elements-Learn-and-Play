@@ -1,49 +1,38 @@
-import 'dart:io';
+import 'package:elements_app/core/config/environment_config.dart';
 
 /// The `GoogleAdsService` class provides access to the AdMob ad unit IDs based on the platform.
-/// It returns the appropriate ad unit IDs for both Android and iOS platforms.
+/// It uses EnvironmentConfig for secure and environment-aware ad unit management.
 class GoogleAdsService {
-  /// Returns the AdMob application ID based on platform.
-  static String get applicationId {
-    if (Platform.isAndroid) {
-      return "ca-app-pub-3499593115543692~1498506854";
-    } else if (Platform.isIOS) {
-      return "ca-app-pub-3499593115543692~7549075426";
-    } else {
-      throw UnsupportedError("Unsupported platform");
-    }
-  }
+  static final EnvironmentConfig _config = EnvironmentConfig.instance;
 
-  /// Returns the AdMob interstitial ad unit ID based on platform.
-  static String get interstitialAdUnitId {
-    if (Platform.isAndroid) {
-      return "ca-app-pub-3499593115543692/7181453654";
-    } else if (Platform.isIOS) {
-      return "ca-app-pub-3499593115543692/8013508657";
-    } else {
-      throw UnsupportedError("Unsupported platform");
-    }
-  }
+  /// Returns the AdMob application ID based on platform and environment.
+  static String get applicationId => _config.applicationId;
 
-  /// Returns the AdMob banner ad unit ID based on platform.
-  static String get bannerAdUnitId {
-    if (Platform.isAndroid) {
-      return "ca-app-pub-3499593115543692/7394614482";
-    } else if (Platform.isIOS) {
-      return "ca-app-pub-3499593115543692/3363871102";
-    } else {
-      throw UnsupportedError("Unsupported platform");
-    }
-  }
+  /// Returns the AdMob interstitial ad unit ID based on platform and environment.
+  static String get interstitialAdUnitId => _config.interstitialAdUnitId;
 
-  /// Returns the AdMob rewarded ad unit ID based on platform.
-  static String get rewardedAdUnitId {
-    if (Platform.isAndroid) {
-      return "ca-app-pub-3499593115543692/5817895627";
-    } else if (Platform.isIOS) {
-      return "ca-app-pub-3499593115543692/3125989969";
-    } else {
-      throw UnsupportedError("Unsupported platform");
-    }
-  }
+  /// Returns the AdMob banner ad unit ID based on platform and environment.
+  static String get bannerAdUnitId => _config.bannerAdUnitId;
+
+  /// Returns the AdMob rewarded ad unit ID based on platform and environment.
+  static String get rewardedAdUnitId => _config.rewardedAdUnitId;
+
+  /// Check if using test ads (development mode)
+  static bool get isUsingTestAds => _config.isUsingTestAds;
+
+  /// Get current environment name
+  static String get environmentName => _config.environmentName;
+
+  /// Get platform name
+  static String get platformName => _config.platformName;
+
+  /// Log current ad configuration
+  static void logConfiguration() => _config.logConfiguration();
+
+  /// Get configuration summary
+  static Map<String, dynamic> getConfigurationSummary() =>
+      _config.getConfigurationSummary();
+
+  /// Validate ad configuration
+  static bool validateConfiguration() => _config.validateConfiguration();
 }

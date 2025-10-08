@@ -4,7 +4,6 @@ import 'package:elements_app/feature/service/google_ads_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:elements_app/feature/provider/purchase_provider.dart';
-import 'banner_ad_widget.dart';
 
 class InterstitialAdWidget {
   static InterstitialAd? _interstitialAd;
@@ -21,9 +20,7 @@ class InterstitialAdWidget {
 
     try {
       await InterstitialAd.load(
-        adUnitId: _isDebugMode()
-            ? AdUnitIds.testInterstitial
-            : GoogleAdsService.interstitialAdUnitId,
+        adUnitId: GoogleAdsService.interstitialAdUnitId,
         request: _createAdRequest(),
         adLoadCallback: InterstitialAdLoadCallback(
           onAdLoaded: (ad) {
@@ -57,9 +54,20 @@ class InterstitialAdWidget {
   /// Create platform-specific ad request
   static AdRequest _createAdRequest() {
     if (Platform.isIOS) {
-      // iOS-specific ad request configuration
+      // iOS-specific ad request configuration for production
       return const AdRequest(
-        keywords: ['education', 'science', 'chemistry', 'periodic table'],
+        keywords: [
+          'education',
+          'science',
+          'chemistry',
+          'periodic table',
+          'learning',
+          'study',
+          'academic',
+          'school',
+          'university',
+          'student',
+        ],
         contentUrl: 'https://elements-app.com',
         nonPersonalizedAds: false,
       );
@@ -114,13 +122,6 @@ class InterstitialAdWidget {
     _interstitialAd?.dispose();
     _interstitialAd = null;
     _isAdLoaded = false;
-  }
-
-  /// Check if running in debug mode
-  static bool _isDebugMode() {
-    bool inDebugMode = false;
-    assert(inDebugMode = true);
-    return inDebugMode;
   }
 }
 
