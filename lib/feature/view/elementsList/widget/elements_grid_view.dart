@@ -15,7 +15,7 @@ class ElementsGridView extends StatelessWidget {
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        childAspectRatio: 0.85,
+        childAspectRatio: 1.7, // Slightly taller to accommodate atomic weight
         crossAxisSpacing: 16,
         mainAxisSpacing: 16,
       ),

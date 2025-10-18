@@ -285,7 +285,7 @@ class _InfoViewState extends State<InfoView> with TickerProviderStateMixin {
                           color: Colors.white.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.2),
+                            color: AppColors.purple.withValues(alpha: 0.6),
                             width: 1,
                           ),
                           boxShadow: [
@@ -302,11 +302,13 @@ class _InfoViewState extends State<InfoView> with TickerProviderStateMixin {
                             Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.2),
+                                color: AppColors.purple.withValues(alpha: 0.6),
                                 borderRadius: BorderRadius.circular(16),
                                 border: Border.all(
-                                  color: Colors.white.withValues(alpha: 0.3),
-                                  width: 1,
+                                  color: AppColors.purple.withValues(
+                                    alpha: 0.8,
+                                  ),
+                                  width: 1.5,
                                 ),
                               ),
                               child: SvgPicture.asset(
@@ -365,11 +367,13 @@ class _InfoViewState extends State<InfoView> with TickerProviderStateMixin {
                             Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.2),
+                                color: AppColors.purple.withValues(alpha: 0.6),
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
-                                  color: Colors.white.withValues(alpha: 0.3),
-                                  width: 1,
+                                  color: AppColors.purple.withValues(
+                                    alpha: 0.8,
+                                  ),
+                                  width: 1.5,
                                 ),
                               ),
                               child: const Icon(
@@ -534,17 +538,20 @@ class _InfoViewState extends State<InfoView> with TickerProviderStateMixin {
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.2),
+                            color: AppColors.purple.withValues(alpha: 0.6),
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.3),
-                              width: 1,
+                              color:
+                                  (info.colors?.toColor() ??
+                                          AppColors.steelBlue)
+                                      .withValues(alpha: 0.8),
+                              width: 1.5,
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.1),
-                                blurRadius: 8,
-                                offset: const Offset(0, 4),
+                                color: AppColors.purple.withValues(alpha: 0.4),
+                                blurRadius: 12,
+                                offset: const Offset(0, 6),
                               ),
                             ],
                           ),
@@ -606,11 +613,14 @@ class _InfoViewState extends State<InfoView> with TickerProviderStateMixin {
                         Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.2),
+                            color: AppColors.purple.withValues(alpha: 0.6),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.3),
-                              width: 1,
+                              color:
+                                  (info.colors?.toColor() ??
+                                          AppColors.steelBlue)
+                                      .withValues(alpha: 0.8),
+                              width: 1.5,
                             ),
                           ),
                           child: const Icon(

@@ -28,15 +28,24 @@ class ElementsListAppBar extends StatelessWidget
       backgroundColor: Colors.transparent,
       flexibleSpace: Container(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppColors.darkBlue,
-              AppColors.steelBlue.withValues(alpha: 0.95),
-              AppColors.purple.withValues(alpha: 0.9),
-            ],
+          color: Colors.white.withValues(
+            alpha: 0.1,
+          ), // Opacity white background
+          border: Border(
+            bottom: BorderSide(
+              color: Colors.white.withValues(
+                alpha: 0.2,
+              ), // Opacity white border
+              width: 1,
+            ),
           ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
       ),
       leading: const ModernBackButton(),
@@ -49,19 +58,14 @@ class ElementsListAppBar extends StatelessWidget
     return Container(
       height: 40,
       decoration: BoxDecoration(
-        color: AppColors.white.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(16),
+        color: Colors.white.withValues(
+          alpha: 0.15,
+        ), // Opacity white background for search field
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppColors.white.withValues(alpha: 0.2),
+          color: Colors.white.withValues(alpha: 0.3), // Opacity white border
           width: 1,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.darkBlue.withValues(alpha: 0.2),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
       ),
       child: Center(
         child: TextField(
@@ -77,8 +81,8 @@ class ElementsListAppBar extends StatelessWidget
             hintText: context.read<LocalizationProvider>().isTr
                 ? 'Element adı, sembol veya numara ara...'
                 : 'Search by element name, symbol or number...',
-            hintStyle: TextStyle(
-              color: AppColors.white.withValues(alpha: 0.5),
+            hintStyle: const TextStyle(
+              color: Color(0xFFB0B0B0), // Light gray hint text
               fontSize: 12,
               height: 1,
             ),
@@ -86,7 +90,7 @@ class ElementsListAppBar extends StatelessWidget
               padding: const EdgeInsets.symmetric(horizontal: 4),
               child: Icon(
                 Icons.search,
-                color: AppColors.white.withValues(alpha: 0.7),
+                color: const Color(0xFFB0B0B0), // Light gray icon
                 size: 20,
               ),
             ),
@@ -98,7 +102,7 @@ class ElementsListAppBar extends StatelessWidget
                 ? IconButton(
                     icon: Icon(
                       Icons.clear,
-                      color: AppColors.white.withValues(alpha: 0.7),
+                      color: const Color(0xFFB0B0B0), // Light gray icon
                       size: 18,
                     ),
                     onPressed: onClearSearch,
@@ -121,8 +125,14 @@ class ElementsListAppBar extends StatelessWidget
       Container(
         margin: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: AppColors.white.withValues(alpha: 0.2),
+          color: Colors.white.withValues(
+            alpha: 0.15,
+          ), // Opacity white background like search field
           borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.3), // Opacity white border
+            width: 1,
+          ),
         ),
         child: IconButton(
           icon: const Icon(Icons.filter_list, color: AppColors.white),

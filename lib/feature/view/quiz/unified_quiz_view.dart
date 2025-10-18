@@ -8,10 +8,8 @@ import 'package:elements_app/feature/provider/localization_provider.dart';
 import 'package:elements_app/feature/model/quiz/quiz_models.dart';
 import 'package:elements_app/product/widget/scaffold/app_scaffold.dart';
 import 'package:elements_app/product/widget/quiz/quiz_components.dart';
-import 'package:elements_app/feature/view/elementsList/elements_loading_view.dart';
+import 'package:elements_app/product/widget/skeleton/universal_skeleton_loader.dart';
 import 'package:elements_app/product/constants/app_colors.dart';
-import 'package:elements_app/product/constants/stringConstants/en_app_strings.dart';
-import 'package:elements_app/product/constants/stringConstants/tr_app_strings.dart';
 import 'package:elements_app/core/services/pattern/pattern_service.dart';
 import 'package:elements_app/product/ads/rewarded_helper.dart';
 import 'package:elements_app/feature/view/quiz/achievements_view.dart';
@@ -127,62 +125,9 @@ class _UnifiedQuizViewState extends State<UnifiedQuizView>
   }
 
   Widget _buildLoadingState() {
-    return Container(
-      color: AppColors.background,
-      child: Stack(
-        children: [
-          Positioned.fill(
-            child: CustomPaint(
-              painter: _patternService.getPatternPainter(
-                type: PatternType.atomic,
-                color: Colors.white,
-                opacity: 0.03,
-              ),
-            ),
-          ),
-          SafeArea(
-            child: Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(
-                    maxWidth: 400,
-                    maxHeight: 600,
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const ElementsLoadingView(),
-                      const SizedBox(height: 24),
-                      Text(
-                        context.watch<LocalizationProvider>().isTr
-                            ? TrAppStrings.loadingQuiz
-                            : EnAppStrings.loadingQuiz,
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: AppColors.white,
-                          fontWeight: FontWeight.w600,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        context.watch<LocalizationProvider>().isTr
-                            ? widget.quizType.turkishTitle
-                            : widget.quizType.englishTitle,
-                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: AppColors.white.withValues(alpha: 0.7),
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
+    return const UniversalSkeletonLoader(
+      type: SkeletonType.quiz,
+      showAppBar: false,
     );
   }
 
@@ -756,20 +701,15 @@ class _ModernQuizHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isTr = context.watch<LocalizationProvider>().isTr;
-    final colors = _getQuizTypeColors(session.type);
 
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [colors.primary, colors.primary.withValues(alpha: 0.8)],
-        ),
+        color: AppColors.darkBlue,
         borderRadius: const BorderRadius.vertical(bottom: Radius.circular(24)),
         boxShadow: [
           BoxShadow(
-            color: colors.primary.withValues(alpha: 0.3),
+            color: AppColors.darkBlue.withValues(alpha: 0.3),
             offset: const Offset(0, 4),
             blurRadius: 12,
             spreadRadius: 0,
@@ -1022,141 +962,47 @@ class _ModernQuizContent extends StatelessWidget {
   }
 
   Widget _buildModernQuestionCard(BuildContext context) {
-    final isTr = context.read<LocalizationProvider>().isTr;
-    final colors = _getQuizTypeColors(session.type);
     final question = session.currentQuestion!;
 
     return FadeTransition(
       opacity: fadeAnimation,
       child: SlideTransition(
         position: slideAnimation,
-        child: Container(
-          width: double.infinity,
-          height: double.infinity,
+        child: Padding(
           padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                AppColors.darkBlue.withValues(alpha: 0.9),
-                AppColors.darkBlue.withValues(alpha: 0.7),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: colors.primary.withValues(alpha: 0.3),
-              width: 1.5,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: colors.primary.withValues(alpha: 0.15),
-                offset: const Offset(0, 4),
-                blurRadius: 12,
-                spreadRadius: 1,
-              ),
-            ],
-          ),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.start,
             children: [
-              // Question type indicator
+              const SizedBox(height: 20),
+
+              // Element display - Simple square container
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
-                ),
+                width: 180,
+                height: 180,
                 decoration: BoxDecoration(
-                  color: colors.primary.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(10),
+                  color: AppColors.darkTurquoise,
+                  borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: colors.primary.withValues(alpha: 0.4),
-                    width: 1,
+                    color: AppColors.turquoise.withValues(alpha: 0.3),
+                    width: 2,
                   ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(session.type.icon, color: colors.primary, size: 14),
-                    const SizedBox(width: 4),
-                    Text(
-                      _getQuestionTypeText(session.type, isTr),
-                      style: TextStyle(
-                        color: colors.primary,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 11,
-                      ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.darkTurquoise.withValues(alpha: 0.3),
+                      offset: const Offset(0, 8),
+                      blurRadius: 20,
+                      spreadRadius: 2,
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(height: 12),
-
-              // Question content - Flexible to prevent overflow
-              Expanded(
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: AppColors.white.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: AppColors.white.withValues(alpha: 0.2),
-                      width: 1,
+                child: Center(
+                  child: Text(
+                    question.questionText,
+                    style: const TextStyle(
+                      color: AppColors.turquoise,
+                      fontSize: 56,
+                      fontWeight: FontWeight.bold,
                     ),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      // Question text - More prominent and larger
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 16,
-                        ),
-                        decoration: BoxDecoration(
-                          color: colors.primary.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: colors.primary.withValues(alpha: 0.4),
-                            width: 2,
-                          ),
-                        ),
-                        child: Text(
-                          question.questionText,
-                          style: TextStyle(
-                            color: colors.primary,
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            height: 1.2,
-                            shadows: [
-                              Shadow(
-                                color: colors.primary.withValues(alpha: 0.3),
-                                offset: const Offset(0, 2),
-                                blurRadius: 4,
-                              ),
-                            ],
-                          ),
-                          textAlign: TextAlign.center,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-
-                      // Question hint
-                      Text(
-                        _getQuestionHint(question.type, isTr),
-                        style: TextStyle(
-                          color: AppColors.white.withValues(alpha: 0.7),
-                          fontSize: 12,
-                          height: 1.1,
-                        ),
-                        textAlign: TextAlign.center,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
                   ),
                 ),
               ),
@@ -1181,101 +1027,84 @@ class _ModernQuizContent extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           child: Column(
             children: [
-              // First row (2 options)
+              // Vertical layout - 4 options stacked
               Expanded(
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: _buildModernOptionButton(
-                        context,
-                        option: question.options[0],
-                        isSelected:
-                            session.selectedAnswer == question.options[0],
-                        isCorrect:
-                            (session.state == QuizState.correct ||
-                                session.state == QuizState.incorrect) &&
-                            question.options[0] == question.correctAnswer,
-                        isWrong:
-                            (session.state == QuizState.correct ||
-                                session.state == QuizState.incorrect) &&
-                            session.selectedAnswer == question.options[0] &&
-                            question.options[0] != question.correctAnswer,
-                        width: double.infinity,
-                        height: double.infinity,
-                        colors: colors,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: _buildModernOptionButton(
-                        context,
-                        option: question.options[1],
-                        isSelected:
-                            session.selectedAnswer == question.options[1],
-                        isCorrect:
-                            (session.state == QuizState.correct ||
-                                session.state == QuizState.incorrect) &&
-                            question.options[1] == question.correctAnswer,
-                        isWrong:
-                            (session.state == QuizState.correct ||
-                                session.state == QuizState.incorrect) &&
-                            session.selectedAnswer == question.options[1] &&
-                            question.options[1] != question.correctAnswer,
-                        width: double.infinity,
-                        height: double.infinity,
-                        colors: colors,
-                      ),
-                    ),
-                  ],
+                child: _buildModernOptionButton(
+                  context,
+                  option: question.options[0],
+                  isSelected: session.selectedAnswer == question.options[0],
+                  isCorrect:
+                      (session.state == QuizState.correct ||
+                          session.state == QuizState.incorrect) &&
+                      question.options[0] == question.correctAnswer,
+                  isWrong:
+                      (session.state == QuizState.correct ||
+                          session.state == QuizState.incorrect) &&
+                      session.selectedAnswer == question.options[0] &&
+                      question.options[0] != question.correctAnswer,
+                  width: double.infinity,
+                  height: double.infinity,
+                  colors: colors,
                 ),
               ),
-              const SizedBox(height: 8),
-              // Second row (2 options)
+              const SizedBox(height: 12),
               Expanded(
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: _buildModernOptionButton(
-                        context,
-                        option: question.options[2],
-                        isSelected:
-                            session.selectedAnswer == question.options[2],
-                        isCorrect:
-                            (session.state == QuizState.correct ||
-                                session.state == QuizState.incorrect) &&
-                            question.options[2] == question.correctAnswer,
-                        isWrong:
-                            (session.state == QuizState.correct ||
-                                session.state == QuizState.incorrect) &&
-                            session.selectedAnswer == question.options[2] &&
-                            question.options[2] != question.correctAnswer,
-                        width: double.infinity,
-                        height: double.infinity,
-                        colors: colors,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: _buildModernOptionButton(
-                        context,
-                        option: question.options[3],
-                        isSelected:
-                            session.selectedAnswer == question.options[3],
-                        isCorrect:
-                            (session.state == QuizState.correct ||
-                                session.state == QuizState.incorrect) &&
-                            question.options[3] == question.correctAnswer,
-                        isWrong:
-                            (session.state == QuizState.correct ||
-                                session.state == QuizState.incorrect) &&
-                            session.selectedAnswer == question.options[3] &&
-                            question.options[3] != question.correctAnswer,
-                        width: double.infinity,
-                        height: double.infinity,
-                        colors: colors,
-                      ),
-                    ),
-                  ],
+                child: _buildModernOptionButton(
+                  context,
+                  option: question.options[1],
+                  isSelected: session.selectedAnswer == question.options[1],
+                  isCorrect:
+                      (session.state == QuizState.correct ||
+                          session.state == QuizState.incorrect) &&
+                      question.options[1] == question.correctAnswer,
+                  isWrong:
+                      (session.state == QuizState.correct ||
+                          session.state == QuizState.incorrect) &&
+                      session.selectedAnswer == question.options[1] &&
+                      question.options[1] != question.correctAnswer,
+                  width: double.infinity,
+                  height: double.infinity,
+                  colors: colors,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Expanded(
+                child: _buildModernOptionButton(
+                  context,
+                  option: question.options[2],
+                  isSelected: session.selectedAnswer == question.options[2],
+                  isCorrect:
+                      (session.state == QuizState.correct ||
+                          session.state == QuizState.incorrect) &&
+                      question.options[2] == question.correctAnswer,
+                  isWrong:
+                      (session.state == QuizState.correct ||
+                          session.state == QuizState.incorrect) &&
+                      session.selectedAnswer == question.options[2] &&
+                      question.options[2] != question.correctAnswer,
+                  width: double.infinity,
+                  height: double.infinity,
+                  colors: colors,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Expanded(
+                child: _buildModernOptionButton(
+                  context,
+                  option: question.options[3],
+                  isSelected: session.selectedAnswer == question.options[3],
+                  isCorrect:
+                      (session.state == QuizState.correct ||
+                          session.state == QuizState.incorrect) &&
+                      question.options[3] == question.correctAnswer,
+                  isWrong:
+                      (session.state == QuizState.correct ||
+                          session.state == QuizState.incorrect) &&
+                      session.selectedAnswer == question.options[3] &&
+                      question.options[3] != question.correctAnswer,
+                  width: double.infinity,
+                  height: double.infinity,
+                  colors: colors,
                 ),
               ),
             ],
@@ -1433,6 +1262,13 @@ class _ModernQuizContent extends StatelessWidget {
                 blurRadius: 8,
                 spreadRadius: 0,
               ),
+              if (isSelected || isCorrect || isWrong)
+                BoxShadow(
+                  color: borderColor.withValues(alpha: 0.4),
+                  offset: const Offset(0, 2),
+                  blurRadius: 4,
+                  spreadRadius: 0,
+                ),
             ],
           ),
           child: Stack(
@@ -1450,8 +1286,9 @@ class _ModernQuizContent extends StatelessWidget {
                       option,
                       style: TextStyle(
                         color: textColor,
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.5,
                       ),
                       textAlign: TextAlign.center,
                       maxLines: 2,
@@ -1464,19 +1301,26 @@ class _ModernQuizContent extends StatelessWidget {
               // Selection indicator
               if (isSelected && !isCorrect && !isWrong)
                 Positioned(
-                  top: 6,
-                  right: 6,
+                  top: 8,
+                  right: 8,
                   child: Container(
-                    width: 16,
-                    height: 16,
+                    width: 20,
+                    height: 20,
                     decoration: BoxDecoration(
                       color: colors.primary,
                       shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: colors.primary.withValues(alpha: 0.3),
+                          offset: const Offset(0, 2),
+                          blurRadius: 4,
+                        ),
+                      ],
                     ),
                     child: const Icon(
                       Icons.check,
                       color: AppColors.white,
-                      size: 10,
+                      size: 12,
                     ),
                   ),
                 ),

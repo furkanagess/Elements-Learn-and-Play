@@ -5,7 +5,7 @@ import 'package:elements_app/feature/provider/localization_provider.dart';
 import 'package:elements_app/product/constants/app_colors.dart';
 import 'package:elements_app/product/widget/premium/premium_features_widget.dart';
 import 'package:elements_app/product/widget/scaffold/app_scaffold.dart';
-import 'package:elements_app/product/widget/appBar/app_bars.dart';
+import 'package:elements_app/product/widget/button/back_button.dart';
 
 /// Settings view for premium features and subscription management
 class PremiumSettingsView extends StatefulWidget {
@@ -32,11 +32,19 @@ class _PremiumSettingsViewState extends State<PremiumSettingsView> {
     return AppScaffold(
       child: Scaffold(
         backgroundColor: AppColors.background,
-        appBar: AppBarConfigs.custom(
-          theme: AppBarVariant.settings,
-          style: AppBarStyle.gradient,
-          title: isTr ? 'Premium Ayarları' : 'Premium Settings',
-        ).toAppBar(),
+        appBar: AppBar(
+          backgroundColor: AppColors.darkBlue,
+          leading: const ModernBackButton(),
+          title: Text(
+            isTr ? 'Premium Ayarları' : 'Premium Settings',
+            style: const TextStyle(
+              color: AppColors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          elevation: 0,
+        ),
         body: Consumer<PurchaseProvider>(
           builder: (context, purchaseProvider, child) {
             return SingleChildScrollView(

@@ -5,10 +5,10 @@ import 'package:elements_app/feature/view/elementDetail/element_detail_view.dart
 import 'package:elements_app/product/constants/app_colors.dart';
 import 'package:elements_app/product/constants/stringConstants/en_app_strings.dart';
 import 'package:elements_app/product/constants/stringConstants/tr_app_strings.dart';
-import 'package:elements_app/feature/view/elementsList/elements_loading_view.dart';
+import 'package:elements_app/product/widget/skeleton/universal_skeleton_loader.dart';
 import 'package:elements_app/product/widget/scaffold/app_scaffold.dart';
-import 'package:elements_app/product/widget/appBar/app_bars.dart';
 import 'package:elements_app/product/widget/ads/banner_ads_widget.dart';
+import 'package:elements_app/product/widget/button/back_button.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -41,7 +41,7 @@ class _PeriodicTableViewState extends State<PeriodicTableView> {
   Widget build(BuildContext context) {
     return AppScaffold(
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: AppColors.darkBlue,
         appBar: _buildAppBar(context),
         body: _buildContent(context),
       ),
@@ -51,16 +51,46 @@ class _PeriodicTableViewState extends State<PeriodicTableView> {
   PreferredSizeWidget _buildAppBar(BuildContext context) {
     final isTr = context.read<LocalizationProvider>().isTr;
 
-    return AppBarConfigs.periodicTable(
-      title: isTr ? TrAppStrings.periodicTable : EnAppStrings.periodicTable,
-    ).toAppBar();
+    return AppBar(
+      backgroundColor: AppColors.darkBlue,
+      leading: const ModernBackButton(),
+      title: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.white.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              Icons.grid_view_outlined,
+              color: AppColors.white,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            isTr ? TrAppStrings.periodicTable : EnAppStrings.periodicTable,
+            style: const TextStyle(
+              color: AppColors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+      elevation: 0,
+    );
   }
 
   Widget _buildContent(BuildContext context) {
     return Consumer<PeriodicTableProvider>(
       builder: (context, provider, child) {
         if (provider.state.isLoading) {
-          return const ElementsLoadingView();
+          return const UniversalSkeletonLoader(
+            type: SkeletonType.periodicTable,
+            showAppBar: false,
+          );
         }
 
         if (provider.state.error != null) {
@@ -184,7 +214,7 @@ class _PeriodicTableViewState extends State<PeriodicTableView> {
         width: 60,
         height: 60,
         decoration: BoxDecoration(
-          color: color,
+          color: color.withValues(alpha: 0.7),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: AppColors.white.withValues(alpha: 0.3),

@@ -20,14 +20,25 @@ class ViewModeToggle extends StatelessWidget {
     return Column(
       children: [
         Container(
-          height: 48,
+          height: 52,
           decoration: BoxDecoration(
-            color: AppColors.darkBlue,
-            borderRadius: BorderRadius.circular(24),
+            color: Colors.white.withValues(
+              alpha: 0.1,
+            ), // Opacity white background like cards
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: AppColors.glowGreen.withValues(alpha: 0.3),
+              color: Colors.white.withValues(
+                alpha: 0.2,
+              ), // Opacity white border
               width: 1,
             ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.2),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
           child: Row(
             children: [
@@ -52,7 +63,7 @@ class ViewModeToggle extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 16),
         // Banner Ads
         const BannerAdsWidget(
           margin: EdgeInsets.symmetric(horizontal: 10),
@@ -77,9 +88,12 @@ class ViewModeToggle extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
+        margin: const EdgeInsets.all(4),
         decoration: BoxDecoration(
-          color: isActive ? AppColors.glowGreen : Colors.transparent,
-          borderRadius: BorderRadius.circular(24),
+          color: isActive
+              ? Colors.white.withValues(alpha: 0.3)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
         ),
         child: Center(
           child: Row(
@@ -88,8 +102,8 @@ class ViewModeToggle extends StatelessWidget {
               Icon(
                 icon,
                 color: isActive
-                    ? AppColors.darkBlue
-                    : AppColors.white.withValues(alpha: 0.7),
+                    ? AppColors.white.withValues(alpha: 0.7)
+                    : AppColors.darkBlue,
                 size: 20,
               ),
               const SizedBox(width: 8),
@@ -97,8 +111,8 @@ class ViewModeToggle extends StatelessWidget {
                 label,
                 style: TextStyle(
                   color: isActive
-                      ? AppColors.darkBlue
-                      : AppColors.white.withValues(alpha: 0.7),
+                      ? AppColors.white.withValues(alpha: 0.7)
+                      : AppColors.darkBlue,
                   fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
                   fontSize: 14,
                 ),

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:elements_app/product/widget/scaffold/app_scaffold.dart';
-import 'package:elements_app/product/widget/appBar/app_bars.dart';
 import 'package:elements_app/product/constants/app_colors.dart';
 import 'package:elements_app/core/services/pattern/pattern_service.dart';
 import 'package:elements_app/feature/provider/localization_provider.dart';
@@ -12,7 +11,6 @@ import 'package:elements_app/feature/view/puzzles/trivia_center_view.dart';
 import 'package:elements_app/feature/view/home/home_view.dart';
 import 'package:elements_app/product/widget/ads/banner_ads_widget.dart';
 import 'package:elements_app/feature/provider/quiz_provider.dart';
-import 'package:elements_app/product/widget/button/back_button.dart';
 
 class TestsHomeView extends StatelessWidget {
   TestsHomeView({super.key});
@@ -33,12 +31,37 @@ class TestsHomeView extends StatelessWidget {
         },
         child: Scaffold(
           backgroundColor: AppColors.background,
-          appBar: AppBarConfigs.custom(
-            theme: AppBarVariant.quiz,
-            style: AppBarStyle.gradient,
-            title: isTr ? 'Oyunlar' : 'Games',
-            leading: const ModernBackButton(),
-          ).toAppBar(),
+          appBar: AppBar(
+            backgroundColor: AppColors.darkBlue,
+            leading: Container(
+              margin: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.white.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: IconButton(
+                icon: const Icon(
+                  Icons.arrow_back_ios_new,
+                  color: AppColors.white,
+                ),
+                onPressed: () {
+                  Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute(builder: (_) => const HomeView()),
+                    (route) => false,
+                  );
+                },
+              ),
+            ),
+            title: Text(
+              isTr ? 'Oyunlar' : 'Games',
+              style: const TextStyle(
+                color: AppColors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            elevation: 0,
+          ),
           body: Stack(
             children: [
               Positioned.fill(
@@ -155,21 +178,21 @@ class TestsHomeView extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         child: Container(
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [color, color.withValues(alpha: 0.75)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
+            color: Colors.white.withValues(
+              alpha: 0.1,
+            ), // Opacity white background
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: Colors.white.withValues(alpha: 0.2),
+              color: Colors.white.withValues(
+                alpha: 0.2,
+              ), // Opacity white border
               width: 1,
             ),
             boxShadow: [
               BoxShadow(
-                color: shadow.withValues(alpha: 0.35),
-                blurRadius: 18,
-                offset: const Offset(0, 8),
+                color: Colors.black.withValues(alpha: 0.2),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
               ),
             ],
           ),
@@ -180,14 +203,21 @@ class TestsHomeView extends StatelessWidget {
                 width: 56,
                 height: 56,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.25),
+                  color: color.withValues(alpha: 0.6), // Card color
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.3),
-                    width: 1,
+                    color: color.withValues(alpha: 0.8),
+                    width: 1.5,
                   ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: shadow.withValues(alpha: 0.4),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
-                child: const Icon(Icons.extension_rounded, color: Colors.white),
+                child: Icon(Icons.extension_rounded, color: Colors.white),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -284,32 +314,17 @@ class TestsHomeView extends StatelessWidget {
       curve: Curves.easeInOut,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: isFirst20
-              ? [
-                  AppColors.glowGreen.withValues(alpha: 0.15),
-                  AppColors.glowGreen.withValues(alpha: 0.08),
-                ]
-              : [
-                  AppColors.steelBlue.withValues(alpha: 0.15),
-                  AppColors.steelBlue.withValues(alpha: 0.08),
-                ],
-        ),
+        color: Colors.white.withValues(alpha: 0.1), // Opacity white background
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isFirst20
-              ? AppColors.glowGreen.withValues(alpha: 0.3)
-              : AppColors.steelBlue.withValues(alpha: 0.3),
+          color: Colors.white.withValues(alpha: 0.2), // Opacity white border
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: (isFirst20 ? AppColors.glowGreen : AppColors.steelBlue)
-                .withValues(alpha: 0.2),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -379,13 +394,9 @@ class TestsHomeView extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          Container(
+          SizedBox(
             height: 50,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(25),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
-            ),
+
             child: Row(
               children: [
                 Expanded(

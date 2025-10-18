@@ -87,10 +87,6 @@ class _MetalGroupViewState extends State<MetalGroupView>
                                 title: context.read<LocalizationProvider>().isTr
                                     ? TrAppStrings.transitionMetal
                                     : EnAppStrings.transitionMetal,
-                                subtitle:
-                                    context.read<LocalizationProvider>().isTr
-                                    ? 'd-blok metaller'
-                                    : 'd-block metals',
                                 leadingIcon: Icons.precision_manufacturing,
                                 color: AppColors.purple,
                                 shadowColor: AppColors.shPurple,
@@ -121,10 +117,6 @@ class _MetalGroupViewState extends State<MetalGroupView>
                                 title: context.read<LocalizationProvider>().isTr
                                     ? TrAppStrings.postTransition
                                     : EnAppStrings.postTransition,
-                                subtitle:
-                                    context.read<LocalizationProvider>().isTr
-                                    ? 'geçiş sonrası metaller'
-                                    : 'post-transition metals',
                                 leadingIcon: Icons.settings,
                                 color: AppColors.steelBlue,
                                 shadowColor: AppColors.shSteelBlue,
@@ -155,10 +147,6 @@ class _MetalGroupViewState extends State<MetalGroupView>
                                 title: context.read<LocalizationProvider>().isTr
                                     ? TrAppStrings.alkaline
                                     : EnAppStrings.alkaline,
-                                subtitle:
-                                    context.read<LocalizationProvider>().isTr
-                                    ? '1A grubu metaller'
-                                    : 'group 1 metals',
                                 leadingIcon: Icons.flash_on,
                                 color: AppColors.turquoise,
                                 shadowColor: AppColors.shTurquoise,
@@ -189,10 +177,6 @@ class _MetalGroupViewState extends State<MetalGroupView>
                                 title: context.read<LocalizationProvider>().isTr
                                     ? TrAppStrings.earthAlkaline
                                     : EnAppStrings.earthAlkaline,
-                                subtitle:
-                                    context.read<LocalizationProvider>().isTr
-                                    ? '2A grubu metaller'
-                                    : 'group 2 metals',
                                 leadingIcon: Icons.construction,
                                 color: AppColors.yellow,
                                 shadowColor: AppColors.shYellow,
@@ -223,10 +207,6 @@ class _MetalGroupViewState extends State<MetalGroupView>
                                 title: context.read<LocalizationProvider>().isTr
                                     ? TrAppStrings.lanthanides
                                     : EnAppStrings.lanthanides,
-                                subtitle:
-                                    context.read<LocalizationProvider>().isTr
-                                    ? 'f-blok: lantanitler'
-                                    : 'f-block: lanthanides',
                                 leadingIcon: Icons.blur_circular,
                                 color: AppColors.darkTurquoise,
                                 shadowColor: AppColors.shDarkTurquoise,
@@ -257,10 +237,6 @@ class _MetalGroupViewState extends State<MetalGroupView>
                                 title: context.read<LocalizationProvider>().isTr
                                     ? TrAppStrings.actinides
                                     : EnAppStrings.actinides,
-                                subtitle:
-                                    context.read<LocalizationProvider>().isTr
-                                    ? 'f-blok: aktinitler'
-                                    : 'f-block: actinides',
                                 leadingIcon: Icons.science,
                                 color: AppColors.pink,
                                 shadowColor: AppColors.shPink,
@@ -302,20 +278,7 @@ class _MetalGroupViewState extends State<MetalGroupView>
 
   AppBar _buildAppBar(BuildContext context) {
     return AppBar(
-      backgroundColor: Colors.transparent,
-      flexibleSpace: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppColors.purple,
-              AppColors.steelBlue.withValues(alpha: 0.95),
-              AppColors.darkBlue.withValues(alpha: 0.9),
-            ],
-          ),
-        ),
-      ),
+      backgroundColor: AppColors.darkBlue,
       leading: const ModernBackButton(),
       title: Row(
         children: [
@@ -340,6 +303,7 @@ class _MetalGroupViewState extends State<MetalGroupView>
           ),
         ],
       ),
+      elevation: 0,
     );
   }
 
@@ -347,7 +311,6 @@ class _MetalGroupViewState extends State<MetalGroupView>
     BuildContext context, {
     required int index,
     required String title,
-    required String subtitle,
     required IconData leadingIcon,
     required Color color,
     required Color shadowColor,
@@ -356,7 +319,7 @@ class _MetalGroupViewState extends State<MetalGroupView>
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         onTapDown: (_) => setState(() => _pressedIndex = index),
         onTapCancel: () => setState(() => _pressedIndex = null),
         onTap: () {
@@ -365,36 +328,31 @@ class _MetalGroupViewState extends State<MetalGroupView>
         },
         onTapUp: (_) => setState(() => _pressedIndex = null),
         child: AnimatedScale(
-          scale: _pressedIndex == index ? 0.97 : 1.0,
-          duration: const Duration(milliseconds: 100),
-          curve: Curves.easeOut,
+          scale: _pressedIndex == index ? 0.95 : 1.0,
+          duration: const Duration(milliseconds: 150),
+          curve: Curves.easeInOut,
           child: Container(
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [color, color.withValues(alpha: 0.85)],
-              ),
-              borderRadius: BorderRadius.circular(20),
+              color: Colors.white.withValues(
+                alpha: 0.1,
+              ), // Opacity white background
+              borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: Colors.white.withValues(alpha: 0.15),
+                color: Colors.white.withValues(
+                  alpha: 0.2,
+                ), // Opacity white border
                 width: 1,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: shadowColor.withValues(alpha: 0.3),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
-                ),
-                BoxShadow(
-                  color: shadowColor.withValues(alpha: 0.2),
-                  blurRadius: 40,
-                  offset: const Offset(0, 20),
+                  color: Colors.black.withValues(alpha: 0.2),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
                 ),
               ],
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(16),
               child: Stack(
                 children: [
                   Positioned.fill(
@@ -442,17 +400,21 @@ class _MetalGroupViewState extends State<MetalGroupView>
                           Container(
                             padding: const EdgeInsets.all(14),
                             decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.15),
+                              color: AppColors.yellow.withValues(
+                                alpha: 0.6,
+                              ), // Metal color
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(
-                                color: Colors.white.withValues(alpha: 0.3),
-                                width: 1,
+                                color: AppColors.yellow.withValues(alpha: 0.8),
+                                width: 1.5,
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.08),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 4),
+                                  color: AppColors.yellow.withValues(
+                                    alpha: 0.4,
+                                  ),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 6),
                                 ),
                               ],
                             ),
@@ -477,18 +439,6 @@ class _MetalGroupViewState extends State<MetalGroupView>
                                   blurRadius: 2,
                                 ),
                               ],
-                            ),
-                            maxLines: 2,
-                            textAlign: TextAlign.center,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            subtitle,
-                            style: TextStyle(
-                              color: AppColors.white.withValues(alpha: 0.85),
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
                             ),
                             maxLines: 2,
                             textAlign: TextAlign.center,

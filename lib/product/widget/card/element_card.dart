@@ -4,7 +4,6 @@ import 'package:elements_app/feature/provider/localization_provider.dart';
 import 'package:elements_app/feature/view/elementDetail/element_detail_view.dart';
 import 'package:elements_app/product/constants/app_colors.dart';
 import 'package:elements_app/product/extensions/color_extension.dart';
-import 'package:elements_app/core/services/pattern/pattern_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -37,7 +36,6 @@ class _ElementCardState extends State<ElementCard>
     with TickerProviderStateMixin {
   late AnimationController _cardController;
   late Animation<double> _cardAnimation;
-  final PatternService _patternService = PatternService();
 
   @override
   void initState() {
@@ -71,9 +69,9 @@ class _ElementCardState extends State<ElementCard>
             margin: _getCardMargin(),
             decoration: _buildCardDecoration(elementColors),
             child: Material(
-              color: Colors.transparent,
+              color: Colors.white.withValues(alpha: 0.07),
               child: InkWell(
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BorderRadius.circular(18),
                 onTapDown: (_) => _cardController.forward(),
                 onTapUp: (_) => _handleTap(),
                 onTapCancel: () => _cardController.reverse(),
@@ -81,16 +79,7 @@ class _ElementCardState extends State<ElementCard>
                   borderRadius: BorderRadius.circular(24),
                   child: Stack(
                     children: [
-                      // Background Pattern
-                      Positioned.fill(
-                        child: CustomPaint(
-                          painter: _patternService.getRandomPatternPainter(
-                            seed: widget.element.number ?? widget.index,
-                            color: Colors.white,
-                            opacity: 0.1,
-                          ),
-                        ),
-                      ),
+                      // Background Pattern removed for all modes to keep them clean
 
                       // Decorative Elements
                       ..._buildDecorativeElements(),
@@ -142,31 +131,20 @@ class _ElementCardState extends State<ElementCard>
 
   /// Build card decoration based on mode
   BoxDecoration _buildCardDecoration(Map<String, Color> colors) {
+    // Same decoration for list, grid, and favorites modes
+    final cardBackgroundColor = _getCardBackgroundColor();
     return BoxDecoration(
-      borderRadius: BorderRadius.circular(24),
-      gradient: LinearGradient(
-        colors: [
-          colors['element']!.withValues(alpha: 0.9),
-          colors['element']!.withValues(alpha: 0.7),
-          colors['element']!.withValues(alpha: 0.5),
-        ],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        stops: const [0.0, 0.6, 1.0],
+      color: cardBackgroundColor,
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(
+        color: Colors.white.withValues(alpha: 0.2), // Opacity white border
+        width: 1,
       ),
-      border: Border.all(color: Colors.white.withValues(alpha: 0.2), width: 1),
       boxShadow: [
         BoxShadow(
-          color: colors['shadow']!.withValues(alpha: 0.4),
-          blurRadius: 20,
-          offset: const Offset(0, 10),
-          spreadRadius: 0,
-        ),
-        BoxShadow(
-          color: colors['shadow']!.withValues(alpha: 0.2),
-          blurRadius: 40,
-          offset: const Offset(0, 20),
-          spreadRadius: 0,
+          color: Colors.black.withValues(alpha: 0.2),
+          blurRadius: 8,
+          offset: const Offset(0, 4),
         ),
       ],
     );
@@ -190,69 +168,16 @@ class _ElementCardState extends State<ElementCard>
       case ElementCardMode.favorites:
         return const EdgeInsets.all(20);
       case ElementCardMode.grid:
-        return const EdgeInsets.all(16);
+        return const EdgeInsets.all(
+          14,
+        ); // Slightly smaller padding for better content fit
     }
   }
 
   /// Build decorative elements based on mode
   List<Widget> _buildDecorativeElements() {
-    switch (widget.mode) {
-      case ElementCardMode.list:
-      case ElementCardMode.favorites:
-        return [
-          Positioned(
-            top: -20,
-            right: -20,
-            child: Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: -10,
-            left: -10,
-            child: Container(
-              width: 60,
-              height: 60,
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.05),
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-        ];
-      case ElementCardMode.grid:
-        return [
-          Positioned(
-            top: -15,
-            right: -15,
-            child: Container(
-              width: 50,
-              height: 50,
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: -8,
-            left: -8,
-            child: Container(
-              width: 35,
-              height: 35,
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.05),
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-        ];
-    }
+    // No decorative elements for all modes to keep them clean
+    return [];
   }
 
   /// Build main content based on mode
@@ -271,45 +196,45 @@ class _ElementCardState extends State<ElementCard>
   Widget _buildListContent(bool isTr) {
     return Row(
       children: [
-        // Element number
-        _buildElementNumber(60, 20),
-        const SizedBox(width: 20),
+        // Element symbol icon (rounded square)
+        _buildElementSymbolIcon(),
+        const SizedBox(width: 16),
 
         // Element info
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Element symbol
-              Text(
-                widget.element.symbol ?? '',
-                style: const TextStyle(
-                  color: AppColors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 32,
-                  height: 1.1,
-                ),
-              ),
-              const SizedBox(height: 6),
-
               // Element name
               Text(
                 isTr
                     ? widget.element.trName ?? ''
                     : widget.element.enName ?? '',
-                style: TextStyle(
-                  color: AppColors.white.withValues(alpha: 0.95),
-                  fontWeight: FontWeight.w600,
-                  fontSize: 16,
+                style: const TextStyle(
+                  color: AppColors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
                   height: 1.2,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 4),
 
-              // Atomic weight
-              _buildWeightContainer(),
+              // Atomic number
+              Text(
+                isTr
+                    ? 'Atom Numarası: ${widget.element.number ?? ''}'
+                    : 'Atomic Number: ${widget.element.number ?? ''}',
+                style: const TextStyle(
+                  color: Color(
+                    0xFFE0E0E0,
+                  ), // Light gray text for better contrast
+                  fontWeight: FontWeight.w400,
+                  fontSize: 14,
+                  height: 1.2,
+                ),
+              ),
             ],
           ),
         ),
@@ -323,84 +248,117 @@ class _ElementCardState extends State<ElementCard>
   /// Build grid mode content
   Widget _buildGridContent(bool isTr) {
     return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Element number
-        Center(child: _buildElementNumber(40, 16)),
+        // Top row with symbol icon and atomic number
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Element symbol icon (top-left)
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: _getGroupColor(), // Group color
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: [
+                  BoxShadow(
+                    color: _getGroupColor().withValues(alpha: 0.3),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Center(
+                child: Text(
+                  widget.element.symbol ?? '',
+                  style: TextStyle(
+                    color: _getOriginalGroupColor(),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    height: 1.1,
+                  ),
+                ),
+              ),
+            ),
+
+            // Atomic number (top-right)
+            Text(
+              '${widget.element.number ?? ''}',
+              style: const TextStyle(
+                color: Color(0xFFB0B0B0), // Light gray
+                fontWeight: FontWeight.w400,
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ),
+
         const SizedBox(height: 12),
 
-        // Element symbol
-        Center(
-          child: Text(
-            widget.element.symbol ?? '',
-            style: const TextStyle(
-              color: AppColors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 28,
+        // Element name and atomic weight on same row
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // Element name (left side)
+            Expanded(
+              child: Text(
+                isTr
+                    ? widget.element.trName ?? ''
+                    : widget.element.enName ?? '',
+                style: const TextStyle(
+                  color: AppColors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
-            textAlign: TextAlign.center,
-          ),
-        ),
-        const SizedBox(height: 8),
 
-        // Element name
-        Center(
-          child: Text(
-            isTr ? widget.element.trName ?? '' : widget.element.enName ?? '',
-            style: TextStyle(
-              color: AppColors.white.withValues(alpha: 0.9),
-              fontWeight: FontWeight.w600,
-              fontSize: 14,
+            const SizedBox(width: 8),
+
+            // Atomic weight (right side)
+            Flexible(
+              child: Text(
+                _formatWeight(widget.element.weight),
+                style: const TextStyle(
+                  color: Color(0xFFB0B0B0), // Light gray
+                  fontWeight: FontWeight.w400,
+                  fontSize: 11,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
-            textAlign: TextAlign.center,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
+          ],
         ),
-        const SizedBox(height: 8),
-
-        // Element weight
-        Center(child: _buildGridWeightContainer()),
       ],
     );
   }
 
-  /// Build favorites mode content
+  /// Build favorites mode content (same as list mode but without arrow)
   Widget _buildFavoritesContent(bool isTr) {
     return Row(
       children: [
-        // Element number
-        _buildElementNumber(60, 20),
-        const SizedBox(width: 20),
+        // Element symbol icon (rounded square)
+        _buildElementSymbolIcon(),
+        const SizedBox(width: 16),
 
         // Element info
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                widget.element.symbol ?? '',
-                style: const TextStyle(
-                  color: AppColors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 32,
-                  shadows: [
-                    Shadow(
-                      color: Colors.black26,
-                      offset: Offset(1, 1),
-                      blurRadius: 2,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 4),
+              // Element name
               Text(
                 isTr
                     ? widget.element.trName ?? ''
                     : widget.element.enName ?? '',
-                style: TextStyle(
-                  color: AppColors.white.withValues(alpha: 0.9),
+                style: const TextStyle(
+                  color: AppColors.white,
                   fontWeight: FontWeight.w600,
                   fontSize: 16,
                 ),
@@ -408,8 +366,9 @@ class _ElementCardState extends State<ElementCard>
                 overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 4),
+              // Atomic number
               Text(
-                _formatWeight(widget.element.weight),
+                '${widget.element.number ?? ''}',
                 style: TextStyle(
                   color: AppColors.white.withValues(alpha: 0.7),
                   fontWeight: FontWeight.w500,
@@ -426,21 +385,19 @@ class _ElementCardState extends State<ElementCard>
     );
   }
 
-  /// Build element number container
-  Widget _buildElementNumber(double size, double fontSize) {
+  /// Build element symbol icon (rounded square)
+  Widget _buildElementSymbolIcon() {
+    final groupColor = _getGroupColor();
+
     return Container(
-      width: size,
-      height: size,
+      width: 56,
+      height: 56,
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.25),
-        borderRadius: BorderRadius.circular(size == 40 ? 12 : 16),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.3),
-          width: 1,
-        ),
+        color: groupColor,
+        borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
+            color: groupColor.withValues(alpha: 0.3),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
@@ -448,82 +405,96 @@ class _ElementCardState extends State<ElementCard>
       ),
       child: Center(
         child: Text(
-          widget.element.number?.toString() ?? '',
+          widget.element.symbol ?? '',
           style: TextStyle(
-            color: AppColors.white,
+            color: _getOriginalGroupColor(),
             fontWeight: FontWeight.bold,
-            fontSize: fontSize,
-            shadows: widget.mode == ElementCardMode.favorites
-                ? [
-                    const Shadow(
-                      color: Colors.black26,
-                      offset: Offset(1, 1),
-                      blurRadius: 2,
-                    ),
-                  ]
-                : null,
+            fontSize: 20,
+            height: 1.1,
           ),
         ),
       ),
     );
   }
 
-  /// Build weight container for list mode
-  Widget _buildWeightContainer() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        _formatWeight(widget.element.weight),
-        style: TextStyle(
-          color: AppColors.white.withValues(alpha: 0.8),
-          fontWeight: FontWeight.w500,
-          fontSize: 13,
-        ),
-      ),
-    );
+  /// Get group-based color for element symbol (opacity version for container background)
+  Color _getGroupColor() {
+    final category = widget.element.enCategory?.toLowerCase();
+
+    switch (category) {
+      case 'alkaline metal':
+        return AppColors.turquoise.withValues(alpha: 0.3); // Opacity turquoise
+      case 'alkaline earth metal':
+        return AppColors.yellow.withValues(alpha: 0.3); // Opacity yellow
+      case 'transition metal':
+        return AppColors.purple.withValues(alpha: 0.3); // Opacity purple
+      case 'post-transition metal':
+        return AppColors.steelBlue.withValues(alpha: 0.3); // Opacity steel blue
+      case 'metalloid':
+        return AppColors.skinColor.withValues(alpha: 0.3); // Opacity skin color
+      case 'reactive nonmetal':
+        return AppColors.powderRed.withValues(alpha: 0.3); // Opacity red
+      case 'noble gas':
+        return AppColors.glowGreen.withValues(alpha: 0.3); // Opacity green
+      case 'halogen':
+        return AppColors.lightGreen.withValues(
+          alpha: 0.3,
+        ); // Opacity light green
+      case 'lanthanide':
+        return AppColors.darkTurquoise.withValues(
+          alpha: 0.3,
+        ); // Opacity turquoise
+      case 'actinide':
+        return AppColors.pink.withValues(alpha: 0.3); // Opacity pink
+      default:
+        return AppColors.darkWhite.withValues(alpha: 0.3); // Opacity default
+    }
   }
 
-  /// Build weight container for grid mode
-  Widget _buildGridWeightContainer() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        _formatWeight(widget.element.weight),
-        style: const TextStyle(
-          color: AppColors.white,
-          fontWeight: FontWeight.w600,
-          fontSize: 12,
-        ),
-        textAlign: TextAlign.center,
-      ),
-    );
+  /// Get original group color for text (full opacity)
+  Color _getOriginalGroupColor() {
+    final category = widget.element.enCategory?.toLowerCase();
+
+    switch (category) {
+      case 'alkaline metal':
+        return AppColors.white; // Full turquoise
+      case 'alkaline earth metal':
+        return AppColors.white; // Full yellow
+      case 'transition metal':
+        return AppColors.white; // Full purple
+      case 'post-transition metal':
+        return AppColors.white; // Full steel blue
+      case 'metalloid':
+        return AppColors.white; // Full skin color
+      case 'reactive nonmetal':
+        return AppColors.white; // Full red
+      case 'noble gas':
+        return AppColors.white; // Full green
+      case 'halogen':
+        return AppColors.white; // Full light green
+      case 'lanthanide':
+        return AppColors.white; // Full turquoise
+      case 'actinide':
+        return AppColors.white; // Full pink
+      default:
+        return AppColors.white; // Full default
+    }
   }
+
+  /// Get card background color - opacity white for all elements
+  Color _getCardBackgroundColor() {
+    // Opacity white background for all elements
+    return Colors.white.withValues(alpha: 0.1); // Opacity white background
+  }
+
+  /// Build element number container
 
   /// Build arrow icon for list mode
   Widget _buildArrowIcon() {
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.1),
-          width: 1,
-        ),
-      ),
-      child: const Icon(
-        Icons.arrow_forward_ios_rounded,
-        color: AppColors.white,
-        size: 16,
-      ),
+    return Icon(
+      Icons.chevron_right_rounded,
+      color: const Color(0xFFB0B0B0), // Medium gray for better contrast
+      size: 24,
     );
   }
 

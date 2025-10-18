@@ -8,7 +8,6 @@ import 'package:elements_app/product/constants/api_types.dart';
 import 'package:elements_app/product/constants/app_colors.dart';
 import 'package:elements_app/product/constants/stringConstants/en_app_strings.dart';
 import 'package:elements_app/product/constants/stringConstants/tr_app_strings.dart';
-import 'package:elements_app/product/extensions/context_extensions.dart';
 import 'package:elements_app/product/widget/button/back_button.dart';
 import 'package:elements_app/product/widget/container/element_group_container.dart';
 import 'package:elements_app/product/widget/scaffold/app_scaffold.dart';
@@ -52,6 +51,11 @@ class _ElementGroupViewState extends State<ElementGroupView>
     super.dispose();
   }
 
+  Color _getGroupColor() {
+    // Return default color for element groups
+    return AppColors.steelBlue;
+  }
+
   @override
   Widget build(BuildContext context) {
     return AppScaffold(
@@ -93,10 +97,6 @@ class _ElementGroupViewState extends State<ElementGroupView>
                                 title: context.read<LocalizationProvider>().isTr
                                     ? TrAppStrings.metalGroups
                                     : EnAppStrings.metalGroups,
-                                subtitle:
-                                    context.read<LocalizationProvider>().isTr
-                                    ? 'Yüksek iletkenlik, parlak ve dövülebilir'
-                                    : 'Conductive, shiny and malleable',
                                 leadingIcon: Icons.construction,
                                 color: AppColors.purple,
                                 shadowColor: AppColors.shPurple,
@@ -120,10 +120,6 @@ class _ElementGroupViewState extends State<ElementGroupView>
                                 title: context.read<LocalizationProvider>().isTr
                                     ? TrAppStrings.nonMetalGroups
                                     : EnAppStrings.nonMetalGroup,
-                                subtitle:
-                                    context.read<LocalizationProvider>().isTr
-                                    ? 'Kırılgan yapı, kötü iletkenlik'
-                                    : 'Brittle, poor conductors',
                                 leadingIcon: Icons.bubble_chart,
                                 color: AppColors.powderRed,
                                 shadowColor: AppColors.shPowderRed,
@@ -147,10 +143,6 @@ class _ElementGroupViewState extends State<ElementGroupView>
                                 title: context.read<LocalizationProvider>().isTr
                                     ? TrAppStrings.metalloidGroups
                                     : EnAppStrings.metalloidGroup,
-                                subtitle:
-                                    context.read<LocalizationProvider>().isTr
-                                    ? 'Metal ve ametal arası özellikler'
-                                    : 'Between metal and nonmetal',
                                 leadingIcon: Icons.category,
                                 color: AppColors.skinColor,
                                 shadowColor: AppColors.shSkinColor,
@@ -181,10 +173,6 @@ class _ElementGroupViewState extends State<ElementGroupView>
                                 title: context.read<LocalizationProvider>().isTr
                                     ? TrAppStrings.halogenGroups
                                     : EnAppStrings.halogenGroup,
-                                subtitle:
-                                    context.read<LocalizationProvider>().isTr
-                                    ? 'Reaktif ametaller, tuz oluşturur'
-                                    : 'Reactive nonmetals forming salts',
                                 leadingIcon: Icons.flare,
                                 color: AppColors.lightGreen,
                                 shadowColor: AppColors.shLightGreen,
@@ -284,20 +272,7 @@ class _ElementGroupViewState extends State<ElementGroupView>
 
   AppBar _buildModernAppBar(BuildContext context) {
     return AppBar(
-      backgroundColor: Colors.transparent,
-      flexibleSpace: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppColors.purple,
-              AppColors.powderRed.withValues(alpha: 0.9),
-              AppColors.lightGreen.withValues(alpha: 0.9),
-            ],
-          ),
-        ),
-      ),
+      backgroundColor: AppColors.darkBlue,
       leading: const ModernBackButton(),
       title: Row(
         children: [
@@ -448,71 +423,10 @@ class _ElementGroupViewState extends State<ElementGroupView>
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
-    return Stack(
-      children: [
-        // Background pattern
-        Positioned.fill(
-          child: CustomPaint(painter: GroupPatternPainter(AppColors.white)),
-        ),
-        // Content
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 60, 20, 20),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppColors.white.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: AppColors.white.withValues(alpha: 0.3),
-                    width: 1,
-                  ),
-                ),
-                child: Icon(Icons.category, color: AppColors.white, size: 24),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      context.read<LocalizationProvider>().isTr
-                          ? 'Element Grupları'
-                          : 'Element Groups',
-                      style: context.textTheme.headlineMedium?.copyWith(
-                        color: AppColors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 28,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      context.read<LocalizationProvider>().isTr
-                          ? 'Elementleri gruplarına göre keşfedin'
-                          : 'Explore elements by their groups',
-                      style: TextStyle(
-                        color: AppColors.white.withValues(alpha: 0.9),
-                        fontSize: 16,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildGroupCard(
     BuildContext context, {
     required int index,
     required String title,
-    required String subtitle,
     required IconData leadingIcon,
     required Color color,
     required Color shadowColor,
@@ -521,7 +435,7 @@ class _ElementGroupViewState extends State<ElementGroupView>
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         onTapDown: (_) => setState(() => _pressedIndex = index),
         onTapCancel: () => setState(() => _pressedIndex = null),
         onTap: () {
@@ -530,36 +444,31 @@ class _ElementGroupViewState extends State<ElementGroupView>
         },
         onTapUp: (_) => setState(() => _pressedIndex = null),
         child: AnimatedScale(
-          scale: _pressedIndex == index ? 0.97 : 1.0,
-          duration: const Duration(milliseconds: 100),
-          curve: Curves.easeOut,
+          scale: _pressedIndex == index ? 0.95 : 1.0,
+          duration: const Duration(milliseconds: 150),
+          curve: Curves.easeInOut,
           child: Container(
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [color, color.withValues(alpha: 0.85)],
-              ),
-              borderRadius: BorderRadius.circular(20),
+              color: Colors.white.withValues(
+                alpha: 0.1,
+              ), // Opacity white background
+              borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: Colors.white.withValues(alpha: 0.15),
+                color: Colors.white.withValues(
+                  alpha: 0.2,
+                ), // Opacity white border
                 width: 1,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: shadowColor.withValues(alpha: 0.3),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
-                ),
-                BoxShadow(
-                  color: shadowColor.withValues(alpha: 0.2),
-                  blurRadius: 40,
-                  offset: const Offset(0, 20),
+                  color: Colors.black.withValues(alpha: 0.2),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
                 ),
               ],
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(16),
               child: Stack(
                 children: [
                   Positioned.fill(
@@ -608,17 +517,21 @@ class _ElementGroupViewState extends State<ElementGroupView>
                           Container(
                             padding: const EdgeInsets.all(14),
                             decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.15),
+                              color: _getGroupColor().withValues(
+                                alpha: 0.6,
+                              ), // Group color
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(
-                                color: Colors.white.withValues(alpha: 0.3),
-                                width: 1,
+                                color: _getGroupColor().withValues(alpha: 0.8),
+                                width: 1.5,
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.08),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 4),
+                                  color: _getGroupColor().withValues(
+                                    alpha: 0.4,
+                                  ),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 6),
                                 ),
                               ],
                             ),
@@ -648,18 +561,6 @@ class _ElementGroupViewState extends State<ElementGroupView>
                             textAlign: TextAlign.center,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          const SizedBox(height: 6),
-                          Text(
-                            subtitle,
-                            style: TextStyle(
-                              color: AppColors.white.withValues(alpha: 0.85),
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                            ),
-                            maxLines: 2,
-                            textAlign: TextAlign.center,
-                            overflow: TextOverflow.ellipsis,
-                          ),
                         ],
                       ),
                     ),
@@ -683,7 +584,7 @@ class _ElementGroupViewState extends State<ElementGroupView>
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         onTapDown: (_) => setState(() => _unknownPressed = true),
         onTapCancel: () => setState(() => _unknownPressed = false),
         onTap: () {
@@ -692,37 +593,32 @@ class _ElementGroupViewState extends State<ElementGroupView>
         },
         onTapUp: (_) => setState(() => _unknownPressed = false),
         child: AnimatedScale(
-          scale: _unknownPressed ? 0.97 : 1.0,
-          duration: const Duration(milliseconds: 100),
-          curve: Curves.easeOut,
+          scale: _unknownPressed ? 0.95 : 1.0,
+          duration: const Duration(milliseconds: 150),
+          curve: Curves.easeInOut,
           child: Container(
             height: 120,
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [color, color.withValues(alpha: 0.85)],
-              ),
-              borderRadius: BorderRadius.circular(20),
+              color: Colors.white.withValues(
+                alpha: 0.1,
+              ), // Opacity white background
+              borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: Colors.white.withValues(alpha: 0.15),
+                color: Colors.white.withValues(
+                  alpha: 0.2,
+                ), // Opacity white border
                 width: 1,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: shadowColor.withValues(alpha: 0.3),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
-                ),
-                BoxShadow(
-                  color: shadowColor.withValues(alpha: 0.2),
-                  blurRadius: 40,
-                  offset: const Offset(0, 20),
+                  color: Colors.black.withValues(alpha: 0.2),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
                 ),
               ],
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(16),
               child: Stack(
                 children: [
                   Positioned.fill(
@@ -766,17 +662,21 @@ class _ElementGroupViewState extends State<ElementGroupView>
                         Container(
                           padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.15),
+                            color: AppColors.steelBlue.withValues(
+                              alpha: 0.6,
+                            ), // Help color
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.3),
-                              width: 1,
+                              color: AppColors.steelBlue.withValues(alpha: 0.8),
+                              width: 1.5,
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.08),
-                                blurRadius: 8,
-                                offset: const Offset(0, 4),
+                                color: AppColors.steelBlue.withValues(
+                                  alpha: 0.4,
+                                ),
+                                blurRadius: 12,
+                                offset: const Offset(0, 6),
                               ),
                             ],
                           ),

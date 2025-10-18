@@ -11,6 +11,7 @@ import 'package:elements_app/product/constants/app_colors.dart';
 import 'package:elements_app/core/services/pattern/pattern_service.dart';
 import 'package:elements_app/feature/view/quiz/modern_quiz_home.dart';
 import 'package:elements_app/product/widget/premium/premium_overlay.dart';
+import 'package:elements_app/product/widget/button/back_button.dart';
 
 class AchievementsView extends StatefulWidget {
   const AchievementsView({super.key});
@@ -60,6 +61,57 @@ class _AchievementsViewState extends State<AchievementsView>
     super.dispose();
   }
 
+  AppBar _buildModernAppBar(BuildContext context) {
+    final isTr = context.watch<LocalizationProvider>().isTr;
+    return AppBar(
+      backgroundColor: AppColors.darkBlue,
+      leading: const ModernBackButton(),
+      title: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.white.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              Icons.emoji_events_outlined,
+              color: AppColors.white,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            isTr ? 'Başarılar' : 'Achievements',
+            style: const TextStyle(
+              color: AppColors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        Container(
+          margin: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: AppColors.white.withValues(alpha: 0.2),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: IconButton(
+            icon: const Icon(
+              Icons.refresh_rounded,
+              color: AppColors.white,
+              size: 20,
+            ),
+            onPressed: () => _showClearAchievementsDialog(context),
+          ),
+        ),
+      ],
+      elevation: 0,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isTr = context.watch<LocalizationProvider>().isTr;
@@ -75,39 +127,7 @@ class _AchievementsViewState extends State<AchievementsView>
       child: AppScaffold(
         child: Scaffold(
           backgroundColor: AppColors.background,
-          appBar: AppBarConfigs.custom(
-            theme: AppBarVariant.quiz,
-            style: AppBarStyle.gradient,
-            title: isTr ? 'Başarılar' : 'Achievements',
-            leading: IconButton(
-              icon: const Icon(
-                Icons.arrow_back_ios_new_rounded,
-                color: AppColors.white,
-                size: 20,
-              ),
-              onPressed: () {
-                HapticFeedback.lightImpact();
-                _navigateToQuizHome();
-              },
-            ),
-            actions: [
-              Container(
-                margin: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: AppColors.white.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: IconButton(
-                  icon: const Icon(
-                    Icons.refresh_rounded,
-                    color: AppColors.white,
-                    size: 20,
-                  ),
-                  onPressed: () => _showClearAchievementsDialog(context),
-                ),
-              ),
-            ],
-          ).toAppBar(),
+          appBar: _buildModernAppBar(context),
           body: Stack(
             children: [
               // Background Pattern

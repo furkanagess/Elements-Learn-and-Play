@@ -4,7 +4,7 @@ import 'package:elements_app/feature/provider/purchase_provider.dart';
 import 'package:elements_app/product/constants/app_colors.dart';
 import 'package:elements_app/product/widget/scaffold/app_scaffold.dart';
 import 'package:elements_app/product/widget/card/element_card.dart';
-import 'package:elements_app/product/widget/appBar/app_bars.dart';
+import 'package:elements_app/product/widget/button/back_button.dart';
 import 'package:elements_app/core/services/pattern/pattern_service.dart';
 import 'package:elements_app/feature/view/settings/settings_view.dart';
 import 'package:flutter/material.dart';
@@ -50,11 +50,21 @@ class _FavoritesViewState extends State<FavoritesView>
     return AppScaffold(
       child: Scaffold(
         backgroundColor: AppColors.background,
-        appBar: AppBarConfigs.favorites(
-          title: context.watch<LocalizationProvider>().isTr
-              ? 'Favori Elementler'
-              : 'Favorite Elements',
-        ).toAppBar(),
+        appBar: AppBar(
+          backgroundColor: AppColors.darkBlue,
+          leading: const ModernBackButton(),
+          title: Text(
+            context.watch<LocalizationProvider>().isTr
+                ? 'Favori Elementler'
+                : 'Favorite Elements',
+            style: const TextStyle(
+              color: AppColors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          elevation: 0,
+        ),
         body: Stack(
           children: [
             // Background Pattern

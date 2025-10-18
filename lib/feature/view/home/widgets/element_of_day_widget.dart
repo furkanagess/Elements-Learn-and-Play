@@ -223,19 +223,20 @@ class _ElementOfDayWidgetState extends State<ElementOfDayWidget>
               height: 160,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(24),
-                gradient: LinearGradient(
-                  colors: [
-                    elementColor.withValues(alpha: 0.2),
-                    elementColor.withValues(alpha: 0.1),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+                color: Colors.white.withValues(
+                  alpha: 0.1,
+                ), // Opacity white background
+                border: Border.all(
+                  color: Colors.white.withValues(
+                    alpha: 0.2,
+                  ), // Opacity white border
+                  width: 1,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: elementColor.withValues(alpha: 0.3),
-                    blurRadius: 30,
-                    offset: const Offset(0, 15),
+                    color: Colors.black.withValues(alpha: 0.2),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
                   ),
                 ],
               ),

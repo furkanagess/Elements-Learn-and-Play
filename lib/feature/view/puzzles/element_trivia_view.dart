@@ -986,15 +986,11 @@ class _TriviaHeader extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [AppColors.purple, AppColors.purple.withValues(alpha: 0.8)],
-        ),
+        color: AppColors.darkBlue,
         borderRadius: const BorderRadius.vertical(bottom: Radius.circular(24)),
         boxShadow: [
           BoxShadow(
-            color: AppColors.purple.withValues(alpha: 0.3),
+            color: AppColors.darkBlue.withValues(alpha: 0.3),
             offset: const Offset(0, 4),
             blurRadius: 12,
           ),

@@ -1,6 +1,6 @@
 import 'package:elements_app/feature/model/periodic_element.dart';
 import 'package:elements_app/core/services/data/data_service.dart';
-import 'package:elements_app/feature/view/elementsList/elements_loading_view.dart';
+import 'package:elements_app/feature/view/elementsList/elements_progressive_loading_view.dart';
 import 'package:elements_app/feature/view/elementsList/widget/widgets.dart';
 import 'package:elements_app/feature/provider/localization_provider.dart';
 import 'package:elements_app/product/constants/app_colors.dart';
@@ -36,6 +36,12 @@ class _ElementsListViewState extends State<ElementsListView>
   final DataService _dataService = DataService();
   late Future<List<PeriodicElement>> _elementList;
   bool _isLoading = true;
+  bool _isInitialized = false;
+
+  // Animation controllers
+  late AnimationController _viewTransitionController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
 
   @override
   void initState() {
@@ -43,11 +49,39 @@ class _ElementsListViewState extends State<ElementsListView>
     _searchController.addListener(_onSearchChanged);
     _scrollController.addListener(_onScrollChanged);
 
+    // Initialize animation controllers
+    _viewTransitionController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _viewTransitionController,
+        curve: Curves.easeInOut,
+      ),
+    );
+
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0.0, 0.1), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _viewTransitionController,
+            curve: Curves.easeInOut,
+          ),
+        );
+
+    // Start animation
+    _viewTransitionController.forward();
+
     // Initialize data fetching
     _initializeData();
   }
 
   void _initializeData() {
+    // Prevent multiple initializations
+    if (_isInitialized) return;
+    _isInitialized = true;
+
     // Clear cache for halogens to ensure fresh data
     if (widget.apiType.contains('halogens')) {
       _dataService.clearHalogensCache();
@@ -55,20 +89,30 @@ class _ElementsListViewState extends State<ElementsListView>
 
     _elementList = _dataService.fetchElements(widget.apiType);
 
-    // Simulate loading delay for better UX
-    Future.delayed(const Duration(seconds: 2), () {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
+    // Remove artificial delay to prevent double loading
+    _elementList
+        .then((_) {
+          if (mounted) {
+            setState(() {
+              _isLoading = false;
+            });
+          }
+        })
+        .catchError((error) {
+          // Handle error and still show content
+          if (mounted) {
+            setState(() {
+              _isLoading = false;
+            });
+          }
         });
-      }
-    });
   }
 
   @override
   void dispose() {
     _searchController.dispose();
     _scrollController.dispose();
+    _viewTransitionController.dispose();
     super.dispose();
   }
 
@@ -90,16 +134,32 @@ class _ElementsListViewState extends State<ElementsListView>
   }
 
   void _toggleViewMode() {
-    setState(() {
-      _isGridView = !_isGridView;
+    // Reverse animation first, then change view mode
+    _viewTransitionController.reverse().then((_) {
+      setState(() {
+        _isGridView = !_isGridView;
+      });
+      // Forward animation for new view
+      _viewTransitionController.forward();
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    // Loading durumunu yeni sayfa ile yönetiyoruz
+    // Progressive loading with skeleton cards for better UX
     if (_isLoading) {
-      return const ElementsLoadingView();
+      return ElementsProgressiveLoadingView(
+        apiType: widget.apiType,
+        title: widget.title,
+        elementList: _elementList,
+        searchController: _searchController,
+        searchQuery: _searchQuery,
+        onSearchChanged: _onSearchChanged,
+        onClearSearch: _onClearSearch,
+        onFilterPressed: () => _showFilterModal(context),
+        isGridView: _isGridView,
+        onToggleViewMode: _toggleViewMode,
+      );
     }
 
     return AppScaffold(
@@ -150,14 +210,25 @@ class _ElementsListViewState extends State<ElementsListView>
                                 ),
                                 const SizedBox(height: 20),
 
-                                // Elements Grid/List
-                                _isGridView
-                                    ? ElementsGridView(
-                                        elements: _filteredElements,
-                                      )
-                                    : ElementsListWidget(
-                                        elements: _filteredElements,
+                                // Elements Grid/List with animation
+                                AnimatedBuilder(
+                                  animation: _viewTransitionController,
+                                  builder: (context, child) {
+                                    return FadeTransition(
+                                      opacity: _fadeAnimation,
+                                      child: SlideTransition(
+                                        position: _slideAnimation,
+                                        child: _isGridView
+                                            ? ElementsGridView(
+                                                elements: _filteredElements,
+                                              )
+                                            : ElementsListWidget(
+                                                elements: _filteredElements,
+                                              ),
                                       ),
+                                    );
+                                  },
+                                ),
 
                                 const SizedBox(height: 100), // Bottom padding
                               ],

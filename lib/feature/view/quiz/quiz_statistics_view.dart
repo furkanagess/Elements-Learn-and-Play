@@ -8,8 +8,6 @@ import 'package:elements_app/product/widget/scaffold/app_scaffold.dart';
 import 'package:elements_app/feature/provider/localization_provider.dart';
 import 'package:elements_app/core/services/pattern/pattern_service.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:elements_app/product/constants/assets_constants.dart';
 import 'package:elements_app/product/widget/ads/banner_ads_widget.dart';
 import 'package:elements_app/product/widget/premium/premium_overlay.dart';
 
@@ -53,7 +51,7 @@ class _QuizStatisticsViewState extends State<QuizStatisticsView>
   Widget build(BuildContext context) {
     return AppScaffold(
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: AppColors.darkBlue,
         appBar: _buildModernAppBar(context),
         body: Stack(
           children: [
@@ -173,21 +171,9 @@ class _QuizStatisticsViewState extends State<QuizStatisticsView>
   }
 
   PreferredSizeWidget _buildModernAppBar(BuildContext context) {
+    final isTr = context.watch<LocalizationProvider>().isTr;
     return AppBar(
-      backgroundColor: Colors.transparent,
-      flexibleSpace: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppColors.glowGreen,
-              AppColors.yellow.withValues(alpha: 0.95),
-              AppColors.darkBlue.withValues(alpha: 0.9),
-            ],
-          ),
-        ),
-      ),
+      backgroundColor: AppColors.darkBlue,
       leading: const ModernBackButton(),
       title: Row(
         children: [
@@ -197,21 +183,15 @@ class _QuizStatisticsViewState extends State<QuizStatisticsView>
               color: AppColors.white.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: SvgPicture.asset(
-              AssetConstants.instance.svgQuestionTwo,
-              colorFilter: const ColorFilter.mode(
-                AppColors.white,
-                BlendMode.srcIn,
-              ),
-              width: 20,
-              height: 20,
+            child: const Icon(
+              Icons.analytics_outlined,
+              color: AppColors.white,
+              size: 20,
             ),
           ),
           const SizedBox(width: 12),
           Text(
-            context.read<LocalizationProvider>().isTr
-                ? 'Quiz İstatistikleri'
-                : 'Quiz Statistics',
+            isTr ? 'Quiz İstatistikleri' : 'Quiz Statistics',
             style: const TextStyle(
               color: AppColors.white,
               fontSize: 18,

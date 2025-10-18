@@ -8,6 +8,7 @@ import 'package:elements_app/core/observer/route_observer.dart';
 import 'package:elements_app/core/services/widget/element_home_widget_service.dart';
 import 'package:elements_app/core/services/purchases/revenue_cat_service.dart';
 import 'package:elements_app/core/services/first_time_service.dart';
+import 'package:elements_app/product/widget/splash/lottie_splash_screen.dart';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -126,11 +127,26 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   Widget? _initialScreen;
   bool _isLoading = true;
+  bool _showSplash = true;
 
   @override
   void initState() {
     super.initState();
-    _checkInitialScreen();
+    _showSplashAndNavigate();
+  }
+
+  Future<void> _showSplashAndNavigate() async {
+    // Always show splash screen for 3 seconds on every restart
+    await Future.delayed(const Duration(seconds: 3));
+
+    if (mounted) {
+      setState(() {
+        _showSplash = false;
+      });
+    }
+
+    // Then check initial screen
+    await _checkInitialScreen();
   }
 
   Future<void> _checkInitialScreen() async {
@@ -165,9 +181,12 @@ class _MyAppState extends State<MyApp> {
       debugShowCheckedModeBanner: false,
       title: EnAppStrings.appName,
       theme: AppTheme.theme,
-      home: _isLoading
+      home: _showSplash
           ? _buildLoadingScreen()
-          : (_initialScreen ?? const HomeView()), // Show home as fallback
+          : (_isLoading
+                ? _buildLoadingScreen()
+                : (_initialScreen ??
+                      const HomeView())), // Show home as fallback
       navigatorObservers: [AdRouteObserver()],
       // Device Preview Configuration
       locale: DevicePreview.locale(context),
@@ -183,40 +202,12 @@ class _MyAppState extends State<MyApp> {
 
   /// Build loading screen to show while initializing
   Widget _buildLoadingScreen() {
-    return Scaffold(
-      backgroundColor: AppTheme.theme.scaffoldBackgroundColor,
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // App logo or icon
-            Container(
-              width: 100,
-              height: 100,
-              decoration: BoxDecoration(
-                color: AppTheme.theme.primaryColor,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: const Icon(Icons.science, size: 50, color: Colors.white),
-            ),
-            const SizedBox(height: 20),
-            // Loading indicator
-            CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(
-                AppTheme.theme.primaryColor,
-              ),
-            ),
-            const SizedBox(height: 20),
-            // Loading text
-            Text(
-              'Yükleniyor...',
-              style: AppTheme.theme.textTheme.bodyLarge?.copyWith(
-                color: AppTheme.theme.primaryColor,
-              ),
-            ),
-          ],
-        ),
-      ),
+    return LottieSplashScreen(
+      duration: const Duration(seconds: 3),
+      onAnimationComplete: () {
+        // Animation completed, but we still need to wait for initialization
+        // The actual navigation will be handled by _checkInitialScreen
+      },
     );
   }
 }

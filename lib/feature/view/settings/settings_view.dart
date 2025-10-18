@@ -5,7 +5,7 @@ import 'package:elements_app/feature/provider/localization_provider.dart';
 import 'package:elements_app/feature/provider/purchase_provider.dart';
 import 'package:elements_app/product/constants/app_colors.dart';
 import 'package:elements_app/product/widget/scaffold/app_scaffold.dart';
-import 'package:elements_app/product/widget/appBar/app_bars.dart';
+import 'package:elements_app/product/widget/button/back_button.dart';
 import 'package:elements_app/core/services/pattern/pattern_service.dart';
 
 class SettingsView extends StatefulWidget {
@@ -37,11 +37,19 @@ class _SettingsViewState extends State<SettingsView> {
     return AppScaffold(
       child: Scaffold(
         backgroundColor: AppColors.background,
-        appBar: AppBarConfigs.custom(
-          theme: AppBarVariant.settings,
-          style: AppBarStyle.gradient,
-          title: isTr ? 'Ayarlar' : 'Settings',
-        ).toAppBar(),
+        appBar: AppBar(
+          backgroundColor: AppColors.darkBlue,
+          leading: const ModernBackButton(),
+          title: Text(
+            isTr ? 'Ayarlar' : 'Settings',
+            style: const TextStyle(
+              color: AppColors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          elevation: 0,
+        ),
         body: Stack(
           children: [
             // Background Pattern
@@ -745,30 +753,21 @@ class _SettingsViewState extends State<SettingsView> {
       width: double.infinity,
       padding: padding,
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: gradientColors,
-        ),
+        color: Colors.white.withValues(alpha: 0.1), // Opacity white background
         borderRadius: BorderRadius.circular(radius),
         border: Border.all(
-          color: borderColor ?? Colors.white.withValues(alpha: 0.15),
+          color:
+              borderColor ??
+              Colors.white.withValues(alpha: 0.2), // Opacity white border
           width: borderWidth,
         ),
         boxShadow:
             shadows ??
             [
               BoxShadow(
-                color: gradientColors.first.withValues(alpha: 0.25),
-                blurRadius: 12,
-                spreadRadius: 1,
+                color: Colors.black.withValues(alpha: 0.2),
+                blurRadius: 8,
                 offset: const Offset(0, 4),
-              ),
-              BoxShadow(
-                color: AppColors.darkBlue.withValues(alpha: 0.2),
-                blurRadius: 6,
-                spreadRadius: -1,
-                offset: const Offset(0, 2),
               ),
             ],
       ),

@@ -2,11 +2,13 @@
 
 <div align="center">
 
-![App Logo](assets/icon/last_icon.png)
+![App Logo](assets/icon/pr-new-ios.png)
 
 **Discover the fascinating world of chemical elements with our comprehensive, interactive periodic table app!**
 
 [![Download on Google Play](https://img.shields.io/badge/Google_Play-414141?style=for-the-badge&logo=google-play&logoColor=white)](https://play.google.com/store/apps/details?id=com.furkanages.elements)
+
+[![Download on App Store](https://img.shields.io/badge/App_Store-007AFF?style=for-the-badge&logo=app-store&logoColor=white)](https://apps.apple.com/us/app/periodic-table-learn-play/id6752439893)
 
 [![Flutter](https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white)](https://flutter.dev/)
 [![Dart](https://img.shields.io/badge/Dart-0175C2?style=for-the-badge&logo=dart&logoColor=white)](https://dart.dev/)
@@ -290,9 +292,10 @@ home_widget: ^0.6.0 # iOS/Android widgets
 
 ### 📱 **Download & Install**
 
-1. Download from [Google Play Store](https://play.google.com/store/apps/details?id=com.furkanages.elements)
-2. Install on your Android device
-3. Open the app and start exploring!
+1. Download from [Google Play Store](https://play.google.com/store/apps/details?id=com.furkanages.elements) (Android)
+2. Download from [App Store](https://apps.apple.com/us/app/periodic-table-learn-play/id6752439893) (iOS)
+3. Install on your device
+4. Open the app and start exploring!
 
 ### 🎯 **First Steps**
 
@@ -391,5 +394,7 @@ If you love Elements App, please consider:
 **Made with ❤️ for chemistry lovers worldwide**
 
 [![Download on Google Play](https://img.shields.io/badge/Google_Play-414141?style=for-the-badge&logo=google-play&logoColor=white)](https://play.google.com/store/apps/details?id=com.furkanages.elements)
+
+[![Download on App Store](https://img.shields.io/badge/App_Store-007AFF?style=for-the-badge&logo=app-store&logoColor=white)](https://apps.apple.com/us/app/periodic-table-learn-play/id6752439893)
 
 </div>

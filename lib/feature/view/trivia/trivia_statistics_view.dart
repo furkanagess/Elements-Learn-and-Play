@@ -7,6 +7,7 @@ import 'package:elements_app/feature/provider/localization_provider.dart';
 import 'package:elements_app/core/services/pattern/pattern_service.dart';
 import 'package:elements_app/feature/provider/trivia_provider.dart';
 import 'package:elements_app/product/widget/premium/premium_overlay.dart';
+import 'package:elements_app/product/widget/button/back_button.dart';
 
 class TriviaStatisticsView extends StatefulWidget {
   const TriviaStatisticsView({super.key});
@@ -46,7 +47,7 @@ class _TriviaStatisticsViewState extends State<TriviaStatisticsView>
     final isTr = context.watch<LocalizationProvider>().isTr;
     return AppScaffold(
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: AppColors.darkBlue,
         appBar: _buildAppBar(isTr),
         body: Stack(
           children: [
@@ -252,38 +253,32 @@ class _TriviaStatisticsViewState extends State<TriviaStatisticsView>
 
   PreferredSizeWidget _buildAppBar(bool isTr) {
     return AppBar(
-      backgroundColor: Colors.transparent,
-      flexibleSpace: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppColors.glowGreen,
-              AppColors.yellow.withValues(alpha: 0.95),
-              AppColors.darkBlue.withValues(alpha: 0.9),
-            ],
+      backgroundColor: AppColors.darkBlue,
+      leading: const ModernBackButton(),
+      title: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.white.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              Icons.analytics_outlined,
+              color: AppColors.white,
+              size: 20,
+            ),
           ),
-        ),
-      ),
-      leading: IconButton(
-        icon: const Icon(
-          Icons.arrow_back_ios_new_rounded,
-          color: AppColors.white,
-          size: 20,
-        ),
-        onPressed: () {
-          HapticFeedback.lightImpact();
-          Navigator.pop(context);
-        },
-      ),
-      title: Text(
-        isTr ? 'Trivia İstatistikleri' : 'Trivia Statistics',
-        style: const TextStyle(
-          color: AppColors.white,
-          fontSize: 18,
-          fontWeight: FontWeight.bold,
-        ),
+          const SizedBox(width: 12),
+          Text(
+            isTr ? 'Trivia İstatistikleri' : 'Trivia Statistics',
+            style: const TextStyle(
+              color: AppColors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
       ),
       actions: [
         Container(

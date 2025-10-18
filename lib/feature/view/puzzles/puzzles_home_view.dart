@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:elements_app/feature/provider/puzzle_provider.dart';
 import 'package:elements_app/feature/provider/localization_provider.dart';
 import 'package:elements_app/product/widget/scaffold/app_scaffold.dart';
-import 'package:elements_app/product/widget/appBar/app_bars.dart';
+import 'package:elements_app/product/widget/button/back_button.dart';
 import 'package:elements_app/product/constants/app_colors.dart';
 import 'package:elements_app/core/services/pattern/pattern_service.dart';
 import 'package:elements_app/feature/view/puzzles/word_puzzle_view.dart';
@@ -20,17 +20,47 @@ class PuzzlesHomeView extends StatelessWidget {
   PuzzlesHomeView({super.key, this.first20Only = false});
   final PatternService _pattern = PatternService();
 
+  AppBar _buildModernAppBar(BuildContext context) {
+    final isTr = context.watch<LocalizationProvider>().isTr;
+    return AppBar(
+      backgroundColor: AppColors.darkBlue,
+      leading: const ModernBackButton(),
+      title: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.white.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              Icons.extension,
+              color: AppColors.white,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            isTr ? 'Bulmaca Merkezi' : 'Puzzles Center',
+            style: const TextStyle(
+              color: AppColors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+      elevation: 0,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isTr = context.watch<LocalizationProvider>().isTr;
     return AppScaffold(
       child: Scaffold(
-        backgroundColor: AppColors.background,
-        appBar: AppBarConfigs.custom(
-          theme: AppBarVariant.quiz,
-          style: AppBarStyle.gradient,
-          title: isTr ? 'Bulmaca Merkezi' : 'Puzzles Center',
-        ).toAppBar(),
+        backgroundColor: AppColors.darkBlue,
+        appBar: _buildModernAppBar(context),
         body: Stack(
           children: [
             Positioned.fill(
@@ -172,207 +202,6 @@ class PuzzlesHomeView extends StatelessWidget {
     );
   }
 
-  Widget _buildQuickActionsRow(BuildContext context) {
-    final isTr = context.watch<LocalizationProvider>().isTr;
-    return Row(
-      children: [
-        Expanded(
-          child: _squareAction(
-            context,
-            title: isTr ? 'İstatistikler' : 'Statistics',
-            icon: Icons.analytics_rounded,
-            subtitle: isTr ? 'Genel görünüm' : 'Overview',
-            gradientColors: [
-              AppColors.purple.withValues(alpha: 0.9),
-              AppColors.pink.withValues(alpha: 0.7),
-            ],
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const PuzzlesStatisticsView(),
-                ),
-              );
-            },
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _squareAction(
-            context,
-            title: isTr ? 'Başarılar' : 'Achievements',
-            icon: Icons.emoji_events_rounded,
-            subtitle: isTr ? 'Rozetler' : 'Badges',
-            gradientColors: [
-              AppColors.steelBlue.withValues(alpha: 0.6),
-              AppColors.darkBlue.withValues(alpha: 0.6),
-            ],
-            footerBuilder: (ctx) => Consumer<PuzzleProvider>(
-              builder: (ctx, provider, _) {
-                final word = provider.getProgress(PuzzleType.word);
-                final matching = provider.getProgress(PuzzleType.matching);
-                final (int earnedW, int totalW) = _computeBadgesOverview(word);
-                final (int earnedM, int totalM) = _computeBadgesOverview(
-                  matching,
-                );
-                final earned = earnedW + earnedM;
-                final total = totalW + totalM;
-                return _miniChip(text: '$earned/$total');
-              },
-            ),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const PuzzlesAchievementsView(),
-                ),
-              );
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _squareAction(
-    BuildContext context, {
-    required String title,
-    required IconData icon,
-    required List<Color> gradientColors,
-    required VoidCallback onTap,
-    String? subtitle,
-    Widget Function(BuildContext context)? footerBuilder,
-  }) {
-    return AspectRatio(
-      aspectRatio: 1,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(16),
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: gradientColors,
-              ),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: Colors.white.withOpacity(0.2),
-                width: 1,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.15),
-                  blurRadius: 16,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: Stack(
-                children: [
-                  // Subtle background pattern
-                  Positioned.fill(
-                    child: CustomPaint(
-                      painter: _pattern.getPatternPainter(
-                        type: PatternType.molecular,
-                        color: Colors.white,
-                        opacity: 0.05,
-                      ),
-                    ),
-                  ),
-                  // Decorative circles
-                  Positioned(
-                    top: -12,
-                    right: -12,
-                    child: Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.06),
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    bottom: -10,
-                    left: -10,
-                    child: Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.04),
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ),
-                  // Content
-                  Padding(
-                    padding: const EdgeInsets.all(14),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.22),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: Colors.white.withOpacity(0.28),
-                              width: 1,
-                            ),
-                          ),
-                          child: Icon(icon, color: AppColors.white, size: 22),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: AppColors.white,
-                            fontWeight: FontWeight.w800,
-                            fontSize: 13,
-                          ),
-                        ),
-                        if (subtitle != null) ...[
-                          const SizedBox(height: 4),
-                          Text(
-                            subtitle,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Colors.white.withOpacity(0.85),
-                              fontWeight: FontWeight.w500,
-                              fontSize: 11,
-                            ),
-                          ),
-                        ],
-                        if (footerBuilder != null) ...[
-                          const SizedBox(height: 8),
-                          Align(
-                            alignment: Alignment.center,
-                            child: footerBuilder(context),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _modernCenterSeparator(BuildContext context) {
     final isTr = context.read<LocalizationProvider>().isTr;
     return Padding(
@@ -443,25 +272,6 @@ class PuzzlesHomeView extends StatelessWidget {
     );
   }
 
-  Widget _miniChip({required String text}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.18),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.white.withOpacity(0.25), width: 1),
-      ),
-      child: Text(
-        text,
-        style: const TextStyle(
-          color: AppColors.white,
-          fontWeight: FontWeight.bold,
-          fontSize: 11,
-        ),
-      ),
-    );
-  }
-
   // Compute earned/total badges using thresholds from PuzzlesAchievementsView
   (int earned, int total) _computeBadgesOverview(PuzzleProgress progress) {
     final totalWins = progress.totalWins;
@@ -510,23 +320,21 @@ class PuzzlesHomeView extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         child: Container(
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: isSoon
-                  ? [
-                      Colors.grey.shade700.withOpacity(0.9),
-                      Colors.grey.shade800.withOpacity(0.8),
-                    ]
-                  : [color, color.withOpacity(0.75)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
+            color: Colors.white.withValues(
+              alpha: 0.1,
+            ), // Opacity white background
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.white.withOpacity(0.2), width: 1),
+            border: Border.all(
+              color: Colors.white.withValues(
+                alpha: 0.2,
+              ), // Opacity white border
+              width: 1,
+            ),
             boxShadow: [
               BoxShadow(
-                color: (isSoon ? Colors.black54 : color.withOpacity(0.35)),
-                blurRadius: 18,
-                offset: const Offset(0, 8),
+                color: Colors.black.withValues(alpha: 0.2),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
               ),
             ],
           ),
@@ -537,12 +345,19 @@ class PuzzlesHomeView extends StatelessWidget {
                 width: 56,
                 height: 56,
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.25),
+                  color: color.withValues(alpha: 0.6), // More prominent color
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
-                    color: Colors.white.withOpacity(0.3),
-                    width: 1,
+                    color: color.withValues(alpha: 0.8),
+                    width: 1.5,
                   ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: color.withValues(alpha: 0.4),
+                      blurRadius: 12,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
                 ),
                 child: Icon(icon, color: Colors.white, size: 30),
               ),
@@ -595,7 +410,7 @@ class PuzzlesHomeView extends StatelessWidget {
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.85),
+                          color: Colors.white.withValues(alpha: 0.85),
                           fontSize: 12,
                         ),
                       ),
@@ -617,9 +432,11 @@ class PuzzlesHomeView extends StatelessWidget {
                     vertical: 8,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.18),
+                    color: Colors.white.withValues(alpha: 0.18),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.white.withOpacity(0.25)),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.25),
+                    ),
                   ),
                   child: Text(
                     isTr ? 'Başla' : 'Start',
