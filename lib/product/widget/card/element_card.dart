@@ -1,3 +1,4 @@
+import 'package:elements_app/core/services/pattern/pattern_service.dart';
 import 'package:elements_app/feature/model/periodic_element.dart';
 import 'package:elements_app/feature/provider/favorite_elements_provider.dart';
 import 'package:elements_app/feature/provider/localization_provider.dart';
@@ -37,6 +38,9 @@ class _ElementCardState extends State<ElementCard>
   late AnimationController _cardController;
   late Animation<double> _cardAnimation;
 
+  // Pattern service for background patterns
+  final PatternService _patternService = PatternService();
+
   @override
   void initState() {
     super.initState();
@@ -68,29 +72,34 @@ class _ElementCardState extends State<ElementCard>
           child: Container(
             margin: _getCardMargin(),
             decoration: _buildCardDecoration(elementColors),
-            child: Material(
-              color: Colors.white.withValues(alpha: 0.07),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(18),
-                onTapDown: (_) => _cardController.forward(),
-                onTapUp: (_) => _handleTap(),
-                onTapCancel: () => _cardController.reverse(),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(24),
-                  child: Stack(
-                    children: [
-                      // Background Pattern removed for all modes to keep them clean
-
-                      // Decorative Elements
-                      ..._buildDecorativeElements(),
-
-                      // Main Content
-                      Padding(
-                        padding: _getContentPadding(),
-                        child: _buildContent(isTr, elementColors),
+            child: GestureDetector(
+              onTapDown: (_) => _cardController.forward(),
+              onTapUp: (_) => _handleTap(),
+              onTapCancel: () => _cardController.reverse(),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(24),
+                child: Stack(
+                  children: [
+                    // Background Pattern - Atomic pattern like element of day
+                    Positioned.fill(
+                      child: CustomPaint(
+                        painter: _patternService.getPatternPainter(
+                          type: PatternType.atomic,
+                          color: Colors.white,
+                          opacity: 0.05,
+                        ),
                       ),
-                    ],
-                  ),
+                    ),
+
+                    // Decorative Elements
+                    ..._buildDecorativeElements(),
+
+                    // Main Content
+                    Padding(
+                      padding: _getContentPadding(),
+                      child: _buildContent(isTr, elementColors),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -133,16 +142,23 @@ class _ElementCardState extends State<ElementCard>
   BoxDecoration _buildCardDecoration(Map<String, Color> colors) {
     // Same decoration for list, grid, and favorites modes
     final cardBackgroundColor = _getCardBackgroundColor();
+    final elementColor = colors['element']!;
+
     return BoxDecoration(
       color: cardBackgroundColor,
       borderRadius: BorderRadius.circular(16),
       border: Border.all(
-        color: Colors.white.withValues(alpha: 0.2), // Opacity white border
-        width: 1,
+        color: elementColor.withValues(alpha: 0.4), // Element color border
+        width: 1.5,
       ),
       boxShadow: [
         BoxShadow(
-          color: Colors.black.withValues(alpha: 0.2),
+          color: elementColor.withValues(alpha: 0.3), // Element color shadow
+          blurRadius: 12,
+          offset: const Offset(0, 6),
+        ),
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.1),
           blurRadius: 8,
           offset: const Offset(0, 4),
         ),
@@ -481,10 +497,13 @@ class _ElementCardState extends State<ElementCard>
     }
   }
 
-  /// Get card background color - opacity white for all elements
+  /// Get card background color - element color with opacity
   Color _getCardBackgroundColor() {
-    // Opacity white background for all elements
-    return Colors.white.withValues(alpha: 0.1); // Opacity white background
+    final elementColors = _getElementColors();
+    final elementColor = elementColors['element']!;
+
+    // Use element color with low opacity for background
+    return elementColor.withValues(alpha: 0.15);
   }
 
   /// Build element number container

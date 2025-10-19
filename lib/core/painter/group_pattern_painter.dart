@@ -3,9 +3,11 @@ import 'package:elements_app/core/painter/base_pattern_painter.dart';
 
 class GroupPatternPainter extends BasePatternPainter {
   GroupPatternPainter(Color color)
-      : super(
-          color: color,
-          opacity: 0.05,
-          gridSpacing: 40,
-        );
+    : super(
+        color: color,
+        opacity: 0.05,
+        gridSpacing: 40,
+        drawGrid: false, // Disable grid lines
+        drawCircles: true, // Keep circles
+      );
 }

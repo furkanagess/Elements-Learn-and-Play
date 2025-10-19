@@ -51,11 +51,6 @@ class _ElementGroupViewState extends State<ElementGroupView>
     super.dispose();
   }
 
-  Color _getGroupColor() {
-    // Return default color for element groups
-    return AppColors.steelBlue;
-  }
-
   @override
   Widget build(BuildContext context) {
     return AppScaffold(
@@ -65,13 +60,6 @@ class _ElementGroupViewState extends State<ElementGroupView>
         body: SafeArea(
           child: Stack(
             children: [
-              Positioned.fill(
-                child: CustomPaint(
-                  painter: GroupPatternPainter(
-                    AppColors.white.withValues(alpha: 0.03),
-                  ),
-                ),
-              ),
               AnimatedBuilder(
                 animation: _fadeAnimation,
                 builder: (context, child) {
@@ -432,141 +420,136 @@ class _ElementGroupViewState extends State<ElementGroupView>
     required Color shadowColor,
     required VoidCallback onTap,
   }) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTapDown: (_) => setState(() => _pressedIndex = index),
-        onTapCancel: () => setState(() => _pressedIndex = null),
-        onTap: () {
-          setState(() => _pressedIndex = null);
-          onTap();
-        },
-        onTapUp: (_) => setState(() => _pressedIndex = null),
-        child: AnimatedScale(
-          scale: _pressedIndex == index ? 0.95 : 1.0,
-          duration: const Duration(milliseconds: 150),
-          curve: Curves.easeInOut,
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(
-                alpha: 0.1,
-              ), // Opacity white background
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: Colors.white.withValues(
-                  alpha: 0.2,
-                ), // Opacity white border
-                width: 1,
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _pressedIndex = index),
+      onTapCancel: () => setState(() => _pressedIndex = null),
+      onTap: () {
+        setState(() => _pressedIndex = null);
+        onTap();
+      },
+      onTapUp: (_) => setState(() => _pressedIndex = null),
+      child: AnimatedScale(
+        scale: _pressedIndex == index ? 0.95 : 1.0,
+        duration: const Duration(milliseconds: 150),
+        curve: Curves.easeInOut,
+        child: Container(
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.15), // Element color background
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: color.withValues(alpha: 0.4), // Element color border
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: color.withValues(alpha: 0.3), // Element color shadow
+                blurRadius: 12,
+                offset: const Offset(0, 6),
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.2),
-                  blurRadius: 8,
-                  offset: const Offset(0, 4),
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.1),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: Stack(
+              children: [
+                // Background pattern
+                Positioned.fill(
+                  child: CustomPaint(
+                    painter: GroupPatternPainter(
+                      AppColors.white.withValues(alpha: 0.08),
+                    ),
+                  ),
+                ),
+                // Decorative circles
+                Positioned(
+                  top: -15,
+                  right: -15,
+                  child: Container(
+                    width: 60,
+                    height: 60,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
+                Positioned(
+                  bottom: -10,
+                  left: -10,
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.06),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
+                // Centered icon, title and subtitle
+                Align(
+                  alignment: Alignment.center,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 24,
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: color.withValues(alpha: 0.7), // Group color
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: color.withValues(alpha: 0.9),
+                              width: 1.5,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: color.withValues(alpha: 0.5),
+                                blurRadius: 12,
+                                offset: const Offset(0, 6),
+                              ),
+                            ],
+                          ),
+                          child: Icon(
+                            leadingIcon,
+                            color: AppColors.white,
+                            size: 22,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          title,
+                          style: const TextStyle(
+                            color: AppColors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800,
+                            height: 1.1,
+                            shadows: [
+                              Shadow(
+                                color: Colors.black26,
+                                offset: Offset(1, 1),
+                                blurRadius: 2,
+                              ),
+                            ],
+                          ),
+                          maxLines: 2,
+                          textAlign: TextAlign.center,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: Stack(
-                children: [
-                  Positioned.fill(
-                    child: CustomPaint(
-                      painter: GroupPatternPainter(
-                        AppColors.white.withValues(alpha: 0.08),
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    top: -15,
-                    right: -15,
-                    child: Container(
-                      width: 60,
-                      height: 60,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.1),
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    bottom: -10,
-                    left: -10,
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.06),
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ),
-                  // Centered icon, title and subtitle
-                  Align(
-                    alignment: Alignment.center,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 24,
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(14),
-                            decoration: BoxDecoration(
-                              color: _getGroupColor().withValues(
-                                alpha: 0.6,
-                              ), // Group color
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: _getGroupColor().withValues(alpha: 0.8),
-                                width: 1.5,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: _getGroupColor().withValues(
-                                    alpha: 0.4,
-                                  ),
-                                  blurRadius: 12,
-                                  offset: const Offset(0, 6),
-                                ),
-                              ],
-                            ),
-                            child: Icon(
-                              leadingIcon,
-                              color: AppColors.white,
-                              size: 22,
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          Text(
-                            title,
-                            style: const TextStyle(
-                              color: AppColors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.w800,
-                              height: 1.1,
-                              shadows: [
-                                Shadow(
-                                  color: Colors.black26,
-                                  offset: Offset(1, 1),
-                                  blurRadius: 2,
-                                ),
-                              ],
-                            ),
-                            maxLines: 2,
-                            textAlign: TextAlign.center,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
             ),
           ),
         ),
@@ -599,19 +582,20 @@ class _ElementGroupViewState extends State<ElementGroupView>
           child: Container(
             height: 120,
             decoration: BoxDecoration(
-              color: Colors.white.withValues(
-                alpha: 0.1,
-              ), // Opacity white background
+              color: color.withValues(alpha: 0.15), // Element color background
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: Colors.white.withValues(
-                  alpha: 0.2,
-                ), // Opacity white border
-                width: 1,
+                color: color.withValues(alpha: 0.4), // Element color border
+                width: 1.5,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.2),
+                  color: color.withValues(alpha: 0.3), // Element color shadow
+                  blurRadius: 12,
+                  offset: const Offset(0, 6),
+                ),
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.1),
                   blurRadius: 8,
                   offset: const Offset(0, 4),
                 ),
@@ -662,19 +646,15 @@ class _ElementGroupViewState extends State<ElementGroupView>
                         Container(
                           padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
-                            color: AppColors.steelBlue.withValues(
-                              alpha: 0.6,
-                            ), // Help color
+                            color: color.withValues(alpha: 0.7), // Group color
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
-                              color: AppColors.steelBlue.withValues(alpha: 0.8),
+                              color: color.withValues(alpha: 0.9),
                               width: 1.5,
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: AppColors.steelBlue.withValues(
-                                  alpha: 0.4,
-                                ),
+                                color: color.withValues(alpha: 0.5),
                                 blurRadius: 12,
                                 offset: const Offset(0, 6),
                               ),

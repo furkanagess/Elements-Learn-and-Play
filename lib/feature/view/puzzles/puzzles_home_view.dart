@@ -11,7 +11,6 @@ import 'package:elements_app/feature/view/puzzles/matching_puzzle_view.dart';
 import 'package:elements_app/feature/view/puzzles/puzzles_statistics_view.dart';
 import 'package:elements_app/feature/view/puzzles/puzzles_achievements_view.dart';
 import 'package:elements_app/product/widget/common/center_quick_actions_row.dart';
-import 'package:elements_app/feature/model/puzzle/puzzle_models.dart';
 import 'package:elements_app/product/widget/ads/banner_ads_widget.dart';
 
 class PuzzlesHomeView extends StatelessWidget {
@@ -97,21 +96,6 @@ class PuzzlesHomeView extends StatelessWidget {
                       AppColors.steelBlue.withValues(alpha: 0.6),
                       AppColors.darkBlue.withValues(alpha: 0.6),
                     ],
-                    achievementsFooter: Consumer<PuzzleProvider>(
-                      builder: (ctx, provider, _) {
-                        final word = provider.getProgress(PuzzleType.word);
-                        final matching = provider.getProgress(
-                          PuzzleType.matching,
-                        );
-                        final (int earnedW, int totalW) =
-                            _computeBadgesOverview(word);
-                        final (int earnedM, int totalM) =
-                            _computeBadgesOverview(matching);
-                        final earned = earnedW + earnedM;
-                        final total = totalW + totalM;
-                        return MiniChip(text: '$earned/$total');
-                      },
-                    ),
                     onAchievementsTap: () {
                       Navigator.push(
                         context,
@@ -272,36 +256,6 @@ class PuzzlesHomeView extends StatelessWidget {
     );
   }
 
-  // Compute earned/total badges using thresholds from PuzzlesAchievementsView
-  (int earned, int total) _computeBadgesOverview(PuzzleProgress progress) {
-    final totalWins = progress.totalWins;
-    final totalPlays = progress.totalPlays;
-    final bestSec = progress.bestTime.inSeconds;
-    final avgSec = totalPlays == 0
-        ? 0
-        : (progress.totalTime.inSeconds / totalPlays).round();
-
-    int earned = 0;
-    int total = 0;
-
-    for (final t in [1, 5, 10, 25]) {
-      total += 1;
-      if (totalWins >= t) earned += 1;
-    }
-    for (final t in [10, 25, 50]) {
-      total += 1;
-      if (totalPlays >= t) earned += 1;
-    }
-    for (final t in [30, 20, 15]) {
-      total += 1;
-      if (bestSec > 0 && bestSec < t) earned += 1;
-    }
-    total += 1; // average < 40s
-    if (avgSec > 0 && avgSec < 40) earned += 1;
-
-    return (earned, total);
-  }
-
   Widget _buildCard(
     BuildContext context, {
     required IconData icon,
@@ -313,142 +267,139 @@ class PuzzlesHomeView extends StatelessWidget {
     String? soonText,
   }) {
     final isTr = context.read<LocalizationProvider>().isTr;
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(
-              alpha: 0.1,
-            ), // Opacity white background
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: Colors.white.withValues(
-                alpha: 0.2,
-              ), // Opacity white border
-              width: 1,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.2),
-                blurRadius: 8,
-                offset: const Offset(0, 4),
-              ),
-            ],
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.15), // Element color background
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: color.withValues(alpha: 0.4), // Element color border
+            width: 1.5,
           ),
-          padding: const EdgeInsets.all(20),
-          child: Row(
-            children: [
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.6), // More prominent color
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: color.withValues(alpha: 0.8),
-                    width: 1.5,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: color.withValues(alpha: 0.4),
-                      blurRadius: 12,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
+          boxShadow: [
+            BoxShadow(
+              color: color.withValues(alpha: 0.3), // Element color shadow
+              blurRadius: 12,
+              offset: const Offset(0, 6),
+            ),
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.all(20),
+        child: Row(
+          children: [
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.6), // More prominent color
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: color.withValues(alpha: 0.8),
+                  width: 1.5,
                 ),
-                child: Icon(icon, color: Colors.white, size: 30),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    if (isSoon)
-                      Container(
-                        margin: const EdgeInsets.only(top: 2),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.yellow,
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.yellow.withValues(alpha: 0.3),
-                              blurRadius: 8,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: Text(
-                          soonText ?? (isTr ? 'ÇOK YAKINDA' : 'COMING SOON'),
-                          style: const TextStyle(
-                            color: AppColors.background,
-                            fontWeight: FontWeight.w900,
-                            fontSize: 11,
-                          ),
-                        ),
-                      )
-                    else
-                      Text(
-                        subtitle,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.85),
-                          fontSize: 12,
-                        ),
-                      ),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        if (!isSoon) _chip(isTr ? 'Popüler' : 'Popular'),
-                        if (!isSoon) const SizedBox(width: 8),
-                        if (!isSoon) _chip(isTr ? 'Zorlu' : 'Challenging'),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              if (!isSoon)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 8,
+                boxShadow: [
+                  BoxShadow(
+                    color: color.withValues(alpha: 0.4),
+                    blurRadius: 12,
+                    offset: const Offset(0, 6),
                   ),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.18),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.25),
-                    ),
-                  ),
-                  child: Text(
-                    isTr ? 'Başla' : 'Start',
+                ],
+              ),
+              child: Icon(icon, color: Colors.white, size: 30),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 12,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
+                  const SizedBox(height: 6),
+                  if (isSoon)
+                    Container(
+                      margin: const EdgeInsets.only(top: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.yellow,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.yellow.withValues(alpha: 0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Text(
+                        soonText ?? (isTr ? 'ÇOK YAKINDA' : 'COMING SOON'),
+                        style: const TextStyle(
+                          color: AppColors.background,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 11,
+                        ),
+                      ),
+                    )
+                  else
+                    Text(
+                      subtitle,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.85),
+                        fontSize: 12,
+                      ),
+                    ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      if (!isSoon) _chip(isTr ? 'Popüler' : 'Popular'),
+                      if (!isSoon) const SizedBox(width: 8),
+                      if (!isSoon) _chip(isTr ? 'Zorlu' : 'Challenging'),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            if (!isSoon)
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 8,
                 ),
-            ],
-          ),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.18),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.25),
+                  ),
+                ),
+                child: Text(
+                  isTr ? 'Başla' : 'Start',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
     );

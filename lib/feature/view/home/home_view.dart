@@ -130,7 +130,7 @@ class _HomeViewState extends State<StatefulWidget> {
                     builder: (context, constraints) {
                       return SingleChildScrollView(
                         physics: const BouncingScrollPhysics(),
-                        padding: const EdgeInsets.fromLTRB(20, 20, 20, 80),
+                        padding: const EdgeInsets.fromLTRB(20, 20, 20, 72),
                         child: ConstrainedBox(
                           constraints: BoxConstraints(
                             minHeight: constraints.maxHeight - 100,
@@ -168,7 +168,7 @@ class _HomeViewState extends State<StatefulWidget> {
               const Positioned(
                 left: 0,
                 right: 0,
-                bottom: 20,
+                bottom: 16,
                 child: RepaintBoundary(child: AppBottomNavBar()),
               ),
             ],

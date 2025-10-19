@@ -9,8 +9,6 @@ import 'package:elements_app/feature/view/puzzles/element_trivia_view.dart';
 import 'package:elements_app/feature/view/trivia/trivia_statistics_view.dart';
 import 'package:elements_app/feature/view/trivia/trivia_achievements_view.dart';
 import 'package:elements_app/product/widget/common/center_quick_actions_row.dart';
-import 'package:elements_app/feature/provider/puzzle_provider.dart';
-import 'package:elements_app/feature/model/puzzle/puzzle_models.dart';
 import 'package:elements_app/product/widget/ads/banner_ads_widget.dart';
 
 class TriviaCenterView extends StatelessWidget {
@@ -96,21 +94,6 @@ class TriviaCenterView extends StatelessWidget {
                       AppColors.steelBlue.withValues(alpha: 0.6),
                       AppColors.darkBlue.withValues(alpha: 0.6),
                     ],
-                    achievementsFooter: Consumer<PuzzleProvider>(
-                      builder: (ctx, provider, _) {
-                        final word = provider.getProgress(PuzzleType.word);
-                        final matching = provider.getProgress(
-                          PuzzleType.matching,
-                        );
-                        final (int earnedW, int totalW) =
-                            _computeBadgesOverview(word);
-                        final (int earnedM, int totalM) =
-                            _computeBadgesOverview(matching);
-                        final earned = earnedW + earnedM;
-                        final total = totalW + totalM;
-                        return MiniChip(text: '$earned/$total');
-                      },
-                    ),
                     onAchievementsTap: () {
                       Navigator.push(
                         context,
@@ -307,34 +290,7 @@ class TriviaCenterView extends StatelessWidget {
     );
   }
 
-  (int earned, int total) _computeBadgesOverview(PuzzleProgress progress) {
-    final totalWins = progress.totalWins;
-    final totalPlays = progress.totalPlays;
-    final bestSec = progress.bestTime.inSeconds;
-    final avgSec = totalPlays == 0
-        ? 0
-        : (progress.totalTime.inSeconds / totalPlays).round();
-
-    int earned = 0;
-    int total = 0;
-
-    for (final t in [1, 5, 10, 25]) {
-      total += 1;
-      if (totalWins >= t) earned += 1;
-    }
-    for (final t in [10, 25, 50]) {
-      total += 1;
-      if (totalPlays >= t) earned += 1;
-    }
-    for (final t in [30, 20, 15]) {
-      total += 1;
-      if (bestSec > 0 && bestSec < t) earned += 1;
-    }
-    total += 1; // average < 40s
-    if (avgSec > 0 && avgSec < 40) earned += 1;
-
-    return (earned, total);
-  }
+  // badges overview removed (no longer used)
 }
 
 /// Modern trivia card widget with animations and modern UI
@@ -381,46 +337,44 @@ class _ModernTriviaCardState extends State<_ModernTriviaCard>
     super.dispose();
   }
 
-  void _onTapDown(TapDownDetails details) {
-    _scaleController.forward();
-  }
-
-  void _onTapUp(TapUpDetails details) {
-    _scaleController.reverse();
+  void _handleTap() {
     widget.onTap();
-  }
-
-  void _onTapCancel() {
-    _scaleController.reverse();
   }
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: _onTapDown,
-      onTapUp: _onTapUp,
-      onTapCancel: _onTapCancel,
-      child: AnimatedBuilder(
-        animation: _scaleAnimation,
-        builder: (context, child) {
-          return Transform.scale(
-            scale: _scaleAnimation.value,
+    return AnimatedBuilder(
+      animation: _scaleAnimation,
+      builder: (context, child) {
+        return Transform.scale(
+          scale: _scaleAnimation.value,
+          child: GestureDetector(
+            onTapDown: (_) => _scaleController.forward(),
+            onTapUp: (_) => _handleTap(),
+            onTapCancel: () => _scaleController.reverse(),
             child: Container(
               margin: const EdgeInsets.only(bottom: 16),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(
-                  alpha: 0.1,
-                ), // Opacity white background
-                borderRadius: BorderRadius.circular(20),
+                color: widget.color.withValues(
+                  alpha: 0.15,
+                ), // Element color background
+                borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: Colors.white.withValues(
-                    alpha: 0.2,
-                  ), // Opacity white border
-                  width: 1,
+                  color: widget.color.withValues(
+                    alpha: 0.4,
+                  ), // Element color border
+                  width: 1.5,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.2),
+                    color: widget.color.withValues(
+                      alpha: 0.3,
+                    ), // Element color shadow
+                    blurRadius: 12,
+                    offset: const Offset(0, 6),
+                  ),
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
                   ),
@@ -518,9 +472,9 @@ class _ModernTriviaCardState extends State<_ModernTriviaCard>
                 ),
               ),
             ),
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 

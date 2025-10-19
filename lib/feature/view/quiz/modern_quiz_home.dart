@@ -131,14 +131,6 @@ class _ModernQuizHomeState extends State<ModernQuizHome>
                       AppColors.steelBlue.withValues(alpha: 0.6),
                       AppColors.darkBlue.withValues(alpha: 0.6),
                     ],
-                    achievementsFooter: Builder(
-                      builder: (ctx) {
-                        final provider = ctx.watch<QuizProvider>();
-                        final totalEarned = provider.getTotalEarnedBadges();
-                        final total = provider.getTotalBadgesCount();
-                        return MiniChip(text: '$totalEarned/$total');
-                      },
-                    ),
                     onAchievementsTap: () {
                       HapticFeedback.lightImpact();
                       Navigator.push(
@@ -349,18 +341,29 @@ class _ModernQuizCardState extends State<_ModernQuizCard>
     widget.onTap();
   }
 
-  /// Build card decoration (similar to tests home view)
+  /// Build card decoration (similar to other modern cards)
   BoxDecoration _buildCardDecoration() {
     return BoxDecoration(
-      color: Colors.white.withValues(alpha: 0.1), // Opacity white background
-      borderRadius: BorderRadius.circular(20),
+      color: widget.colors.primary.withValues(
+        alpha: 0.15,
+      ), // Element color background
+      borderRadius: BorderRadius.circular(16),
       border: Border.all(
-        color: Colors.white.withValues(alpha: 0.2), // Opacity white border
-        width: 1,
+        color: widget.colors.primary.withValues(
+          alpha: 0.4,
+        ), // Element color border
+        width: 1.5,
       ),
       boxShadow: [
         BoxShadow(
-          color: Colors.black.withValues(alpha: 0.2),
+          color: widget.colors.primary.withValues(
+            alpha: 0.3,
+          ), // Element color shadow
+          blurRadius: 12,
+          offset: const Offset(0, 6),
+        ),
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.1),
           blurRadius: 8,
           offset: const Offset(0, 4),
         ),
@@ -462,87 +465,83 @@ class _ModernQuizCardState extends State<_ModernQuizCard>
       builder: (context, child) {
         return Transform.scale(
           scale: _scaleAnimation.value,
-          child: Container(
-            margin: const EdgeInsets.only(bottom: 16),
-            decoration: _buildCardDecoration(),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                borderRadius: BorderRadius.circular(16),
-                onTapDown: (_) => _scaleController.forward(),
-                onTapUp: (_) => _handleTap(),
-                onTapCancel: () => _scaleController.reverse(),
-                onLongPress: _onLongPress,
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Row(
-                    children: [
-                      // Quiz Icon Container (similar to tests home view)
-                      _buildQuizIconContainer(),
-                      const SizedBox(width: 14),
+          child: GestureDetector(
+            onTapDown: (_) => _scaleController.forward(),
+            onTapUp: (_) => _handleTap(),
+            onTapCancel: () => _scaleController.reverse(),
+            onLongPress: _onLongPress,
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: _buildCardDecoration(),
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Row(
+                  children: [
+                    // Quiz Icon Container (similar to tests home view)
+                    _buildQuizIconContainer(),
+                    const SizedBox(width: 14),
 
-                      // Quiz Info (similar to tests home view)
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Quiz Title
-                            Text(
-                              widget.isTr
-                                  ? widget.type.turkishTitle
-                                  : widget.type.englishTitle,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
+                    // Quiz Info (similar to tests home view)
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Quiz Title
+                          Text(
+                            widget.isTr
+                                ? widget.type.turkishTitle
+                                : widget.type.englishTitle,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
                             ),
-                            const SizedBox(height: 6),
+                          ),
+                          const SizedBox(height: 6),
 
-                            // Quiz Description
-                            Text(
-                              _getQuizDescriptionLocalized(
-                                widget.type,
-                                widget.isTr,
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.85),
-                                fontSize: 12,
-                              ),
+                          // Quiz Description
+                          Text(
+                            _getQuizDescriptionLocalized(
+                              widget.type,
+                              widget.isTr,
                             ),
-                            const SizedBox(height: 10),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.85),
+                              fontSize: 12,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
 
-                            // Difficulty and Stats Row
-                            Row(
-                              children: [
-                                _buildDifficultyChip(),
-                                const SizedBox(width: 8),
-                                Consumer<QuizProvider>(
-                                  builder: (context, provider, child) {
-                                    final stats = provider.getStatisticsForType(
-                                      widget.type,
-                                    );
-                                    return _buildStatsChip(
-                                      widget.isTr
-                                          ? 'En İyi: %${stats.bestScore.toInt()}'
-                                          : 'Best: %${stats.bestScore.toInt()}',
-                                    );
-                                  },
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
+                          // Difficulty and Stats Row
+                          Row(
+                            children: [
+                              _buildDifficultyChip(),
+                              const SizedBox(width: 8),
+                              Consumer<QuizProvider>(
+                                builder: (context, provider, child) {
+                                  final stats = provider.getStatisticsForType(
+                                    widget.type,
+                                  );
+                                  return _buildStatsChip(
+                                    widget.isTr
+                                        ? 'En İyi: %${stats.bestScore.toInt()}'
+                                        : 'Best: %${stats.bestScore.toInt()}',
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
+                    ),
 
-                      // Start Button (similar to tests home view)
-                      _buildStartButton(),
-                    ],
-                  ),
+                    // Start Button (similar to tests home view)
+                    _buildStartButton(),
+                  ],
                 ),
               ),
             ),

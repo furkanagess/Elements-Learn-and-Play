@@ -19,6 +19,8 @@ class _HeroSectionWidgetState extends State<HeroSectionWidget>
     with TickerProviderStateMixin {
   late AnimationController _scaleController;
   late Animation<double> _scaleAnimation;
+  late AnimationController _shimmerController;
+  late Animation<double> _shimmerAnimation;
 
   @override
   void initState() {
@@ -31,11 +33,24 @@ class _HeroSectionWidgetState extends State<HeroSectionWidget>
     _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
       CurvedAnimation(parent: _scaleController, curve: Curves.easeInOut),
     );
+
+    _shimmerController = AnimationController(
+      duration: const Duration(seconds: 3),
+      vsync: this,
+    );
+
+    _shimmerAnimation = Tween<double>(begin: -1.5, end: 2.5).animate(
+      CurvedAnimation(parent: _shimmerController, curve: Curves.easeInOut),
+    );
+
+    // Start shimmer animation
+    _shimmerController.repeat();
   }
 
   @override
   void dispose() {
     _scaleController.dispose();
+    _shimmerController.dispose();
     super.dispose();
   }
 
@@ -76,115 +91,164 @@ class _HeroSectionWidgetState extends State<HeroSectionWidget>
             builder: (context, child) {
               return Transform.scale(
                 scale: _scaleAnimation.value,
-                child: Container(
-                  height: 200,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(24),
-                    color: Colors.white.withValues(
-                      alpha: 0.1,
-                    ), // Opacity white background
-                    border: Border.all(
-                      color: Colors.white.withValues(
-                        alpha: 0.2,
-                      ), // Opacity white border
-                      width: 1,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.2),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
+                child: AnimatedBuilder(
+                  animation: _shimmerAnimation,
+                  builder: (context, child) {
+                    return Container(
+                      height: 200,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(24),
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            AppColors.glowGreen.withValues(alpha: 0.3),
+                            AppColors.yellow.withValues(alpha: 0.3),
+                            AppColors.turquoise.withValues(alpha: 0.2),
+                          ],
+                        ),
+                        border: Border.all(
+                          color: AppColors.glowGreen.withValues(alpha: 0.6),
+                          width: 2,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.glowGreen.withValues(alpha: 0.4),
+                            blurRadius: 20,
+                            offset: const Offset(0, 8),
+                            spreadRadius: 2,
+                          ),
+                          BoxShadow(
+                            color: AppColors.yellow.withValues(alpha: 0.3),
+                            blurRadius: 15,
+                            offset: const Offset(0, -5),
+                            spreadRadius: 1,
+                          ),
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.1),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Center(
-                      child: Row(
+                      child: Stack(
                         children: [
-                          // Periodic Table Image (Left Side)
-                          Expanded(
-                            flex: 2,
-                            child: Center(
-                              child: Image.asset(
-                                AssetConstants.instance.pngHomeImage,
-                                height: 160,
-                                fit: BoxFit.contain,
+                          // Shimmer effect overlay
+                          Positioned.fill(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(24),
+                                gradient: LinearGradient(
+                                  begin: Alignment(
+                                    _shimmerAnimation.value - 1.5,
+                                    0,
+                                  ),
+                                  end: Alignment(_shimmerAnimation.value, 0),
+                                  stops: const [0.0, 0.3, 0.7, 1.0],
+                                  colors: [
+                                    Colors.transparent,
+                                    Colors.white.withValues(alpha: 0.1),
+                                    Colors.white.withValues(alpha: 0.25),
+                                    Colors.transparent,
+                                  ],
+                                ),
                               ),
                             ),
                           ),
-
-                          const SizedBox(width: 20),
-
-                          // Text Content (Right Side) with 3D Effect - Centered
-                          Expanded(
-                            flex: 3,
+                          // Content
+                          Padding(
+                            padding: const EdgeInsets.all(20),
                             child: Center(
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 20,
-                                  vertical: 16,
-                                ),
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                    colors: [
-                                      AppColors.glowGreen.withValues(
-                                        alpha: 0.4,
+                              child: Row(
+                                children: [
+                                  // Periodic Table Image (Left Side)
+                                  Expanded(
+                                    flex: 2,
+                                    child: Center(
+                                      child: Image.asset(
+                                        AssetConstants.instance.pngHomeImage,
+                                        height: 160,
+                                        fit: BoxFit.contain,
                                       ),
-                                      AppColors.yellow.withValues(alpha: 0.4),
-                                    ],
-                                  ),
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(
-                                    color: AppColors.glowGreen.withValues(
-                                      alpha: 0.6,
                                     ),
-                                    width: 1.5,
                                   ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: AppColors.shGlowGreen.withValues(
-                                        alpha: 0.3,
+
+                                  const SizedBox(width: 20),
+
+                                  // Text Content (Right Side) with 3D Effect - Centered
+                                  Expanded(
+                                    flex: 3,
+                                    child: Center(
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 20,
+                                          vertical: 16,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                            begin: Alignment.topLeft,
+                                            end: Alignment.bottomRight,
+                                            colors: [
+                                              AppColors.glowGreen.withValues(
+                                                alpha: 0.4,
+                                              ),
+                                              AppColors.yellow.withValues(
+                                                alpha: 0.4,
+                                              ),
+                                            ],
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            20,
+                                          ),
+                                          border: Border.all(
+                                            color: AppColors.glowGreen
+                                                .withValues(alpha: 0.6),
+                                            width: 1.5,
+                                          ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: AppColors.shGlowGreen
+                                                  .withValues(alpha: 0.3),
+                                              blurRadius: 12,
+                                              offset: const Offset(0, 6),
+                                            ),
+                                            BoxShadow(
+                                              color: AppColors.shYellow
+                                                  .withValues(alpha: 0.2),
+                                              blurRadius: 8,
+                                              offset: const Offset(0, -3),
+                                            ),
+                                          ],
+                                        ),
+                                        child: Text(
+                                          isTr
+                                              ? TrAppStrings.periodicTable
+                                              : EnAppStrings.periodicTable,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 24,
+                                            fontWeight: FontWeight.bold,
+                                            shadows: [
+                                              Shadow(
+                                                color: Colors.black26,
+                                                offset: Offset(2, 2),
+                                                blurRadius: 3,
+                                              ),
+                                            ],
+                                          ),
+                                          textAlign: TextAlign.center,
+                                        ),
                                       ),
-                                      blurRadius: 12,
-                                      offset: const Offset(0, 6),
                                     ),
-                                    BoxShadow(
-                                      color: AppColors.shYellow.withValues(
-                                        alpha: 0.2,
-                                      ),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, -3),
-                                    ),
-                                  ],
-                                ),
-                                child: Text(
-                                  isTr
-                                      ? TrAppStrings.periodicTable
-                                      : EnAppStrings.periodicTable,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.bold,
-                                    shadows: [
-                                      Shadow(
-                                        color: Colors.black26,
-                                        offset: Offset(2, 2),
-                                        blurRadius: 3,
-                                      ),
-                                    ],
                                   ),
-                                  textAlign: TextAlign.center,
-                                ),
+                                ],
                               ),
                             ),
                           ),
                         ],
                       ),
-                    ),
-                  ),
+                    );
+                  },
                 ),
               );
             },

@@ -1190,10 +1190,6 @@ class _TriviaContent extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(24, 12, 24, 8),
-          child: _buildInfoCard(context, question.category),
-        ),
         Expanded(
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -1261,67 +1257,6 @@ class _TriviaContent extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildInfoCard(BuildContext context, String category) {
-    final isTr = context.read<LocalizationProvider>().isTr;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppColors.darkBlue.withValues(alpha: 0.8),
-            AppColors.darkBlue.withValues(alpha: 0.6),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: AppColors.turquoise.withValues(alpha: 0.3),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.turquoise.withValues(alpha: 0.12),
-            offset: const Offset(0, 4),
-            blurRadius: 12,
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: AppColors.turquoise.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                color: AppColors.turquoise.withValues(alpha: 0.4),
-                width: 1,
-              ),
-            ),
-            child: const Icon(
-              Icons.touch_app,
-              color: AppColors.turquoise,
-              size: 18,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              isTr ? 'Kategori: $category' : 'Category: $category',
-              style: const TextStyle(
-                color: AppColors.white,
-                fontWeight: FontWeight.w500,
-                fontSize: 14,
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

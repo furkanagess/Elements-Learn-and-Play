@@ -223,18 +223,27 @@ class _ElementOfDayWidgetState extends State<ElementOfDayWidget>
               height: 160,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(24),
-                color: Colors.white.withValues(
-                  alpha: 0.1,
-                ), // Opacity white background
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    elementColor.withValues(alpha: 0.2),
+                    elementColor.withValues(alpha: 0.1),
+                    AppColors.darkBlue.withValues(alpha: 0.8),
+                  ],
+                ),
                 border: Border.all(
-                  color: Colors.white.withValues(
-                    alpha: 0.2,
-                  ), // Opacity white border
-                  width: 1,
+                  color: elementColor.withValues(alpha: 0.4),
+                  width: 1.5,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.2),
+                    color: elementColor.withValues(alpha: 0.3),
+                    blurRadius: 12,
+                    offset: const Offset(0, 6),
+                  ),
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
                   ),
@@ -305,8 +314,21 @@ class _ElementOfDayWidgetState extends State<ElementOfDayWidget>
                                   vertical: 6,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: elementColor.withValues(alpha: 0.2),
+                                  color: elementColor.withValues(alpha: 0.4),
                                   borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: elementColor.withValues(alpha: 0.6),
+                                    width: 1,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: elementColor.withValues(
+                                        alpha: 0.3,
+                                      ),
+                                      blurRadius: 6,
+                                      offset: const Offset(0, 3),
+                                    ),
+                                  ],
                                 ),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
@@ -351,14 +373,23 @@ class _ElementOfDayWidgetState extends State<ElementOfDayWidget>
                                   width: 70,
                                   height: 70,
                                   decoration: BoxDecoration(
-                                    color: elementColor.withValues(alpha: 0.2),
+                                    color: elementColor.withValues(alpha: 0.3),
                                     borderRadius: BorderRadius.circular(16),
                                     border: Border.all(
                                       color: elementColor.withValues(
-                                        alpha: 0.3,
+                                        alpha: 0.6,
                                       ),
-                                      width: 1,
+                                      width: 1.5,
                                     ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: elementColor.withValues(
+                                          alpha: 0.4,
+                                        ),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ],
                                   ),
                                   child: Column(
                                     mainAxisAlignment: MainAxisAlignment.center,

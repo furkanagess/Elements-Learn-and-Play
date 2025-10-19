@@ -78,19 +78,26 @@ class _FeatureCardWidgetState extends State<FeatureCardWidget>
             child: Container(
               height: 140,
               decoration: BoxDecoration(
-                color: Colors.white.withValues(
-                  alpha: 0.1,
-                ), // Opacity white background
+                color: widget.color.withValues(
+                  alpha: 0.15,
+                ), // Element color background
                 borderRadius: BorderRadius.circular(24),
                 border: Border.all(
-                  color: Colors.white.withValues(
-                    alpha: 0.2,
-                  ), // Opacity white border
-                  width: 1,
+                  color: widget.color.withValues(
+                    alpha: 0.4,
+                  ), // Element color border
+                  width: 1.5,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.2),
+                    color: widget.color.withValues(
+                      alpha: 0.3,
+                    ), // Element color shadow
+                    blurRadius: 12,
+                    offset: const Offset(0, 6),
+                  ),
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
                   ),
@@ -103,85 +110,52 @@ class _FeatureCardWidgetState extends State<FeatureCardWidget>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Header with Icon and Arrow
-                      Row(
-                        children: [
-                          // Icon Container
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: widget.color.withValues(alpha: 0.6),
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: widget.color.withValues(alpha: 0.8),
-                                width: 1.5,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: widget.shadowColor.withValues(
-                                    alpha: 0.5,
-                                  ),
-                                  blurRadius: 12,
-                                  offset: const Offset(0, 6),
+                      // Centered Icon
+                      Center(
+                        child: Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: widget.color.withValues(alpha: 0.7),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: widget.color.withValues(alpha: 0.9),
+                              width: 2,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: widget.shadowColor.withValues(
+                                  alpha: 0.6,
                                 ),
-                              ],
-                            ),
-                            child: SvgPicture.asset(
-                              widget.icon,
-                              height: 24,
-                              colorFilter: const ColorFilter.mode(
-                                Colors.white,
-                                BlendMode.srcIn,
+                                blurRadius: 20,
+                                offset: const Offset(0, 10),
                               ),
+                            ],
+                          ),
+                          child: SvgPicture.asset(
+                            widget.icon,
+                            height: 32,
+                            colorFilter: const ColorFilter.mode(
+                              Colors.white,
+                              BlendMode.srcIn,
                             ),
                           ),
-                          const Spacer(),
-                          // Arrow Icon
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: widget.color.withValues(alpha: 0.4),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: widget.color.withValues(alpha: 0.6),
-                                width: 1,
-                              ),
-                            ),
-                            child: Icon(
-                              Icons.arrow_forward_ios_rounded,
-                              color: Colors.white,
-                              size: 16,
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
 
                       const Spacer(),
 
-                      // Title and Subtitle
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            widget.title,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              height: 1.2,
-                            ),
+                      // Title only
+                      Center(
+                        child: Text(
+                          widget.title,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            height: 1.1,
+                            letterSpacing: 0.5,
                           ),
-                          const SizedBox(height: 6),
-                          Text(
-                            widget.subtitle,
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.9),
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                              height: 1.3,
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
                     ],
                   ),

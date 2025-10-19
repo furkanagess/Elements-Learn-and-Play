@@ -11,6 +11,7 @@ import 'package:elements_app/product/widget/button/back_button.dart';
 import 'package:elements_app/product/widget/scaffold/app_scaffold.dart';
 import 'package:elements_app/product/constants/assets_constants.dart';
 import 'package:elements_app/core/services/pattern/pattern_service.dart';
+import 'package:elements_app/product/widget/element_configuration/electron_configuration_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -853,6 +854,14 @@ class _ElementDetailViewState extends State<ElementDetailView>
           Icons.science,
           elementColor,
         ),
+        const SizedBox(height: 20),
+        _buildInfoSection(
+          context,
+          isTr ? 'Kaynak' : 'Source',
+          isTr ? widget.element.trSource ?? '' : widget.element.enSource ?? '',
+          Icons.source,
+          elementColor,
+        ),
       ],
     );
   }
@@ -864,15 +873,12 @@ class _ElementDetailViewState extends State<ElementDetailView>
   ) {
     return Column(
       children: [
-        _buildPropertyGrid(context, elementColor),
+        // Electron Configuration Visualization
+        ElectronConfigurationWidget(element: widget.element),
         const SizedBox(height: 20),
-        _buildInfoSection(
-          context,
-          isTr ? 'Kaynak' : 'Source',
-          isTr ? widget.element.trSource ?? '' : widget.element.enSource ?? '',
-          Icons.source,
-          elementColor,
-        ),
+        // Electron Configuration Text
+        _buildElectronConfigurationText(context, elementColor, isTr),
+        const SizedBox(height: 20),
       ],
     );
   }
@@ -894,16 +900,6 @@ class _ElementDetailViewState extends State<ElementDetailView>
               value: _formatWeight(widget.element.weight),
               unit: 'u',
               icon: Icons.scale,
-            ),
-            DetailItem(
-              label: isTr
-                  ? 'Elektron Konfigürasyonu'
-                  : 'Electron Configuration',
-              value: widget.element.electronConfiguration ?? '-',
-              icon: Icons.science_outlined,
-              valueColor: widget.element.electronConfiguration != null
-                  ? null
-                  : AppColors.white.withValues(alpha: 0.5),
             ),
           ],
           Icons.science_outlined,
@@ -965,133 +961,71 @@ class _ElementDetailViewState extends State<ElementDetailView>
     );
   }
 
-  Widget _buildPropertyGrid(BuildContext context, Color elementColor) {
-    final isTr = Provider.of<LocalizationProvider>(context).isTr;
-    final properties = [
-      DetailItem(
-        label: isTr ? 'Blok' : 'Block',
-        value: widget.element.block ?? '',
-        icon: Icons.crop_square,
-      ),
-      DetailItem(
-        label: isTr ? 'Periyot' : 'Period',
-        value: widget.element.period ?? '',
-        icon: Icons.timeline,
-      ),
-      DetailItem(
-        label: isTr ? 'Grup' : 'Group',
-        value: widget.element.group ?? '',
-        icon: Icons.group_work,
-      ),
-      DetailItem(
-        label: isTr ? 'Kategori' : 'Category',
-        value: isTr
-            ? widget.element.trCategory ?? ''
-            : widget.element.enCategory ?? '',
-        icon: Icons.category,
-      ),
-    ];
-
+  Widget _buildElectronConfigurationText(
+    BuildContext context,
+    Color elementColor,
+    bool isTr,
+  ) {
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.darkBlue,
         borderRadius: BorderRadius.circular(16),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            elementColor.withValues(alpha: 0.15),
+            elementColor.withValues(alpha: 0.12),
+            elementColor.withValues(alpha: 0.08),
+          ],
+        ),
         border: Border.all(
           color: elementColor.withValues(alpha: 0.3),
-          width: 1,
+          width: 1.5,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: elementColor.withValues(alpha: 0.2),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.tune, color: elementColor, size: 24),
-              const SizedBox(width: 12),
+              Icon(
+                Icons.science_outlined,
+                color: elementColor.withValues(alpha: 0.7),
+                size: 20,
+              ),
+              const SizedBox(width: 8),
               Text(
-                isTr ? 'Temel Özellikler' : 'Basic Properties',
-                style: context.textTheme.titleLarge?.copyWith(
-                  color: AppColors.white,
-                  fontWeight: FontWeight.bold,
+                isTr ? 'Elektron Konfigürasyonu' : 'Electron Configuration',
+                style: TextStyle(
+                  color: elementColor,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 20),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              return GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: constraints.maxWidth > 400 ? 2 : 1,
-                  childAspectRatio: constraints.maxWidth > 400 ? 3 : 4,
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
-                ),
-                itemCount: properties.length,
-                itemBuilder: (context, index) {
-                  final property = properties[index];
-                  return _buildPropertyItem(
-                    context,
-                    property.label,
-                    property.value,
-                    property.icon ?? Icons.info,
-                    elementColor,
-                  );
-                },
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPropertyItem(
-    BuildContext context,
-    String label,
-    String value,
-    IconData icon,
-    Color color,
-  ) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: AppColors.background,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withValues(alpha: 0.2), width: 1),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: color, size: 20),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  label,
-                  style: context.textTheme.bodySmall?.copyWith(
-                    color: AppColors.white.withValues(alpha: 0.7),
-                    fontWeight: FontWeight.w500,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  value,
-                  style: context.textTheme.titleSmall?.copyWith(
-                    color: AppColors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
+          const SizedBox(height: 12),
+          Text(
+            widget.element.electronConfiguration ?? '-',
+            style: const TextStyle(
+              color: AppColors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              fontFamily: 'monospace',
             ),
           ),
         ],

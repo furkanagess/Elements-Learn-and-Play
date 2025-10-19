@@ -28,14 +28,10 @@ class ElementsListAppBar extends StatelessWidget
       backgroundColor: Colors.transparent,
       flexibleSpace: Container(
         decoration: BoxDecoration(
-          color: Colors.white.withValues(
-            alpha: 0.1,
-          ), // Opacity white background
+          color: AppColors.darkBlue, // darkBlue background
           border: Border(
             bottom: BorderSide(
-              color: Colors.white.withValues(
-                alpha: 0.2,
-              ), // Opacity white border
+              color: AppColors.darkBlue, // Opacity white border
               width: 1,
             ),
           ),

@@ -1000,7 +1000,7 @@ class _ModernQuizContent extends StatelessWidget {
                     question.questionText,
                     style: const TextStyle(
                       color: AppColors.turquoise,
-                      fontSize: 56,
+                      fontSize: 32,
                       fontWeight: FontWeight.bold,
                     ),
                   ),

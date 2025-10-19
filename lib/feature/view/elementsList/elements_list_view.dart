@@ -296,8 +296,11 @@ class _ElementsListViewState extends State<ElementsListView>
     }
 
     final query = _searchQuery.toLowerCase();
-    return elements.where((element) {
-      final name = context.read<LocalizationProvider>().isTr
+    final isTr = context.read<LocalizationProvider>().isTr;
+
+    // Filter elements that match the search query
+    final matchingElements = elements.where((element) {
+      final name = isTr
           ? element.trName?.toLowerCase() ?? ''
           : element.enName?.toLowerCase() ?? '';
       final symbol = element.symbol?.toLowerCase() ?? '';
@@ -307,5 +310,38 @@ class _ElementsListViewState extends State<ElementsListView>
           symbol.contains(query) ||
           number.contains(query);
     }).toList();
+
+    // Sort by priority: starts with query first, then contains query
+    matchingElements.sort((a, b) {
+      final aName = isTr
+          ? a.trName?.toLowerCase() ?? ''
+          : a.enName?.toLowerCase() ?? '';
+      final bName = isTr
+          ? b.trName?.toLowerCase() ?? ''
+          : b.enName?.toLowerCase() ?? '';
+      final aSymbol = a.symbol?.toLowerCase() ?? '';
+      final bSymbol = b.symbol?.toLowerCase() ?? '';
+
+      // Check if element starts with query
+      final aStartsWithQuery =
+          aName.startsWith(query) || aSymbol.startsWith(query);
+      final bStartsWithQuery =
+          bName.startsWith(query) || bSymbol.startsWith(query);
+
+      // Priority: starts with query first
+      if (aStartsWithQuery && !bStartsWithQuery) return -1;
+      if (!aStartsWithQuery && bStartsWithQuery) return 1;
+
+      // If both start with query or both don't, sort alphabetically
+      if (aStartsWithQuery && bStartsWithQuery) {
+        // Both start with query, sort by name
+        return aName.compareTo(bName);
+      } else {
+        // Neither starts with query, sort by name
+        return aName.compareTo(bName);
+      }
+    });
+
+    return matchingElements;
   }
 }

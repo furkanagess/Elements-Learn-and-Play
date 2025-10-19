@@ -179,10 +179,10 @@ class _PeriodicTableViewState extends State<PeriodicTableView> {
                   ),
                 ),
               ),
-              const Padding(
-                padding: EdgeInsets.fromLTRB(20, 0, 20, 20),
-                child: BannerAdsWidget(showLoadingIndicator: true),
-              ),
+              // const Padding(
+              //   padding: EdgeInsets.fromLTRB(20, 0, 20, 20),
+              //   child: BannerAdsWidget(showLoadingIndicator: true),
+              // ),
             ],
           ),
         );

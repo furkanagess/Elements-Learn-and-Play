@@ -31,21 +31,27 @@ class CenterQuickActionsRow extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: _SquareAction(
+          child: _ModernActionCard(
             title: statisticsTitle,
             subtitle: statisticsSubtitle,
             icon: Icons.analytics_rounded,
-            gradientColors: statisticsGradient,
+            primaryColor: statisticsGradient.first,
+            shadowColor: statisticsGradient.length > 1
+                ? statisticsGradient.last
+                : statisticsGradient.first,
             onTap: onStatisticsTap,
           ),
         ),
         const SizedBox(width: 12),
         Expanded(
-          child: _SquareAction(
+          child: _ModernActionCard(
             title: achievementsTitle,
             subtitle: achievementsSubtitle,
             icon: Icons.emoji_events_rounded,
-            gradientColors: achievementsGradient,
+            primaryColor: achievementsGradient.first,
+            shadowColor: achievementsGradient.length > 1
+                ? achievementsGradient.last
+                : achievementsGradient.first,
             footer: achievementsFooter,
             onTap: onAchievementsTap,
           ),
@@ -55,152 +61,152 @@ class CenterQuickActionsRow extends StatelessWidget {
   }
 }
 
-class _SquareAction extends StatelessWidget {
+class _ModernActionCard extends StatefulWidget {
   final String title;
   final String? subtitle;
   final IconData icon;
-  final List<Color> gradientColors;
+  final Color primaryColor;
+  final Color shadowColor;
   final VoidCallback onTap;
   final Widget? footer;
 
-  const _SquareAction({
+  const _ModernActionCard({
     required this.title,
     required this.icon,
-    required this.gradientColors,
+    required this.primaryColor,
+    required this.shadowColor,
     required this.onTap,
     this.subtitle,
     this.footer,
   });
 
   @override
+  State<_ModernActionCard> createState() => _ModernActionCardState();
+}
+
+class _ModernActionCardState extends State<_ModernActionCard>
+    with TickerProviderStateMixin {
+  late AnimationController _scaleController;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _scaleController = AnimationController(
+      duration: const Duration(milliseconds: 150),
+      vsync: this,
+    );
+
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
+      CurvedAnimation(parent: _scaleController, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _scaleController.dispose();
+    super.dispose();
+  }
+
+  void _handleTap() {
+    widget.onTap();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return AspectRatio(
-      aspectRatio: 1,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(20),
-          onTap: onTap,
-          child: Ink(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(20),
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  // Base gradient background
-                  Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: gradientColors,
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                    ),
+    return AnimatedBuilder(
+      animation: _scaleAnimation,
+      builder: (context, child) {
+        return Transform.scale(
+          scale: _scaleAnimation.value,
+          child: GestureDetector(
+            onTapDown: (_) => _scaleController.forward(),
+            onTapUp: (_) => _handleTap(),
+            onTapCancel: () => _scaleController.reverse(),
+            child: Container(
+              height: 140,
+              decoration: BoxDecoration(
+                color: widget.primaryColor.withValues(
+                  alpha: 0.15,
+                ), // Element color background
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: widget.primaryColor.withValues(
+                    alpha: 0.4,
+                  ), // Element color border
+                  width: 1.5,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: widget.primaryColor.withValues(
+                      alpha: 0.3,
+                    ), // Element color shadow
+                    blurRadius: 12,
+                    offset: const Offset(0, 6),
                   ),
-                  // Subtle radial highlight for depth
-                  Positioned.fill(
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: RadialGradient(
-                          colors: [
-                            Colors.white.withValues(alpha: 0.10),
-                            Colors.transparent,
-                          ],
-                          radius: 1.0,
-                          center: const Alignment(-0.7, -0.8),
-                        ),
-                      ),
-                    ),
-                  ),
-                  // Decorative top-right soft circle
-                  Positioned(
-                    right: -30,
-                    top: -30,
-                    child: Container(
-                      width: 120,
-                      height: 120,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.white.withValues(alpha: 0.06),
-                      ),
-                    ),
-                  ),
-                  // Content
-                  Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.16),
-                        width: 1,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: gradientColors.first.withValues(alpha: 0.22),
-                          blurRadius: 26,
-                          offset: const Offset(0, 12),
-                        ),
-                      ],
-                    ),
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.22),
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.28),
-                              width: 1,
-                            ),
-                          ),
-                          child: Icon(icon, color: AppColors.white, size: 22),
-                        ),
-                        const SizedBox(height: 10),
-                        Text(
-                          title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: AppColors.white,
-                            fontSize: 17,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 0.2,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        if (subtitle != null) ...[
-                          const SizedBox(height: 4),
-                          Text(
-                            subtitle!,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.85),
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 0.2,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                        if (footer != null) ...[
-                          const SizedBox(height: 10),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [footer!],
-                          ),
-                        ],
-                      ],
-                    ),
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
                   ),
                 ],
               ),
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // Icon Container (similar to other modern cards)
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: widget.primaryColor.withValues(
+                          alpha: 0.6,
+                        ), // Card color
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: widget.primaryColor.withValues(alpha: 0.8),
+                          width: 1.5,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: widget.shadowColor.withValues(alpha: 0.4),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Icon(widget.icon, color: Colors.white, size: 24),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Title
+                    Text(
+                      widget.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+
+                    // Footer (for achievements badge count)
+                    if (widget.footer != null) ...[
+                      const SizedBox(height: 8),
+                      widget.footer!,
+                    ],
+                  ],
+                ),
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
@@ -212,12 +218,12 @@ class MiniChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.16),
+        color: Colors.white.withValues(alpha: 0.18),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: Colors.white.withValues(alpha: 0.24),
+          color: Colors.white.withValues(alpha: 0.25),
           width: 1,
         ),
       ),

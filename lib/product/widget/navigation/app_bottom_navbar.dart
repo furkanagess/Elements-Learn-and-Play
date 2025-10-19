@@ -13,18 +13,14 @@ class AppBottomNavBar extends StatelessWidget {
   void _navigateToFavorites(BuildContext context) {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => const FavoritesView(),
-      ),
+      MaterialPageRoute(builder: (context) => const FavoritesView()),
     );
   }
 
   void _navigateToSettings(BuildContext context) {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => const SettingsView(),
-      ),
+      MaterialPageRoute(builder: (context) => const SettingsView()),
     );
   }
 
@@ -33,49 +29,71 @@ class AppBottomNavBar extends StatelessWidget {
     final isTr = context.watch<LocalizationProvider>().isTr;
 
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-      height: 56,
+      margin: const EdgeInsets.fromLTRB(24, 0, 24, 16),
+      height: 48,
       decoration: BoxDecoration(
-        color: AppColors.darkBlue.withValues(alpha: 0.95),
+        gradient: LinearGradient(
+          colors: [
+            AppColors.darkBlue.withValues(alpha: 0.95),
+            AppColors.darkBlue.withValues(alpha: 0.85),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: Colors.white.withValues(alpha: 0.1),
-          width: 0.5,
+          color: Colors.white.withValues(alpha: 0.15),
+          width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
-            blurRadius: 8,
+            color: AppColors.darkBlue.withValues(alpha: 0.3),
+            blurRadius: 12,
             offset: const Offset(0, 4),
+          ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
       child: Row(
         children: [
-          // Favorites Button
+          // Left side - Favorites Button (centered in left half)
           Expanded(
-            child: _buildNavItem(
-              context: context,
-              icon: Icons.favorite_rounded,
-              label: isTr ? TrAppStrings.favorites : EnAppStrings.favorites,
-              onTap: () => _navigateToFavorites(context),
+            child: Center(
+              child: _buildNavItem(
+                context: context,
+                icon: Icons.favorite_rounded,
+                label: isTr ? TrAppStrings.favorites : EnAppStrings.favorites,
+                onTap: () => _navigateToFavorites(context),
+                color: AppColors.pink,
+              ),
             ),
           ),
 
           // Divider
           Container(
             height: 24,
-            width: 0.5,
-            color: Colors.white.withValues(alpha: 0.2),
+            width: 1,
+            margin: const EdgeInsets.symmetric(vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.25),
+              borderRadius: BorderRadius.circular(0.5),
+            ),
           ),
 
-          // Settings Button
+          // Right side - Settings Button (centered in right half)
           Expanded(
-            child: _buildNavItem(
-              context: context,
-              icon: Icons.settings_rounded,
-              label: isTr ? TrAppStrings.settings : EnAppStrings.settings,
-              onTap: () => _navigateToSettings(context),
+            child: Center(
+              child: _buildNavItem(
+                context: context,
+                icon: Icons.settings_rounded,
+                label: isTr ? TrAppStrings.settings : EnAppStrings.settings,
+                onTap: () => _navigateToSettings(context),
+                color: AppColors.steelBlue,
+              ),
             ),
           ),
         ],
@@ -88,36 +106,28 @@ class AppBottomNavBar extends StatelessWidget {
     required IconData icon,
     required String label,
     required VoidCallback onTap,
+    required Color color,
   }) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(8),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                icon,
-                color: Colors.white.withValues(alpha: 0.9),
-                size: 20,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                label,
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.8),
-                  fontSize: 10,
-                  fontWeight: FontWeight.w500,
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
+            boxShadow: [
+              BoxShadow(
+                color: color.withValues(alpha: 0.2),
+                blurRadius: 4,
+                offset: const Offset(0, 1),
               ),
             ],
           ),
+          child: Icon(icon, color: Colors.white, size: 16),
         ),
       ),
     );

@@ -31,8 +31,8 @@ class _ModernInfoViewState extends State<ModernInfoView>
     with TickerProviderStateMixin {
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
-
-  // Animation controllers for 3D button effects
+  late List<AnimationController> _cardControllers;
+  late List<Animation<double>> _cardAnimations;
 
   // Map to store scale controllers for each info card
   final Map<int, AnimationController> _scaleControllers = {};
@@ -45,7 +45,7 @@ class _ModernInfoViewState extends State<ModernInfoView>
     super.initState();
 
     _fadeController = AnimationController(
-      duration: const Duration(milliseconds: 800),
+      duration: const Duration(milliseconds: 600),
       vsync: this,
     );
 
@@ -53,7 +53,22 @@ class _ModernInfoViewState extends State<ModernInfoView>
       CurvedAnimation(parent: _fadeController, curve: Curves.easeInOut),
     );
 
-    // Initialize element types scale animation
+    // Initialize card animations - same structure as info detail view
+    _cardControllers = List.generate(
+      10, // Maximum expected number of cards
+      (index) => AnimationController(
+        duration: const Duration(milliseconds: 300),
+        vsync: this,
+      ),
+    );
+
+    _cardAnimations = _cardControllers
+        .map(
+          (controller) => Tween<double>(begin: 0.0, end: 1.0).animate(
+            CurvedAnimation(parent: controller, curve: Curves.easeInOut),
+          ),
+        )
+        .toList();
 
     _fadeController.forward();
   }
@@ -61,6 +76,11 @@ class _ModernInfoViewState extends State<ModernInfoView>
   @override
   void dispose() {
     _fadeController.dispose();
+
+    // Dispose all card controllers
+    for (var controller in _cardControllers) {
+      controller.dispose();
+    }
 
     // Dispose all scale controllers
     for (var controller in _scaleControllers.values) {
@@ -70,7 +90,16 @@ class _ModernInfoViewState extends State<ModernInfoView>
     super.dispose();
   }
 
-  // Animation methods for info cards
+  // Start card animations with delay - same as info detail view
+  void _startCardAnimations(int itemCount) {
+    for (int i = 0; i < itemCount && i < _cardControllers.length; i++) {
+      Future.delayed(Duration(milliseconds: 200 + (i * 150)), () {
+        if (mounted) {
+          _cardControllers[i].forward();
+        }
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -214,6 +243,11 @@ class _ModernInfoViewState extends State<ModernInfoView>
           );
         }
 
+        // Start card animations with delay - same as info detail view
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _startCardAnimations(provider.infoList.length + 2);
+        });
+
         return ListView.builder(
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
           itemCount:
@@ -221,18 +255,29 @@ class _ModernInfoViewState extends State<ModernInfoView>
           itemBuilder: (context, index) {
             // First item is banner ads
             if (index == 0) {
-              return const BannerAdsWidget(showLoadingIndicator: true);
+              return AnimatedBuilder(
+                animation: _cardAnimations[index],
+                builder: (context, child) {
+                  return Transform.translate(
+                    offset: Offset(0, 50 * (1 - _cardAnimations[index].value)),
+                    child: Opacity(
+                      opacity: _cardAnimations[index].value,
+                      child: const BannerAdsWidget(showLoadingIndicator: true),
+                    ),
+                  );
+                },
+              );
             }
 
             // Second item is element types card
             if (index == 1) {
               return AnimatedBuilder(
-                animation: _fadeAnimation,
+                animation: _cardAnimations[index],
                 builder: (context, child) {
-                  return FadeTransition(
-                    opacity: _fadeAnimation,
-                    child: Transform.translate(
-                      offset: Offset(0, 20 * (1 - _fadeAnimation.value)),
+                  return Transform.translate(
+                    offset: Offset(0, 50 * (1 - _cardAnimations[index].value)),
+                    child: Opacity(
+                      opacity: _cardAnimations[index].value,
                       child: ModernElementTypesCard(
                         onTap: () {
                           HapticFeedback.lightImpact();
@@ -256,12 +301,12 @@ class _ModernInfoViewState extends State<ModernInfoView>
             // Other items are info cards
             final info = provider.infoList[index - 2];
             return AnimatedBuilder(
-              animation: _fadeAnimation,
+              animation: _cardAnimations[index],
               builder: (context, child) {
-                return FadeTransition(
-                  opacity: _fadeAnimation,
-                  child: Transform.translate(
-                    offset: Offset(0, 20 * (1 - _fadeAnimation.value)),
+                return Transform.translate(
+                  offset: Offset(0, 50 * (1 - _cardAnimations[index].value)),
+                  child: Opacity(
+                    opacity: _cardAnimations[index].value,
                     child: ModernInfoCard(
                       title: context.read<LocalizationProvider>().isTr
                           ? info.trTitle ?? ''
