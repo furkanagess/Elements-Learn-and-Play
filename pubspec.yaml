@@ -1,7 +1,7 @@
 name: elements_app
 description: Periodic Table - Learn and explore chemical elements
 publish_to: 'none'
-version: 2.1.1+17
+version: 2.1.2+18
 
 environment:
   sdk: '>=3.8.0 <4.0.0'
@@ -67,7 +67,6 @@ dev_dependencies:
 
   # Launcher
   flutter_launcher_icons: ^0.13.1
-  flutter_native_splash: ^2.3.4
 
   # General
   change_app_package_name: ^1.1.0
@@ -82,7 +81,6 @@ flutter_launcher_icons:
   adaptive_icon_background: "#212437"
   adaptive_icon_foreground: "assets/icon/last-pr-icon.png"
 
-# flutter_native_splash removed - using Lottie animation instead
  
 
 

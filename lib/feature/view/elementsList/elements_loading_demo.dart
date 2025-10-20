@@ -1,4 +1,3 @@
-import 'package:elements_app/feature/provider/localization_provider.dart';
 import 'package:elements_app/product/constants/app_colors.dart';
 import 'package:elements_app/product/widget/card/element_card.dart';
 import 'package:elements_app/product/widget/scaffold/app_scaffold.dart';
@@ -6,7 +5,6 @@ import 'package:elements_app/product/widget/skeleton/element_card_skeleton.dart'
 import 'package:elements_app/product/widget/loadingBar/modern_loading_indicator.dart';
 import 'package:elements_app/core/services/pattern/pattern_service.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 
 /// Demo page to showcase the new loading system
 class ElementsLoadingDemo extends StatefulWidget {

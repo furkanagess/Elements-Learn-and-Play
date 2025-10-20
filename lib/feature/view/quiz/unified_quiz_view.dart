@@ -1,4 +1,6 @@
-import 'package:elements_app/feature/view/tests/tests_home_view.dart';
+// ignore_for_file: use_build_context_synchronously
+
+import 'package:elements_app/feature/view/home/home_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -159,7 +161,7 @@ class _UnifiedQuizViewState extends State<UnifiedQuizView>
                     mainAxisSize: MainAxisSize.min,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(
+                      const Icon(
                         Icons.error_outline,
                         size: 80,
                         color: AppColors.powderRed,
@@ -293,7 +295,7 @@ class _UnifiedQuizViewState extends State<UnifiedQuizView>
               child: Column(
                 children: [
                   // Modern Quiz Header - Similar to Puzzle Header
-                  Container(
+                  SizedBox(
                     height: MediaQuery.of(context).size.height * 0.16,
                     child: _ModernQuizHeader(
                       session: session,
@@ -445,7 +447,7 @@ class _UnifiedQuizViewState extends State<UnifiedQuizView>
     quizProvider.resetQuiz();
 
     Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (context) => TestsHomeView()),
+      MaterialPageRoute(builder: (context) => const HomeView()),
       (route) => false,
     );
   }
@@ -822,7 +824,7 @@ class _ModernQuizHeader extends StatelessWidget {
                           backgroundColor: AppColors.white.withValues(
                             alpha: 0.2,
                           ),
-                          valueColor: AlwaysStoppedAnimation<Color>(
+                          valueColor: const AlwaysStoppedAnimation<Color>(
                             AppColors.white,
                           ),
                           minHeight: 3,
@@ -906,17 +908,6 @@ class _ModernQuizHeader extends StatelessWidget {
       if (d == 'medium' || d == 'orta') return 'Medium';
       if (d == 'hard' || d == 'zor') return 'Hard';
       return difficulty;
-    }
-  }
-
-  ({Color primary, Color shadow}) _getQuizTypeColors(QuizType type) {
-    switch (type) {
-      case QuizType.symbol:
-        return (primary: AppColors.turquoise, shadow: AppColors.shTurquoise);
-      case QuizType.group:
-        return (primary: AppColors.steelBlue, shadow: AppColors.shSteelBlue);
-      case QuizType.number:
-        return (primary: AppColors.purple, shadow: AppColors.shPurple);
     }
   }
 }
@@ -1329,34 +1320,6 @@ class _ModernQuizContent extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  String _getQuestionTypeText(QuizType type, bool isTr) {
-    switch (type) {
-      case QuizType.symbol:
-        return isTr ? 'Sembol Testi' : 'Symbol Test';
-      case QuizType.group:
-        return isTr ? 'Grup Testi' : 'Group Test';
-      case QuizType.number:
-        return isTr ? 'Numara Testi' : 'Number Test';
-    }
-  }
-
-  String _getQuestionHint(QuizType type, bool isTr) {
-    switch (type) {
-      case QuizType.symbol:
-        return isTr
-            ? 'Element sembolüne göre doğru elementi seçin'
-            : 'Select the correct element based on its symbol';
-      case QuizType.group:
-        return isTr
-            ? 'Element adına göre doğru grubu seçin'
-            : 'Select the correct group based on the element name';
-      case QuizType.number:
-        return isTr
-            ? 'Atom numarasına göre doğru elementi seçin'
-            : 'Select the correct element based on its atomic number';
-    }
   }
 
   ({Color primary, Color shadow}) _getQuizTypeColors(QuizType type) {

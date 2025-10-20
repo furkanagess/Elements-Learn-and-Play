@@ -60,56 +60,60 @@ class _LottieSplashScreenState extends State<LottieSplashScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: Center(
-        child: FadeTransition(
-          opacity: _fadeAnimation,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Lottie Animation
-              SizedBox(
-                width: 300,
-                height: 300,
-                child: Lottie.asset(
-                  'assets/lottie/Chemicals.json',
-                  controller: _animationController,
-                  fit: BoxFit.contain,
-                  repeat: true,
-                ),
-              ),
-
-              const SizedBox(height: 40),
-
-              // App Title
-              Text(
-                'Periodic Table',
-                style: TextStyle(
-                  color: AppColors.white,
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  shadows: [
-                    Shadow(
-                      color: Colors.black.withValues(alpha: 0.3),
-                      offset: const Offset(2, 2),
-                      blurRadius: 4,
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 8),
-
-              // Subtitle
-              Text(
-                'Learn and explore chemical elements',
-                style: TextStyle(
-                  color: AppColors.white.withValues(alpha: 0.8),
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                ),
-                textAlign: TextAlign.center,
-              ),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              AppColors.background,
+              AppColors.background.withValues(alpha: 0.8),
             ],
+          ),
+        ),
+        child: Center(
+          child: FadeTransition(
+            opacity: _fadeAnimation,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Lottie animation - much larger
+                SizedBox(
+                  width: 300,
+                  height: 300,
+                  child: Lottie.asset(
+                    'assets/lottie/Chemicals.json',
+                    controller: _animationController,
+                    fit: BoxFit.contain,
+                    repeat: true,
+                    errorBuilder: (context, error, stackTrace) {
+                      return const Icon(
+                        Icons.science,
+                        size: 120,
+                        color: Colors.white,
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 40),
+                // App title
+                Text(
+                  'Periodic Table',
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 15),
+                // Subtitle
+                Text(
+                  'Learn & Explore Chemical Elements',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyLarge?.copyWith(color: Colors.white70),
+                ),
+              ],
+            ),
           ),
         ),
       ),

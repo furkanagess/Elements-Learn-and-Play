@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:provider/provider.dart';
 import 'package:elements_app/feature/provider/purchase_provider.dart';
+import 'package:elements_app/product/widget/ads/remove_ads_dialog.dart';
 
 /// The `AdmobProvider` class is responsible for managing interstitial ads using the
 /// AdMob service. It provides methods for creating and displaying interstitial ads
@@ -12,6 +13,7 @@ class AdmobProvider with ChangeNotifier {
   int _interstitialLoadAttempts = 0;
   InterstitialAd? _interstitialAd;
   bool _isAdLoading = false;
+  BuildContext? _lastAdContext; // Store context from last ad show
 
   // Route tracking for interstitial ads
   int _routeCounter = 0;
@@ -130,6 +132,10 @@ class AdmobProvider with ChangeNotifier {
 
         // Preload next ad with immersive mode
         _createInterstitialAd();
+
+        // Show remove ads dialog after ad dismissal
+        _showRemoveAdsDialogAfterAd();
+
         notifyListeners();
       },
       onAdFailedToShowFullScreenContent: (InterstitialAd ad, AdError error) {
@@ -164,6 +170,8 @@ class AdmobProvider with ChangeNotifier {
           debugPrint('🚫 Premium user - skipping interstitial ad');
           return;
         }
+        // Store context for later use in dialog
+        _lastAdContext = context;
       }
 
       if (_interstitialAd != null) {
@@ -199,6 +207,33 @@ class AdmobProvider with ChangeNotifier {
     debugPrint('🚀 Creating and showing interstitial ad immediately');
     _createInterstitialAd();
     // Note: This will show the ad when it's loaded, not immediately
+  }
+
+  /// Shows remove ads dialog after interstitial ad dismissal
+  void _showRemoveAdsDialogAfterAd() {
+    // Add a small delay to ensure the ad is fully dismissed
+    Future.delayed(const Duration(milliseconds: 500), () {
+      // Use the stored context from the last ad show
+      final context = _lastAdContext;
+      if (context != null && context.mounted) {
+        // Check if user is premium before showing dialog
+        final purchaseProvider = context.read<PurchaseProvider>();
+        if (!purchaseProvider.isPremium) {
+          _showRemoveAdsDialog(context);
+        }
+      }
+      // Clear the stored context
+      _lastAdContext = null;
+    });
+  }
+
+  /// Shows the remove ads dialog
+  void _showRemoveAdsDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) => const RemoveAdsDialog(),
+    );
   }
 
   /// Tracks all route changes (push, pop, replace) and shows interstitial ad every 15 routes

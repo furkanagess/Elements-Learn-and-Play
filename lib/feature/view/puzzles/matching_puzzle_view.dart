@@ -10,7 +10,7 @@ import 'package:elements_app/product/constants/app_colors.dart';
 import 'package:elements_app/product/ads/rewarded_helper.dart';
 import 'package:elements_app/feature/provider/localization_provider.dart';
 import 'package:elements_app/core/services/pattern/pattern_service.dart';
-import 'package:elements_app/feature/view/tests/tests_home_view.dart';
+import 'package:elements_app/feature/view/home/home_view.dart';
 import 'package:elements_app/feature/view/trivia/trivia_achievements_view.dart';
 import 'package:elements_app/product/widget/common/modern_game_result_dialog.dart';
 import 'package:elements_app/product/widget/ads/interstitial_ad_widget.dart';
@@ -271,7 +271,7 @@ class _MatchingPuzzleViewState extends State<MatchingPuzzleView>
 
     provider.resetMatchingSessionFlags();
     Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => TestsHomeView()),
+      MaterialPageRoute(builder: (_) => const HomeView()),
       (route) => false,
     );
   }
@@ -292,7 +292,7 @@ class _MatchingPuzzleViewState extends State<MatchingPuzzleView>
         onHome: () {
           provider.resetMatchingSessionFlags();
           Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (_) => TestsHomeView()),
+            MaterialPageRoute(builder: (_) => const HomeView()),
             (route) => false,
           );
         },
@@ -372,7 +372,7 @@ class _MatchingPuzzleViewState extends State<MatchingPuzzleView>
           await InterstitialAdManager.instance.showAdOnAction(context);
           _providerRef?.resetMatchingSessionFlags();
           Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (_) => TestsHomeView()),
+            MaterialPageRoute(builder: (_) => const HomeView()),
             (route) => false,
           );
         },

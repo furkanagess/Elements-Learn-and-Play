@@ -16,7 +16,7 @@ import 'package:elements_app/feature/service/periodicTable/periodic_table_servic
 import 'package:elements_app/feature/service/api_service.dart';
 import 'package:elements_app/product/widget/ads/interstitial_ad_widget.dart';
 import 'package:elements_app/product/ads/rewarded_helper.dart';
-import 'package:elements_app/feature/view/tests/tests_home_view.dart';
+import 'package:elements_app/feature/view/home/home_view.dart';
 import 'package:elements_app/feature/view/trivia/trivia_achievements_view.dart';
 import 'package:elements_app/product/widget/common/modern_game_result_dialog.dart';
 
@@ -749,7 +749,7 @@ class _ElementTriviaViewState extends State<ElementTriviaView>
             await Future.delayed(const Duration(milliseconds: 500));
             await InterstitialAdManager.instance.showAdOnAction(context);
             Navigator.of(context).pushAndRemoveUntil(
-              MaterialPageRoute(builder: (_) => TestsHomeView()),
+              MaterialPageRoute(builder: (_) => const HomeView()),
               (route) => false,
             );
           },
@@ -793,7 +793,7 @@ class _ElementTriviaViewState extends State<ElementTriviaView>
         category: category,
         onHome: () {
           Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (_) => TestsHomeView()),
+            MaterialPageRoute(builder: (_) => const HomeView()),
             (route) => false,
           );
         },

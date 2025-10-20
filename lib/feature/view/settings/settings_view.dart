@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:in_app_review/in_app_review.dart';
+import 'dart:io';
 import 'package:elements_app/feature/provider/localization_provider.dart';
 import 'package:elements_app/feature/provider/purchase_provider.dart';
 import 'package:elements_app/product/constants/app_colors.dart';
@@ -77,9 +79,9 @@ class _SettingsViewState extends State<SettingsView> {
                           _buildLanguageCard(context, isTr),
                           const SizedBox(height: 20),
 
-                          // // Rate App Card
-                          // _buildRateAppCard(context, isTr),
-                          // const SizedBox(height: 20),
+                          // Rate App Card
+                          _buildRateAppCard(context, isTr),
+                          const SizedBox(height: 20),
 
                           // Premium / Non-premium area listens only to isPremium
                           Builder(
@@ -236,8 +238,12 @@ class _SettingsViewState extends State<SettingsView> {
                 const SizedBox(height: 2),
                 Text(
                   isTr
-                      ? 'Uygulamamızı beğendiyseniz değerlendirin'
-                      : 'Rate our app if you like it',
+                      ? Platform.isIOS
+                            ? 'Uygulamamızı beğendiyseniz değerlendirin (iOS)'
+                            : 'Uygulamamızı beğendiyseniz değerlendirin (Android)'
+                      : Platform.isIOS
+                      ? 'Rate our app if you like it (iOS)'
+                      : 'Rate our app if you like it (Android)',
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.85),
                     fontSize: 12,
@@ -475,218 +481,166 @@ class _SettingsViewState extends State<SettingsView> {
           offset: const Offset(0, 4),
         ),
       ],
-      child: Stack(
+      child: Column(
         children: [
-          // Background Pattern
-          Positioned.fill(
-            child: CustomPaint(
-              painter: PatternService().getPatternPainter(
-                type: PatternType.circuit,
-                color: Colors.white,
-                opacity: 0.05,
-              ),
-            ),
-          ),
-          // Content
-          Column(
+          // Header with icon and title
+          Row(
             children: [
-              // Header with icon and title
-              Row(
-                children: [
-                  Container(
-                    width: 64,
-                    height: 64,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.15),
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.2),
-                        width: 1.5,
-                      ),
-                    ),
-                    child: const Icon(
-                      Icons.ads_click,
-                      color: AppColors.white,
-                      size: 32,
-                    ),
-                  ),
-                  const SizedBox(width: 20),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          isTr ? '🚫 Reklamları Kaldır' : '🚫 Remove Ads',
-                          style: const TextStyle(
-                            color: AppColors.white,
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          isTr
-                              ? 'Reklamsız deneyim için tek seferlik ödeme'
-                              : 'One-time payment for ad-free experience',
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.85),
-                            fontSize: 14,
-                            height: 1.3,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 24),
-
-              // Features list
               Container(
-                padding: const EdgeInsets.all(20),
+                width: 64,
+                height: 64,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(16),
+                  color: Colors.white.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
                   border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.15),
-                    width: 1,
+                    color: Colors.white.withValues(alpha: 0.2),
+                    width: 1.5,
                   ),
                 ),
+                child: const Icon(
+                  Icons.ads_click,
+                  color: AppColors.white,
+                  size: 32,
+                ),
+              ),
+              const SizedBox(width: 20),
+              Expanded(
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildFeatureRow(
-                      Icons.visibility_off,
-                      isTr ? 'Reklamsız Deneyim' : 'Ad-Free Experience',
-                      isTr
-                          ? 'Hiç reklam görmeden kullan'
-                          : 'Use without any ads',
+                    Text(
+                      isTr ? '🚫 Reklamları Kaldır' : '🚫 Remove Ads',
+                      style: const TextStyle(
+                        color: AppColors.white,
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                    const SizedBox(height: 16),
-                    _buildFeatureRow(
-                      Icons.favorite,
-                      isTr ? 'Oyunlarda Fazladan Can' : 'More Game Lives',
-                      isTr ? 'Daha fazla can ile oyna' : 'Play with more lives',
-                    ),
-                    const SizedBox(height: 16),
-                    _buildFeatureRow(
-                      Icons.emoji_events,
+                    const SizedBox(height: 6),
+                    Text(
                       isTr
-                          ? 'Tüm Başarımlar ve İstatistikler'
-                          : 'All Achievements and Stats',
-                      isTr
-                          ? 'Tüm başarımlar ve istatistiklere erişim'
-                          : 'Access to all achievements and stats',
-                    ),
-                    const SizedBox(height: 16),
-                    _buildFeatureRow(
-                      Icons.favorite_border,
-                      isTr ? 'Sınırsız Favori' : 'Unlimited Favorites',
-                      isTr
-                          ? 'İstediğin kadar içeriği favorileyebilirsin'
-                          : 'Favorite unlimited items',
+                          ? 'Reklamsız deneyim için tek seferlik ödeme'
+                          : 'One-time payment for ad-free experience',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.85),
+                        fontSize: 14,
+                        height: 1.3,
+                      ),
                     ),
                   ],
                 ),
               ),
+            ],
+          ),
 
-              const SizedBox(height: 24),
+          const SizedBox(height: 24),
 
-              // Price and purchase button
-              Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          provider.formattedPrice,
-                          style: const TextStyle(
-                            color: AppColors.white,
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          isTr ? 'Tek seferlik ödeme' : 'One-time payment',
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.8),
-                            fontSize: 13,
-                          ),
-                        ),
-                        if (provider.removeAdsProduct != null) ...[
-                          const SizedBox(height: 4),
-                          Text(
-                            '${provider.currencyCode} • ${provider.priceAmount.toStringAsFixed(2)}',
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.6),
-                              fontSize: 11,
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 20),
-                  Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          Colors.white.withValues(alpha: 0.9),
-                          Colors.white.withValues(alpha: 0.7),
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.white.withValues(alpha: 0.3),
-                          blurRadius: 12,
-                          offset: const Offset(0, 6),
-                        ),
-                      ],
-                    ),
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        final result = await provider
-                            .directPurchaseRemoveAdsWithDetails();
-                        _showPurchaseResultBottomSheet(
-                          context,
-                          result['success'] as bool,
-                          isTr,
-                          errorDetails: result,
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.transparent,
-                        shadowColor: Colors.transparent,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 28,
-                          vertical: 16,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                      child: Text(
-                        isTr ? 'Satın Al' : 'Buy Now',
-                        style: TextStyle(
-                          color: AppColors.powderRed,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+          // Features list
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.15),
+                width: 1,
               ),
-              const SizedBox(height: 20),
+            ),
+            child: Column(
+              children: [
+                _buildFeatureRow(
+                  Icons.visibility_off,
+                  isTr ? 'Reklamsız Deneyim' : 'Ad-Free Experience',
+                  isTr ? 'Hiç reklam görmeden kullan' : 'Use without any ads',
+                ),
+                const SizedBox(height: 16),
+                _buildFeatureRow(
+                  Icons.favorite,
+                  isTr ? 'Oyunlarda Fazladan Can' : 'More Game Lives',
+                  isTr ? 'Daha fazla can ile oyna' : 'Play with more lives',
+                ),
+                const SizedBox(height: 16),
+                _buildFeatureRow(
+                  Icons.emoji_events,
+                  isTr
+                      ? 'Tüm Başarımlar ve İstatistikler'
+                      : 'All Achievements and Stats',
+                  isTr
+                      ? 'Tüm başarımlar ve istatistiklere erişim'
+                      : 'Access to all achievements and stats',
+                ),
+                const SizedBox(height: 16),
+                _buildFeatureRow(
+                  Icons.favorite_border,
+                  isTr ? 'Sınırsız Favori' : 'Unlimited Favorites',
+                  isTr
+                      ? 'İstediğin kadar içeriği favorileyebilirsin'
+                      : 'Favorite unlimited items',
+                ),
+              ],
+            ),
+          ),
 
-              // Restore Purchase Text
-              Center(
-                child: GestureDetector(
-                  onTap: () async {
-                    final result = await provider.restorePurchasesWithDetails();
+          const SizedBox(height: 24),
+
+          // Price and purchase button
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      provider.formattedPrice,
+                      style: const TextStyle(
+                        color: AppColors.white,
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      isTr ? 'Tek seferlik ödeme' : 'One-time payment',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.8),
+                        fontSize: 13,
+                      ),
+                    ),
+                    if (provider.removeAdsProduct != null) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        '${provider.currencyCode} • ${provider.priceAmount.toStringAsFixed(2)}',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.6),
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(width: 20),
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.white.withValues(alpha: 0.9),
+                      Colors.white.withValues(alpha: 0.7),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.white.withValues(alpha: 0.3),
+                      blurRadius: 12,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: ElevatedButton(
+                  onPressed: () async {
+                    final result = await provider
+                        .directPurchaseRemoveAdsWithDetails();
                     _showPurchaseResultBottomSheet(
                       context,
                       result['success'] as bool,
@@ -694,44 +648,77 @@ class _SettingsViewState extends State<SettingsView> {
                       errorDetails: result,
                     );
                   },
-                  child: Container(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
+                      horizontal: 28,
+                      vertical: 16,
                     ),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.2),
-                        width: 1,
-                      ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.restore,
-                          color: Colors.white.withValues(alpha: 0.8),
-                          size: 14,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          isTr
-                              ? 'Satın Alımları Geri Yükle'
-                              : 'Restore Purchases',
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.8),
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
+                  ),
+                  child: Text(
+                    isTr ? 'Satın Al' : 'Buy Now',
+                    style: TextStyle(
+                      color: AppColors.powderRed,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
                     ),
                   ),
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 20),
+
+          // Restore Purchase Text
+          Center(
+            child: GestureDetector(
+              onTap: () async {
+                final result = await provider.restorePurchasesWithDetails();
+                _showPurchaseResultBottomSheet(
+                  context,
+                  result['success'] as bool,
+                  isTr,
+                  errorDetails: result,
+                );
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    width: 1,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.restore,
+                      color: Colors.white.withValues(alpha: 0.8),
+                      size: 14,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      isTr ? 'Satın Alımları Geri Yükle' : 'Restore Purchases',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.8),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         ],
       ),
@@ -1271,41 +1258,71 @@ class _SettingsViewState extends State<SettingsView> {
     );
   }
 
-  /// Rate app functionality
+  /// Rate app functionality - different behavior for iOS and Android
   Future<void> _rateApp(BuildContext context, bool isTr) async {
     try {
-      // App Store URL for the app
-      const String appStoreUrl =
-          'https://apps.apple.com/app/com-furkanages-elements/id1234567890';
-
-      // Try to launch the URL
-      final Uri url = Uri.parse(appStoreUrl);
-
-      if (await canLaunchUrl(url)) {
-        await launchUrl(url, mode: LaunchMode.externalApplication);
-
-        // Show success message
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                isTr
-                    ? 'Teşekkürler! App Store\'a yönlendiriliyorsunuz...'
-                    : 'Thank you! Redirecting to App Store...',
-              ),
-              backgroundColor: Colors.green,
-              duration: const Duration(seconds: 2),
-            ),
-          );
-        }
+      if (Platform.isIOS) {
+        // iOS: Use in-app review
+        await _rateAppIOS(context, isTr);
+      } else if (Platform.isAndroid) {
+        // Android: Use Play Store URL
+        await _rateAppAndroid(context, isTr);
       } else {
-        // Fallback: Show dialog if URL can't be launched
+        // Other platforms: Show dialog
         if (context.mounted) {
           _showRateAppDialog(context, isTr);
         }
       }
     } catch (e) {
       // Error handling: Show dialog if something goes wrong
+      if (context.mounted) {
+        _showRateAppDialog(context, isTr);
+      }
+    }
+  }
+
+  /// iOS-specific rating functionality using in-app review
+  Future<void> _rateAppIOS(BuildContext context, bool isTr) async {
+    final InAppReview inAppReview = InAppReview.instance;
+
+    // Check if in-app review is available
+    if (await inAppReview.isAvailable()) {
+      // Request in-app review
+      await inAppReview.requestReview();
+    } else {
+      // Fallback to App Store if in-app review is not available
+      await _openAppStore(context, isTr);
+    }
+  }
+
+  /// Android-specific rating functionality using Play Store URL
+  Future<void> _rateAppAndroid(BuildContext context, bool isTr) async {
+    const String playStoreUrl =
+        'https://play.google.com/store/apps/details?id=com.furkanages.elements';
+
+    final Uri url = Uri.parse(playStoreUrl);
+
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
+    } else {
+      // Fallback: Show dialog if URL can't be launched
+      if (context.mounted) {
+        _showRateAppDialog(context, isTr);
+      }
+    }
+  }
+
+  /// Open App Store (fallback for iOS)
+  Future<void> _openAppStore(BuildContext context, bool isTr) async {
+    const String appStoreUrl =
+        'https://apps.apple.com/app/com-furkanages-elements/id1234567890';
+
+    final Uri url = Uri.parse(appStoreUrl);
+
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
+    } else {
+      // Fallback: Show dialog if URL can't be launched
       if (context.mounted) {
         _showRateAppDialog(context, isTr);
       }
@@ -1324,8 +1341,12 @@ class _SettingsViewState extends State<SettingsView> {
         ),
         content: Text(
           isTr
-              ? 'Uygulamamızı beğendiyseniz App Store\'da değerlendirmeyi unutmayın!\n\nApp ID: com.furkanages.elements'
-              : 'If you like our app, don\'t forget to rate it on the App Store!\n\nApp ID: com.furkanages.elements',
+              ? Platform.isIOS
+                    ? 'Uygulamamızı beğendiyseniz App Store\'da değerlendirmeyi unutmayın!\n\nApp ID: com.furkanages.elements'
+                    : 'Uygulamamızı beğendiyseniz Google Play Store\'da değerlendirmeyi unutmayın!\n\nPackage: com.furkanages.elements'
+              : Platform.isIOS
+              ? 'If you like our app, don\'t forget to rate it on the App Store!\n\nApp ID: com.furkanages.elements'
+              : 'If you like our app, don\'t forget to rate it on Google Play Store!\n\nPackage: com.furkanages.elements',
           style: const TextStyle(color: AppColors.white),
         ),
         actions: [

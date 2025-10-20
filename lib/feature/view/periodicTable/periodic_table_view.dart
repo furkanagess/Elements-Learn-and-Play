@@ -7,7 +7,6 @@ import 'package:elements_app/product/constants/stringConstants/en_app_strings.da
 import 'package:elements_app/product/constants/stringConstants/tr_app_strings.dart';
 import 'package:elements_app/product/widget/skeleton/universal_skeleton_loader.dart';
 import 'package:elements_app/product/widget/scaffold/app_scaffold.dart';
-import 'package:elements_app/product/widget/ads/banner_ads_widget.dart';
 import 'package:elements_app/product/widget/button/back_button.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';

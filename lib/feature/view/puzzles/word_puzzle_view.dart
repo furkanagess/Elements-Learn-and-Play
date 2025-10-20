@@ -11,7 +11,7 @@ import 'package:elements_app/product/constants/app_colors.dart';
 import 'package:elements_app/product/ads/rewarded_helper.dart';
 import 'package:elements_app/product/widget/ads/interstitial_ad_widget.dart';
 import 'package:elements_app/core/services/pattern/pattern_service.dart';
-import 'package:elements_app/feature/view/tests/tests_home_view.dart';
+import 'package:elements_app/feature/view/home/home_view.dart';
 import 'package:elements_app/feature/view/trivia/trivia_achievements_view.dart';
 import 'package:elements_app/product/widget/common/modern_game_result_dialog.dart';
 
@@ -251,7 +251,7 @@ class _WordPuzzleViewState extends State<WordPuzzleView>
   void _navigateToHome(BuildContext context, PuzzleProvider provider) {
     provider.resetWordSessionFlags();
     Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (context) => TestsHomeView()),
+      MaterialPageRoute(builder: (context) => const HomeView()),
       (route) => false,
     );
   }
