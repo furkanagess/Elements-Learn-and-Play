@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:elements_app/feature/service/google_ads_service.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
@@ -5,6 +6,7 @@ import 'package:lottie/lottie.dart';
 import 'package:elements_app/product/constants/assets_constants.dart';
 import 'package:provider/provider.dart';
 import 'package:elements_app/feature/provider/purchase_provider.dart';
+import 'package:elements_app/core/services/att_permission_service.dart';
 
 /// The `BannerAdsProvider` class is responsible for managing banner ads using the
 /// AdMob service. It provides methods for creating and displaying banner ads
@@ -17,8 +19,20 @@ class BannerAdsProvider with ChangeNotifier {
   bool get isBannerAdLoaded => _isBannerAdLoaded;
 
   /// Creates and loads a banner ad.
-  void createBannerAd() {
+  Future<void> createBannerAd() async {
     try {
+      // Check ATT permission on iOS before creating ads
+      if (Platform.isIOS) {
+        final isAuthorized = await ATTPermissionService.instance
+            .isPermissionAuthorized();
+        if (!isAuthorized) {
+          print(
+            '📱 ATT permission not authorized, skipping banner ad creation',
+          );
+          return;
+        }
+      }
+
       bannerAd = BannerAd(
         adUnitId: GoogleAdsService.bannerAdUnitId,
         size: AdSize.banner,

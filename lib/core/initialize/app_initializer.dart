@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:elements_app/core/services/notifications/fcm_token_service.dart';
 import 'package:elements_app/core/services/ios_ad_tracking_service.dart';
+import 'package:elements_app/core/services/att_permission_service.dart';
 import 'package:elements_app/core/services/ad_configuration_service.dart';
 import 'package:elements_app/core/services/ios_production_ad_service.dart';
 import 'package:elements_app/core/services/android_production_service.dart';
@@ -43,6 +44,18 @@ class AppInitializer {
         await IOSAdTrackingService.instance.initialize().timeout(
           const Duration(seconds: 5),
         );
+
+        // Request ATT permission on iOS (critical for App Store approval)
+        if (Platform.isIOS) {
+          try {
+            await ATTPermissionService.instance.requestPermission().timeout(
+              const Duration(seconds: 10),
+            );
+            print('✅ ATT permission requested successfully');
+          } catch (e) {
+            print('❌ ATT permission request failed: $e');
+          }
+        }
 
         // iOS-specific initialization delay (reduced)
         if (Platform.isIOS) {

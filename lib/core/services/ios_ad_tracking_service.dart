@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:app_tracking_transparency/app_tracking_transparency.dart';
 
 /// Service to handle iOS App Tracking Transparency (ATT) for AdMob
 class IOSAdTrackingService {
@@ -52,9 +53,15 @@ class IOSAdTrackingService {
     if (!Platform.isIOS) return true;
 
     try {
-      // This will be handled by the AdMob SDK internally
-      // The SDK will respect the user's tracking preference
-      return true;
+      final status = await AppTrackingTransparency.trackingAuthorizationStatus;
+      final isAuthorized = status == TrackingStatus.authorized;
+
+      if (kDebugMode) {
+        debugPrint('📱 ATT Status: $status');
+        debugPrint('📱 Tracking authorized: $isAuthorized');
+      }
+
+      return isAuthorized;
     } catch (e) {
       if (kDebugMode) {
         debugPrint('❌ Error checking tracking authorization: $e');
@@ -64,21 +71,23 @@ class IOSAdTrackingService {
   }
 
   /// Request tracking authorization if needed
-  Future<void> requestTrackingAuthorization() async {
-    if (!Platform.isIOS) return;
+  Future<TrackingStatus> requestTrackingAuthorization() async {
+    if (!Platform.isIOS) return TrackingStatus.authorized;
 
     try {
-      // The AdMob SDK will handle this automatically
-      // when the first ad request is made
+      final status =
+          await AppTrackingTransparency.requestTrackingAuthorization();
+
       if (kDebugMode) {
-        debugPrint(
-          '📱 iOS tracking authorization will be requested by AdMob SDK',
-        );
+        debugPrint('📱 ATT Permission requested. Status: $status');
       }
+
+      return status;
     } catch (e) {
       if (kDebugMode) {
         debugPrint('❌ Error requesting tracking authorization: $e');
       }
+      return TrackingStatus.denied;
     }
   }
 }

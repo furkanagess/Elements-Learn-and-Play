@@ -31,8 +31,8 @@ class _BannerAdsWidgetState extends State<BannerAdsWidget> {
   void initState() {
     super.initState();
     // Create banner ad when widget is initialized
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<BannerAdsProvider>().createBannerAd();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await context.read<BannerAdsProvider>().createBannerAd();
     });
   }
 

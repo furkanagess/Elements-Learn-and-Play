@@ -1,9 +1,11 @@
+import 'dart:io';
 import 'package:elements_app/feature/service/google_ads_service.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:provider/provider.dart';
 import 'package:elements_app/feature/provider/purchase_provider.dart';
 import 'package:elements_app/product/widget/ads/remove_ads_dialog.dart';
+import 'package:elements_app/core/services/att_permission_service.dart';
 
 /// The `AdmobProvider` class is responsible for managing interstitial ads using the
 /// AdMob service. It provides methods for creating and displaying interstitial ads
@@ -57,8 +59,20 @@ class AdmobProvider with ChangeNotifier {
   DateTime? get lastAdShownTime => _lastAdShownTime;
 
   /// Creates and loads an interstitial ad.
-  void _createInterstitialAd() {
+  Future<void> _createInterstitialAd() async {
     if (_isAdLoading) return; // Prevent multiple simultaneous loads
+
+    // Check ATT permission on iOS before creating ads
+    if (Platform.isIOS) {
+      final isAuthorized = await ATTPermissionService.instance
+          .isPermissionAuthorized();
+      if (!isAuthorized) {
+        print(
+          '📱 ATT permission not authorized, skipping interstitial ad creation',
+        );
+        return;
+      }
+    }
 
     try {
       _isAdLoading = true;

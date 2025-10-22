@@ -1,7 +1,7 @@
 name: elements_app
 description: Periodic Table - Learn and explore chemical elements
 publish_to: 'none'
-version: 2.1.2+18
+version: 2.1.2+19
 
 environment:
   sdk: '>=3.8.0 <4.0.0'
@@ -36,6 +36,7 @@ dependencies:
 
   # Ads
   google_mobile_ads: ^6.0.0
+  app_tracking_transparency: ^2.0.2
   
   # Firebase
   firebase_core: ^2.21.0
