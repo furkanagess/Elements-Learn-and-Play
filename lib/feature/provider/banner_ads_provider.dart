@@ -21,13 +21,12 @@ class BannerAdsProvider with ChangeNotifier {
   /// Creates and loads a banner ad.
   Future<void> createBannerAd() async {
     try {
-      // Check ATT permission on iOS before creating ads
+      // Check if ads can be shown on iOS (authorized OR denied)
       if (Platform.isIOS) {
-        final isAuthorized = await ATTPermissionService.instance
-            .isPermissionAuthorized();
-        if (!isAuthorized) {
+        final canShowAds = await ATTPermissionService.instance.canShowAds();
+        if (!canShowAds) {
           print(
-            '📱 ATT permission not authorized, skipping banner ad creation',
+            '📱 ATT permission not determined/restricted, skipping banner ad creation',
           );
           return;
         }

@@ -58,6 +58,32 @@ class ATTPermissionService {
     }
   }
 
+  /// Check if ads can be shown (authorized OR denied - not restricted/notDetermined)
+  Future<bool> canShowAds() async {
+    if (!Platform.isIOS) return true;
+
+    try {
+      final status = await AppTrackingTransparency.trackingAuthorizationStatus;
+
+      // Show ads if authorized OR denied (but not if restricted or not determined)
+      final canShow =
+          status == TrackingStatus.authorized ||
+          status == TrackingStatus.denied;
+
+      if (kDebugMode) {
+        debugPrint('📱 ATT Status: $status');
+        debugPrint('📱 Can show ads: $canShow');
+      }
+
+      return canShow;
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('❌ Error checking if ads can be shown: $e');
+      }
+      return true; // Default to showing ads on error
+    }
+  }
+
   /// Request ATT permission with proper timing
   Future<TrackingStatus> requestPermission() async {
     if (!Platform.isIOS) return TrackingStatus.authorized;

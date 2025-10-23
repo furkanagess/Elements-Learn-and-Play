@@ -5,6 +5,7 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:provider/provider.dart';
 import 'package:elements_app/feature/provider/purchase_provider.dart';
 import 'package:elements_app/feature/service/google_ads_service.dart';
+import 'package:elements_app/core/services/att_permission_service.dart';
 
 /// Simple helper to show a rewarded ad and invoke [onRewardEarned]
 /// when the user successfully earns the reward.
@@ -28,6 +29,20 @@ class RewardedHelper {
         DateTime.now().difference(_lastLoadAt!) < const Duration(seconds: 5)) {
       return;
     }
+
+    // Check if ads can be shown on iOS (authorized OR denied)
+    if (Platform.isIOS) {
+      final canShowAds = await ATTPermissionService.instance.canShowAds();
+      if (!canShowAds) {
+        if (kDebugMode) {
+          debugPrint(
+            '📱 ATT permission not determined/restricted, skipping rewarded ad creation',
+          );
+        }
+        return;
+      }
+    }
+
     _isLoading = true;
     _lastLoadAt = DateTime.now();
 

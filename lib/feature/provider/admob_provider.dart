@@ -62,13 +62,12 @@ class AdmobProvider with ChangeNotifier {
   Future<void> _createInterstitialAd() async {
     if (_isAdLoading) return; // Prevent multiple simultaneous loads
 
-    // Check ATT permission on iOS before creating ads
+    // Check if ads can be shown on iOS (authorized OR denied)
     if (Platform.isIOS) {
-      final isAuthorized = await ATTPermissionService.instance
-          .isPermissionAuthorized();
-      if (!isAuthorized) {
+      final canShowAds = await ATTPermissionService.instance.canShowAds();
+      if (!canShowAds) {
         print(
-          '📱 ATT permission not authorized, skipping interstitial ad creation',
+          '📱 ATT permission not determined/restricted, skipping interstitial ad creation',
         );
         return;
       }
